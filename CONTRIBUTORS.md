@@ -2,7 +2,7 @@
 
 ## Author & Maintainer
 
-**[Your Name]**  
+**Francesco Casali**  
 Product design, architecture decisions, requirements definition,  
 testing, deployment and ongoing maintenance.
 
