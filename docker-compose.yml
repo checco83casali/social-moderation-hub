@@ -1,0 +1,69 @@
+version: '3.9'
+
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: moderation-hub-app
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      - ./logs:/var/www/html/logs
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - moderation-hub
+
+  db:
+    image: mysql:8.0
+    container_name: moderation-hub-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-moderation_hub}
+      MYSQL_USER: ${DB_USERNAME:-moduser}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootsecret}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database/migrations/001_initial_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-rootsecret}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "3306:3306"
+    networks:
+      - moderation-hub
+
+  # Optional: phpMyAdmin for DB inspection during development
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: moderation-hub-pma
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      PMA_USER: ${DB_USERNAME:-moduser}
+      PMA_PASSWORD: ${DB_PASSWORD:-secret}
+    ports:
+      - "8081:80"
+    depends_on:
+      - db
+    profiles:
+      - dev
+    networks:
+      - moderation-hub
+
+volumes:
+  db_data:
+
+networks:
+  moderation-hub:
+    driver: bridge

@@ -1,0 +1,15 @@
+# Credentials
+.env
+
+# Local-only notes
+LICENSE_OFFLINE_NOTES.md
+
+# macOS
+.DS_Store
+
+# Dependencies
+/vendor/
+
+# Runtime logs / error files
+/logs/
+error_log

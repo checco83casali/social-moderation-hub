@@ -1,0 +1,13 @@
+RewriteEngine On
+
+# Aumenta limite query string
+LimitRequestLine 16384
+
+# Handle OPTIONS preflight
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
+
+# Route everything to index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]
