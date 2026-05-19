@@ -98,7 +98,7 @@ function fbLoginAndListPages() {
     ? { config_id: window._fbLoginConfigId }
     : { scope: 'pages_show_list,pages_manage_metadata,pages_read_engagement,pages_manage_engagement' };
 
-  FB.login(async (resp) => {
+  FB.login((resp) => {
     if (!resp.authResponse || !resp.authResponse.accessToken) {
       _setAddPagesStep('login');
       _showAddPagesError('Login annullato o non autorizzato.');
@@ -107,6 +107,10 @@ function fbLoginAndListPages() {
     _fbUserToken = resp.authResponse.accessToken;
     _fbOwnerId   = resp.authResponse.userID || null;
 
+    // FB.login non accetta callback async (l'SDK lancia
+    // "Expression is of type asyncfunction, not function"),
+    // quindi la logica asincrona gira in una IIFE interna.
+    (async () => {
     try {
       const data = await api('/pages/available', 'POST', { user_token: _fbUserToken });
       _fbAvailablePages = data.pages || [];
@@ -133,6 +137,7 @@ function fbLoginAndListPages() {
       _setAddPagesStep('login');
       _showAddPagesError('Errore caricamento pagine: ' + (e.message || ''));
     }
+    })();
   }, opts);
 }
 
