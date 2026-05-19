@@ -38,6 +38,7 @@ class PagesController
                 'cp.is_active', 'cp.webhook_verified', 'cp.connected_at',
                 'a.name as connected_by',
             ])
+            ->whereNull('cp.disconnected_at')
             ->orderByDesc('cp.connected_at')
             ->get()
             ->map(fn($r) => (array) $r)
@@ -81,8 +82,9 @@ class PagesController
             return $this->json($response, ['error' => 'Meta API error: ' . $e->getMessage()], 502);
         }
 
-        // Mark which pages are already connected
+        // Mark which pages are already connected (disconnected pages can be re-added)
         $connectedIds = DB::table('connected_pages')
+            ->whereNull('disconnected_at')
             ->pluck('page_id')
             ->toArray();
 
@@ -116,18 +118,19 @@ class PagesController
             }
         }
 
-        // Check not already connected
+        // A row still connected (disconnected_at IS NULL) = already connected.
+        // A disconnected row = will be reactivated, preserving its audit history.
         $existing = DB::table('connected_pages')
             ->where('page_id', $body['page_id'])
             ->first();
 
-        if ($existing) {
+        if ($existing && $existing->disconnected_at === null) {
             return $this->json($response, ['error' => 'Page already connected'], 409);
         }
 
-        // Free plan: max 1 connected page. Pro (multi_page) unlocks unlimited.
+        // Free plan: max 1 connected page (disconnected pages don't count).
         if (!$this->license->hasFeature('multi_page')
-            && DB::table('connected_pages')->count() >= 1) {
+            && DB::table('connected_pages')->whereNull('disconnected_at')->count() >= 1) {
             return $this->json($response, [
                 'error'   => 'Il piano gratuito consente una sola pagina. Passa a Pro per collegarne altre.',
                 'feature' => 'multi_page',
@@ -142,17 +145,32 @@ class PagesController
             // Non-fatal: page gets connected, admin can retry webhook manually
         }
 
-        $id = DB::table('connected_pages')->insertGetId([
-            'page_id'            => $body['page_id'],
-            'page_name'          => $body['page_name'],
-            'page_access_token'  => $body['page_access_token'],
-            'admin_user_id'      => $auth->sub,
-            'page_owner_fb_id'   => $body['owner_fb_id'] ?? null, // FB user ID of who connected the page
-            'is_active'          => 1,
-            'webhook_verified'   => $webhookOk ? 1 : 0,
-            'connected_at'       => date('Y-m-d H:i:s'),
-            'updated_at'         => date('Y-m-d H:i:s'),
-        ]);
+        if ($existing) {
+            // Reactivate a previously disconnected page (its history is preserved).
+            DB::table('connected_pages')->where('id', $existing->id)->update([
+                'page_name'         => $body['page_name'],
+                'page_access_token' => $body['page_access_token'],
+                'admin_user_id'     => $auth->sub,
+                'page_owner_fb_id'  => $body['owner_fb_id'] ?? null,
+                'is_active'         => 1,
+                'webhook_verified'  => $webhookOk ? 1 : 0,
+                'disconnected_at'   => null,
+                'updated_at'        => date('Y-m-d H:i:s'),
+            ]);
+            $id = $existing->id;
+        } else {
+            $id = DB::table('connected_pages')->insertGetId([
+                'page_id'            => $body['page_id'],
+                'page_name'          => $body['page_name'],
+                'page_access_token'  => $body['page_access_token'],
+                'admin_user_id'      => $auth->sub,
+                'page_owner_fb_id'   => $body['owner_fb_id'] ?? null, // FB user ID of who connected the page
+                'is_active'          => 1,
+                'webhook_verified'   => $webhookOk ? 1 : 0,
+                'connected_at'       => date('Y-m-d H:i:s'),
+                'updated_at'         => date('Y-m-d H:i:s'),
+            ]);
+        }
 
         return $this->json($response, [
             'id'              => $id,
@@ -178,7 +196,11 @@ class PagesController
             return $this->json($response, ['error' => 'pages array is required'], 422);
         }
 
-        $connectedIds = DB::table('connected_pages')->pluck('page_id')->toArray();
+        // Existing rows keyed by Meta page_id. Disconnected rows are reactivated
+        // (preserving their audit history) rather than inserted again.
+        $existingRows = DB::table('connected_pages')->get()->keyBy('page_id');
+        $activeIds = $existingRows->filter(fn($r) => $r->disconnected_at === null)
+                                  ->keys()->all();
         $now = date('Y-m-d H:i:s');
 
         // Free plan: max 1 connected page total. Pro (multi_page) unlocks unlimited.
@@ -198,14 +220,14 @@ class PagesController
                 continue;
             }
 
-            if (in_array($pageId, $connectedIds, true)) {
+            if (in_array($pageId, $activeIds, true)) {
                 $results[] = ['page_id' => $pageId, 'page_name' => $pageName, 'status' => 'skipped', 'reason' => 'already_connected'];
                 $counts['skipped']++;
                 continue;
             }
 
-            // Enforce the free-plan single-page limit.
-            if (!$canMulti && count($connectedIds) >= 1) {
+            // Enforce the free-plan single-page limit (disconnected pages don't count).
+            if (!$canMulti && count($activeIds) >= 1) {
                 $results[] = ['page_id' => $pageId, 'page_name' => $pageName, 'status' => 'failed', 'reason' => 'pro_required'];
                 $counts['failed']++;
                 continue;
@@ -218,19 +240,34 @@ class PagesController
                 // Non-fatal: page gets connected, admin can retry webhook from UI
             }
 
-            DB::table('connected_pages')->insert([
-                'page_id'           => $pageId,
-                'page_name'         => $pageName,
-                'page_access_token' => $pageToken,
-                'admin_user_id'     => $auth->sub,
-                'page_owner_fb_id'  => $p['owner_fb_id'] ?? null,
-                'is_active'         => 1,
-                'webhook_verified'  => $webhookOk ? 1 : 0,
-                'connected_at'      => $now,
-                'updated_at'        => $now,
-            ]);
+            $existing = $existingRows->get($pageId);
+            if ($existing) {
+                // Reactivate a previously disconnected page.
+                DB::table('connected_pages')->where('id', $existing->id)->update([
+                    'page_name'         => $pageName,
+                    'page_access_token' => $pageToken,
+                    'admin_user_id'     => $auth->sub,
+                    'page_owner_fb_id'  => $p['owner_fb_id'] ?? null,
+                    'is_active'         => 1,
+                    'webhook_verified'  => $webhookOk ? 1 : 0,
+                    'disconnected_at'   => null,
+                    'updated_at'        => $now,
+                ]);
+            } else {
+                DB::table('connected_pages')->insert([
+                    'page_id'           => $pageId,
+                    'page_name'         => $pageName,
+                    'page_access_token' => $pageToken,
+                    'admin_user_id'     => $auth->sub,
+                    'page_owner_fb_id'  => $p['owner_fb_id'] ?? null,
+                    'is_active'         => 1,
+                    'webhook_verified'  => $webhookOk ? 1 : 0,
+                    'connected_at'      => $now,
+                    'updated_at'        => $now,
+                ]);
+            }
 
-            $connectedIds[] = $pageId;
+            $activeIds[] = $pageId;
             $results[] = [
                 'page_id'        => $pageId,
                 'page_name'      => $pageName,
@@ -311,13 +348,18 @@ class PagesController
             return $this->json($response, ['error' => 'Not found'], 404);
         }
 
-        // Hard-delete: removes the page and — via ON DELETE CASCADE — all its
-        // comments, moderation logs, bans and per-page settings. This frees the
-        // connection slot (free plan = 1 page) and allows re-adding the page later.
-        // Use the "Pausa" toggle instead to disable moderation while keeping data.
-        DB::table('connected_pages')->where('id', $page->id)->delete();
+        // Disconnect (soft): hide from the list and stop moderation (is_active=0),
+        // but KEEP all data — moderation queue, logs, bans — for audit.
+        // The free-plan slot is freed (disconnected pages don't count) and the same
+        // page can be re-added later, which reactivates this row preserving history.
+        // Use the "Pausa" toggle instead to disable moderation while keeping it listed.
+        DB::table('connected_pages')->where('id', $page->id)->update([
+            'is_active'       => 0,
+            'disconnected_at' => date('Y-m-d H:i:s'),
+            'updated_at'      => date('Y-m-d H:i:s'),
+        ]);
 
-        return $this->json($response, ['message' => "Pagina '{$page->page_name}' rimossa"]);
+        return $this->json($response, ['message' => "Pagina '{$page->page_name}' disconnessa"]);
     }
 
     // ── GET /api/pages/{id}/settings  ───────────────────────────────

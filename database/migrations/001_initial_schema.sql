@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS `connected_pages` (
     `webhook_verified` TINYINT(1) NOT NULL DEFAULT 0,
     `connected_at`     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at`       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `disconnected_at`  TIMESTAMP NULL DEFAULT NULL COMMENT 'Set when disconnected: hidden from list, moderation off, data kept for audit. NULL = connected',
     FOREIGN KEY (`admin_user_id`) REFERENCES `admin_users`(`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

@@ -33,18 +33,18 @@ async function loadPages() {
         </div>
         <button class="btn-sm" onclick="openPageSettings(${p.id})">Soglie AI</button>
         <button class="btn-sm" onclick="togglePage(${p.id})">${p.is_active ? 'Pausa' : 'Attiva'}</button>
-        <button class="btn-sm" style="color:var(--danger);border-color:var(--danger)" onclick="removePage(${p.id})">Rimuovi</button>
+        <button class="btn-sm" style="color:var(--danger);border-color:var(--danger)" onclick="disconnectPage(${p.id})">Disconnetti</button>
       </div>`).join('');
   } catch (e) { wrap.innerHTML = '<div class="empty">Errore nel caricamento</div>'; }
 }
 
-async function removePage(id) {
-  if (!confirm('Rimuovere questa pagina?\n\nVerranno eliminati DEFINITIVAMENTE anche tutti i commenti, i log di moderazione e i ban associati a questa pagina. L\'operazione è irreversibile.')) return;
+async function disconnectPage(id) {
+  if (!confirm('Disconnettere questa pagina?\n\nNon sarà più moderata e verrà tolta dall\'elenco, ma tutti i dati (coda di moderazione, log, ban) restano conservati per audit. Potrai ricollegarla in seguito.')) return;
   try {
     const r = await api(`/pages/${id}`, 'DELETE');
-    toast(r.message || 'Pagina rimossa', 'ok');
+    toast(r.message || 'Pagina disconnessa', 'ok');
     loadPages();
-  } catch (e) { toast(e.message || 'Errore nella rimozione', 'err'); }
+  } catch (e) { toast(e.message || 'Errore', 'err'); }
 }
 
 async function togglePage(id) {
