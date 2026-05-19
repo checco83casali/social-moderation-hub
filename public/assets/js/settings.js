@@ -131,6 +131,7 @@ function applyLicensePanel(lic) {
       templates:           'Template reply personalizzabili',
       per_page_thresholds: 'Soglie AI per pagina',
       fact_check:          'Fact check AI',
+      multi_page:          'Pagine multiple',
     };
     const feats = (lic.features ?? []).map(f => featureNames[f] ?? f);
     featEl.innerHTML = feats.length

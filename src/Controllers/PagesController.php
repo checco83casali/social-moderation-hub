@@ -125,6 +125,15 @@ class PagesController
             return $this->json($response, ['error' => 'Page already connected'], 409);
         }
 
+        // Free plan: max 1 connected page. Pro (multi_page) unlocks unlimited.
+        if (!$this->license->hasFeature('multi_page')
+            && DB::table('connected_pages')->count() >= 1) {
+            return $this->json($response, [
+                'error'   => 'Il piano gratuito consente una sola pagina. Passa a Pro per collegarne altre.',
+                'feature' => 'multi_page',
+            ], 403);
+        }
+
         // Subscribe webhook
         $webhookOk = false;
         try {
@@ -172,6 +181,9 @@ class PagesController
         $connectedIds = DB::table('connected_pages')->pluck('page_id')->toArray();
         $now = date('Y-m-d H:i:s');
 
+        // Free plan: max 1 connected page total. Pro (multi_page) unlocks unlimited.
+        $canMulti = $this->license->hasFeature('multi_page');
+
         $results  = [];
         $counts   = ['connected' => 0, 'skipped' => 0, 'failed' => 0];
 
@@ -189,6 +201,13 @@ class PagesController
             if (in_array($pageId, $connectedIds, true)) {
                 $results[] = ['page_id' => $pageId, 'page_name' => $pageName, 'status' => 'skipped', 'reason' => 'already_connected'];
                 $counts['skipped']++;
+                continue;
+            }
+
+            // Enforce the free-plan single-page limit.
+            if (!$canMulti && count($connectedIds) >= 1) {
+                $results[] = ['page_id' => $pageId, 'page_name' => $pageName, 'status' => 'failed', 'reason' => 'pro_required'];
+                $counts['failed']++;
                 continue;
             }
 

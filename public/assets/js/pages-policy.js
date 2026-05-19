@@ -1,8 +1,26 @@
 // ── Pages ─────────────────────────────────────────────────────────
+// Free plan = 1 pagina; Pro (multi_page) = illimitate.
+// Disabilita "+ Aggiungi pagine" quando il limite è raggiunto.
+async function _updateAddPagesGate(count) {
+  const btn = document.getElementById('btn-add-pages');
+  if (!btn) return;
+  let multiPage = false;
+  try {
+    const lic = await api('/license');
+    multiPage = (lic.features || []).includes('multi_page');
+  } catch (e) { /* in caso di errore licenza, non blocchiamo */ multiPage = true; }
+  const blocked = count >= 1 && !multiPage;
+  btn.disabled = blocked;
+  btn.title = blocked ? 'Piano gratuito: 1 sola pagina. Passa a Pro per collegarne altre.' : '';
+  btn.style.opacity = blocked ? '.5' : '';
+  btn.style.cursor  = blocked ? 'not-allowed' : '';
+}
+
 async function loadPages() {
   const wrap = document.getElementById('pages-list-wrap');
   try {
     const pages = await api('/pages');
+    _updateAddPagesGate(pages.length);
     if (!pages.length) {
       wrap.innerHTML = '<div class="empty">Nessuna pagina connessa.<br><br>Usa il widget di connessione per aggiungere una pagina.</div>';
       return;
@@ -180,11 +198,16 @@ async function connectSelectedPages() {
 
   try {
     const r = await api('/pages/connect-batch', 'POST', payload);
+    const proBlocked = (r.results || []).some(x => x.reason === 'pro_required');
     const parts = [];
     if (r.connected) parts.push(`${r.connected} connesse`);
     if (r.skipped)   parts.push(`${r.skipped} saltate`);
     if (r.failed)    parts.push(`${r.failed} fallite`);
-    toast(parts.join(' · ') || 'Nessuna pagina aggiunta', r.failed ? 'err' : 'ok');
+    if (proBlocked) {
+      toast('Piano gratuito: 1 sola pagina. Passa a Pro per collegarne altre.', 'err');
+    } else {
+      toast(parts.join(' · ') || 'Nessuna pagina aggiunta', r.failed ? 'err' : 'ok');
+    }
     closeModal('modal-add-pages');
     loadPages();
   } catch (e) {
