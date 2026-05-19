@@ -252,11 +252,8 @@ class ModerationService
             if ($rmw !== null) $reasonMaxWords = max(10, (int) $rmw);
         } catch (\Throwable) {}
 
-        // Use moderation_prompt (operator-editable) if available;
-        // fall back to legacy system_prompt for older installations.
-        $moderationPrompt = !empty($policy->moderation_prompt)
-            ? $policy->moderation_prompt
-            : $policy->system_prompt;
+        // Operator-editable moderation rules (the technical block is appended in ClaudeService).
+        $moderationPrompt = $policy->moderation_prompt;
 
         $result = $this->claude->moderate(
             commentText:      $commentContext,
@@ -1178,9 +1175,7 @@ class ModerationService
             if ($rmw !== null) $reasonMaxWords = max(10, (int) $rmw);
         } catch (\Throwable) {}
 
-        $reModPrompt = !empty($policy?->moderation_prompt)
-            ? $policy->moderation_prompt
-            : ($policy?->system_prompt ?? '');
+        $reModPrompt = $policy?->moderation_prompt ?? '';
 
         $result = $this->claude->moderate(
             commentText:      $commentContext,

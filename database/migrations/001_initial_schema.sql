@@ -58,12 +58,10 @@ CREATE TABLE IF NOT EXISTS `policies` (
 
     -- OPERATOR-EDITABLE: community rules, violation categories, escalation logic.
     -- Publicly visible at GET /public/policy (transparency endpoint).
-    -- This is the ONLY field the operator should customise via the dashboard.
+    -- This is the ONLY prompt field the operator customises via the dashboard.
+    -- The technical output-format block is appended at runtime by
+    -- ClaudeService::composeSystemPrompt() and is NOT stored here.
     `moderation_prompt` LONGTEXT NOT NULL COMMENT 'Operator-editable moderation rules sent to Claude',
-
-    -- LEGACY / BACKWARD COMPAT: kept in sync with moderation_prompt on new installs.
-    -- Used as fallback when moderation_prompt is empty (pre-migration installations).
-    `system_prompt`     LONGTEXT NOT NULL COMMENT 'Legacy: full prompt. Deprecated in favour of moderation_prompt.',
 
     `is_active`         TINYINT(1) NOT NULL DEFAULT 1,
     `version`           INT UNSIGNED NOT NULL DEFAULT 1,
@@ -83,14 +81,11 @@ CREATE TABLE IF NOT EXISTS `policies` (
 --                      criteria, context guidance, routing summary.
 --                      The operator customises this via the dashboard Policy editor.
 --
--- system_prompt      = LEGACY fallback column, kept in sync for backward compat.
---                      Ignored when moderation_prompt is present.
---
 -- OUTPUT FORMAT / Decision guide / Severity guide / Language rules
 --                    → NOT stored here. Hardcoded in ClaudeService::TECHNICAL_PROMPT_BLOCK
 --                      and appended at call time by composeSystemPrompt().
 -- ─────────────────────────────────────────────────────────────────────────────
-INSERT INTO `policies` (`name`, `description`, `moderation_prompt`, `system_prompt`, `created_by`) VALUES
+INSERT INTO `policies` (`name`, `description`, `moderation_prompt`, `created_by`) VALUES
 ('Default Policy', 'Standard community moderation policy with scam and threat detection',
 
 -- ════════════════════════════════════════════════════════════════════
@@ -200,9 +195,6 @@ Potentially illegal content             | Human (reportable) — auto-hidden imm
 -- are appended automatically at runtime by ClaudeService::composeSystemPrompt()
 -- and are NOT stored in this column.
 -- ════════════════════════════════════════════════════════════════════',
-
--- system_prompt: legacy fallback — kept in sync with moderation_prompt
-'You are an expert social media content moderator. [legacy field — see moderation_prompt]',
 1) ON DUPLICATE KEY UPDATE `id`=`id`;
 
 -- ------------------------------------------------------------

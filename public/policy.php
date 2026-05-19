@@ -54,9 +54,7 @@ if (!empty($jsonMode)) {
             'version'      => $policy->version,
             'activated_at' => $policy->updated_at,
         ],
-        'moderation_rules' => !empty($policy->moderation_prompt)
-            ? $policy->moderation_prompt
-            : $policy->system_prompt,
+        'moderation_rules' => $policy->moderation_prompt,
         'pipeline' => [
             'stage_1' => 'Claude Haiku — fast initial analysis',
             'stage_2' => 'Claude Sonnet — deep analysis (when Haiku confidence is below threshold)',
@@ -72,7 +70,7 @@ if (!$policy) {
     return;
 }
 
-$promptRaw     = !empty($policy->moderation_prompt) ? $policy->moderation_prompt : $policy->system_prompt;
+$promptRaw     = $policy->moderation_prompt;
 $policyName    = htmlspecialchars($policy->name        ?? '', ENT_QUOTES, 'UTF-8');
 $policyDesc    = htmlspecialchars($policy->description ?? '', ENT_QUOTES, 'UTF-8');
 $policyVersion = (int) ($policy->version ?? 1);
