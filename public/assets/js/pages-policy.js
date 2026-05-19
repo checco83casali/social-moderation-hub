@@ -31,9 +31,20 @@ async function loadPages() {
         <div class="page-name">${esc(p.page_name)}<br>
           <span style="font-size:11px;color:var(--muted)">ID: ${p.page_id} · Webhook: ${p.webhook_verified ? '✓' : '✗'}</span>
         </div>
+        <button class="btn-sm" onclick="openPageSettings(${p.id})">Soglie AI</button>
         <button class="btn-sm" onclick="togglePage(${p.id})">${p.is_active ? 'Pausa' : 'Attiva'}</button>
+        <button class="btn-sm" style="color:var(--danger);border-color:var(--danger)" onclick="removePage(${p.id})">Rimuovi</button>
       </div>`).join('');
   } catch (e) { wrap.innerHTML = '<div class="empty">Errore nel caricamento</div>'; }
+}
+
+async function removePage(id) {
+  if (!confirm('Rimuovere questa pagina?\n\nVerranno eliminati DEFINITIVAMENTE anche tutti i commenti, i log di moderazione e i ban associati a questa pagina. L\'operazione è irreversibile.')) return;
+  try {
+    const r = await api(`/pages/${id}`, 'DELETE');
+    toast(r.message || 'Pagina rimossa', 'ok');
+    loadPages();
+  } catch (e) { toast(e.message || 'Errore nella rimozione', 'err'); }
 }
 
 async function togglePage(id) {
@@ -42,6 +53,93 @@ async function togglePage(id) {
     toast(r.message || 'Aggiornato', 'ok');
     loadPages();
   } catch (e) { toast('Errore', 'err'); }
+}
+
+// ── Soglie AI per pagina (feature Pro: per_page_thresholds) ─────────
+let _pageSettingsId = null;
+
+async function openPageSettings(id) {
+  _pageSettingsId = id;
+  const body   = document.getElementById('page-settings-body');
+  const errEl  = document.getElementById('page-settings-error');
+  const saveBtn = document.getElementById('page-settings-save-btn');
+  errEl.style.display = 'none';
+  saveBtn.style.display = '';
+  document.getElementById('page-settings-title').textContent = 'Soglie AI';
+  body.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">Caricamento…</div>';
+  openModal('modal-page-settings');
+
+  try {
+    const d = await api(`/pages/${id}/settings`);
+    document.getElementById('page-settings-title').textContent = 'Soglie AI — ' + (d.page_name || '');
+    body.innerHTML = `
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+        Lascia un campo <strong>vuoto</strong> per usare il valore globale. I valori impostati qui sovrascrivono le soglie generali solo per questa pagina.
+      </div>
+      <label class="form-label">Soglia Haiku <span style="color:var(--muted);font-weight:400">(globale: ${d.global_haiku})</span></label>
+      <input class="form-input" type="number" id="ps-haiku" min="0.01" max="1.00" step="0.01" value="${d.haiku_confidence_threshold ? d.haiku_confidence_threshold : ''}" placeholder="${d.global_haiku}">
+      <div style="font-size:11px;color:var(--muted);margin:5px 0 14px">Se confidence ≥ soglia → Haiku decide da solo. Sotto → passa a Sonnet.</div>
+      <label class="form-label">Soglia Sonnet <span style="color:var(--muted);font-weight:400">(globale: ${d.global_sonnet})</span></label>
+      <input class="form-input" type="number" id="ps-sonnet" min="0.01" max="1.00" step="0.01" value="${d.sonnet_confidence_threshold ? d.sonnet_confidence_threshold : ''}" placeholder="${d.global_sonnet}">
+      <div style="font-size:11px;color:var(--muted);margin:5px 0 16px">Se confidence ≥ soglia → Sonnet decide da solo. Sotto → revisione umana. Deve essere inferiore alla soglia Haiku.</div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="ps-factcheck" ${d.fact_check_enabled ? 'checked' : ''} style="width:16px;height:16px">
+        Fact-check AI attivo su questa pagina
+      </label>`;
+  } catch (e) {
+    if ((e.message || '').toLowerCase().includes('pro license')) {
+      saveBtn.style.display = 'none';
+      body.innerHTML = `
+        <div style="text-align:center;padding:18px">
+          <div style="font-size:14px;font-weight:600;margin-bottom:8px">⭐ Funzionalità Pro</div>
+          <div style="font-size:12.5px;color:var(--muted);line-height:1.6">
+            Le soglie AI per singola pagina richiedono una licenza Pro.<br>
+            Con il piano gratuito tutte le pagine usano le soglie globali impostate in Impostazioni.
+          </div>
+        </div>`;
+    } else {
+      body.innerHTML = '<div class="empty" style="padding:20px">Errore nel caricamento</div>';
+    }
+  }
+}
+
+async function savePageSettings() {
+  if (!_pageSettingsId) return;
+  const haikuEl  = document.getElementById('ps-haiku');
+  const sonnetEl = document.getElementById('ps-sonnet');
+  const fcEl     = document.getElementById('ps-factcheck');
+  if (!haikuEl || !sonnetEl) return;
+
+  const haiku  = haikuEl.value.trim();
+  const sonnet = sonnetEl.value.trim();
+
+  // Validazione lato client: se entrambe impostate, Sonnet < Haiku
+  if (haiku !== '' && sonnet !== '' && parseFloat(sonnet) >= parseFloat(haiku)) {
+    const errEl = document.getElementById('page-settings-error');
+    errEl.textContent = 'La soglia Sonnet deve essere inferiore alla soglia Haiku.';
+    errEl.style.display = '';
+    return;
+  }
+
+  const payload = {
+    haiku_confidence_threshold:  haiku  === '' ? null : parseFloat(haiku),
+    sonnet_confidence_threshold: sonnet === '' ? null : parseFloat(sonnet),
+    fact_check_enabled:          fcEl ? fcEl.checked : true,
+  };
+
+  const btn = document.getElementById('page-settings-save-btn');
+  btn.disabled = true;
+  try {
+    await api(`/pages/${_pageSettingsId}/settings`, 'PUT', payload);
+    toast('Soglie salvate', 'ok');
+    closeModal('modal-page-settings');
+  } catch (e) {
+    const errEl = document.getElementById('page-settings-error');
+    errEl.textContent = e.message || 'Errore nel salvataggio';
+    errEl.style.display = '';
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 // ── Add Facebook pages (modal flow) ───────────────────────────────

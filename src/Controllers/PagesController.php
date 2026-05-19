@@ -311,13 +311,13 @@ class PagesController
             return $this->json($response, ['error' => 'Not found'], 404);
         }
 
-        // Soft-delete: mark inactive instead of deleting (preserves FK references)
-        DB::table('connected_pages')->where('id', $page->id)->update([
-            'is_active'  => 0,
-            'updated_at' => date('Y-m-d H:i:s'),
-        ]);
+        // Hard-delete: removes the page and — via ON DELETE CASCADE — all its
+        // comments, moderation logs, bans and per-page settings. This frees the
+        // connection slot (free plan = 1 page) and allows re-adding the page later.
+        // Use the "Pausa" toggle instead to disable moderation while keeping data.
+        DB::table('connected_pages')->where('id', $page->id)->delete();
 
-        return $this->json($response, ['message' => "Page '{$page->page_name}' disconnected"]);
+        return $this->json($response, ['message' => "Pagina '{$page->page_name}' rimossa"]);
     }
 
     // ── GET /api/pages/{id}/settings  ───────────────────────────────
