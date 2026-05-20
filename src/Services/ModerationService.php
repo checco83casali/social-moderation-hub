@@ -35,30 +35,6 @@ class ModerationService
     // ──────────────────────────────────────────────────────────────────
 
     /**
-     * Posta una risposta di avviso ban imminente sul commento rimosso.
-     * Chiamato quando violation_count raggiunge esattamente il limite.
-     */
-    private function postBanWarningReply(
-        string $platformCommentId,
-        string $displayName,
-        string $pageToken,
-    ): void {
-        try {
-            $default = "Ciao {nome}, il tuo commento è stato rimosso perché non rispetta le nostre linee guida.\n\n"
-                     . "⚠️ Ti informiamo che ulteriori violazioni comporteranno un ban temporaneo dalla pagina.";
-
-            $template = DB::table('app_settings')
-                ->where('key', 'ban_warning_template')
-                ->value('value') ?? $default;
-
-            $message = str_replace('{nome}', $displayName ?: 'utente', $template);
-            $this->meta->replyToComment($platformCommentId, $message, $pageToken);
-        } catch (\Throwable $e) {
-            $this->logger?->warning('[BanWarning] Could not post warning reply: ' . $e->getMessage());
-        }
-    }
-
-    /**
      * Posta una risposta di notifica ban attivo sul commento rimosso.
      * Chiamato quando scatta il ban oppure quando un utente bannato tenta di postare.
      */
@@ -193,11 +169,11 @@ class ModerationService
             }
 
             if (!$this->isDevMode()) {
-                $this->removeComment($platformCommentId, $page['page_access_token']);
+                $this->meta->hideComment($platformCommentId, $page['page_access_token']);
             } else {
-                $this->logger?->info("[DEV MODE] Skipped auto-delete for banned user {$socialUser['id']}");
+                $this->logger?->info("[DEV MODE] Skipped auto-hide for banned user {$socialUser['id']}");
             }
-            return ['action' => 'auto_removed_banned_user', 'user_id' => $socialUser['id'], 'dev_mode' => $this->isDevMode()];
+            return ['action' => 'auto_hidden_banned_user', 'user_id' => $socialUser['id'], 'dev_mode' => $this->isDevMode()];
         }
 
         // 4. Deduplicate
@@ -288,7 +264,7 @@ class ModerationService
             'ai_fact_check_suggested' => $result->factCheckSuggested ? 1 : 0,
             'final_action'           => match(true) {
                 $result->stage === 'human'                                         => 'pending_human',
-                in_array($result->decision, ['hide','reportable','remove'], true)  => 'hidden',
+                in_array($result->decision, ['hide','reportable'], true)           => 'hidden',
                 default                                                            => 'approved',
             },
             'created_at'             => date('Y-m-d H:i:s'),
@@ -299,9 +275,7 @@ class ModerationService
             $result->stage === 'human'         => $this->escalateToHuman($commentId, $result, logId: $logId),
             // Illegal / reportable content is NEVER deleted: it is hidden, the author
             // is notified, and it lands in the Segnalazioni queue for legal handling.
-            // 'remove' is treated as 'reportable' (no hard deletion in the AI pipeline).
-            in_array($result->decision, ['reportable', 'remove'], true)
-                                               => $this->escalateToHuman($commentId, $result, reportable: true, logId: $logId),
+            $result->decision === 'reportable' => $this->escalateToHuman($commentId, $result, reportable: true, logId: $logId),
             $result->decision === 'hide'       => $this->executeHide(
                 $commentId, $socialUser, $page, $result, $logId, decidedBy: 'ai'
             ),
@@ -350,23 +324,11 @@ class ModerationService
             'human_note'       => $note,
             'human_decided_at' => date('Y-m-d H:i:s'),
             'final_action'     => match($decision) {
-                'remove'  => 'removed',
                 'hide'    => 'hidden',
                 'unhide'  => 'approved',
                 default   => 'approved',
             },
         ]);
-
-        if ($decision === 'remove') {
-            $result = new ModerationResult(
-                stage: 'human', decision: 'remove', confidence: 1.0,
-                reason: $note, categories: [], model: 'human',
-            );
-            return $this->executeRemoval(
-                $commentId, (array) $socialUser, (array) $page,
-                $result, $log->id, decidedBy: 'human', adminUserId: $adminUserId,
-            );
-        }
 
         if ($decision === 'hide') {
             $result = new ModerationResult(
@@ -736,206 +698,6 @@ class ModerationService
             'processed_at' => date('Y-m-d H:i:s'),
         ]);
         return ['action' => 'approved', 'comment_id' => $commentId, 'stage' => $result->stage];
-    }
-
-    // ──────────────────────────────────────────────────────────────────
-    // Reply helpers
-    // ──────────────────────────────────────────────────────────────────
-
-    /**
-     * Build the public reply text from template + AI public_reason.
-     * Template placeholders: {nome}, {reason}
-     */
-    private function buildRemovalReply(string $displayName, string $publicReason): string
-    {
-        $template = 'Ciao @{nome}, il tuo commento è stato rimosso perché {reason}';
-        try {
-            $tpl = DB::table('app_settings')
-                ->where('key', 'removal_reply_template')->value('value');
-            if ($tpl) $template = $tpl;
-        } catch (\Throwable) {}
-
-        return str_replace(
-            ['{nome}', '{reason}'],
-            [$displayName, rtrim($publicReason, '.')],
-            $template,
-        );
-    }
-
-    /**
-     * Post reply BEFORE deleting — this ensures the @mention tag is valid
-     * since the user has just interacted with the page.
-     * Returns true if reply was posted successfully.
-     */
-    private function postRemovalReply(
-        int    $commentId,
-        int    $logId,
-        array  $socialUser,
-        array  $page,
-        string $publicReason,
-    ): bool {
-        $replyEnabled = true;
-        try {
-            $val = DB::table('app_settings')->where('key', 'removal_reply_enabled')->value('value');
-            $replyEnabled = (bool)(int)($val ?? '1');
-        } catch (\Throwable) {}
-
-        if (!$replyEnabled || empty($publicReason)) return false;
-
-        $comment = DB::table('comments')->find($commentId);
-        if (!$comment) return false;
-
-        $postId      = $comment->platform_post_id ?? '';
-        $displayName = $socialUser['display_name'] ?? 'utente';
-        $replyText   = $this->buildRemovalReply($displayName, $publicReason);
-
-        // Post on the parent post (comment will be deleted after this)
-        $sent = false;
-        if ($postId) {
-            $sent = $this->meta->postCommentOnPost($postId, $replyText, $page['page_access_token']);
-        }
-
-        // Track reply in log
-        DB::table('moderation_log')->where('id', $logId)->update([
-            'removal_reply_sent' => $sent ? 1 : 0,
-            'removal_reply_text' => $replyText,
-        ]);
-
-        return $sent;
-    }
-
-    private function executeRemoval(
-        int              $commentId,
-        array            $socialUser,
-        array            $page,
-        ModerationResult $result,
-        int              $logId,
-        string           $decidedBy,
-        ?int             $adminUserId = null,
-    ): array {
-        $devMode = $this->isDevMode();
-
-        if ($devMode) {
-            // DEV MODE: tag the comment as flagged but take no real action
-            $this->logger?->info("[DEV MODE] Would remove comment #{$commentId} (reason: {$result->reason})");
-            DB::table('comments')->where('id', $commentId)->update([
-                'status'       => 'dev_flagged',
-                'processed_at' => date('Y-m-d H:i:s'),
-            ]);
-            return [
-                'action'     => 'dev_flagged',
-                'comment_id' => $commentId,
-                'user_id'    => $socialUser['id'],
-                'decided_by' => $decidedBy,
-                'dev_mode'   => true,
-            ];
-        }
-
-        // PRODUCTION: post reply FIRST (while comment still exists), then delete
-        if ($result->publicReason) {
-            try {
-                $this->postRemovalReply($commentId, $logId, $socialUser, $page, $result->publicReason);
-            } catch (\Throwable $e) {
-                $this->logger?->warning("Could not post removal reply: " . $e->getMessage());
-            }
-        }
-
-        try {
-            $platformId = DB::table('comments')->where('id', $commentId)->value('platform_comment_id') ?? '';
-            $this->meta->deleteComment($platformId, $page['page_access_token']);
-        } catch (\Throwable $e) {
-            $this->logger?->warning("Could not remove comment from Meta: " . $e->getMessage());
-        }
-
-        DB::table('comments')->where('id', $commentId)->update([
-            'status'       => 'removed',
-            'processed_at' => date('Y-m-d H:i:s'),
-        ]);
-
-        $newCount = ($socialUser['violation_count'] ?? 0) + 1;
-        DB::table('social_users')->where('id', $socialUser['id'])->update([
-            'violation_count'   => $newCount,
-            'last_violation_at' => date('Y-m-d H:i:s'),
-            'updated_at'        => date('Y-m-d H:i:s'),
-        ]);
-
-        DB::table('ban_records')->insert([
-            'social_user_id'     => $socialUser['id'],
-            'page_id'            => $page['id'],
-            'ban_type'           => 'comment_removed',
-            'ban_scope'          => 'comment',
-            'trigger_comment_id' => $commentId,
-            'trigger_log_id'     => $logId,
-            'decided_by'         => $decidedBy,
-            'admin_user_id'      => $adminUserId,
-            'reason'             => $result->reason,
-            'categories'         => json_encode($result->categories),
-            'is_active'          => 1,
-            'created_at'         => date('Y-m-d H:i:s'),
-        ]);
-
-        // Read recidivism limit from DB settings (runtime override) or .env / hardcoded default
-        $recidivismLimit = (int) ($_ENV['RECIDIVISM_COMMENT_BAN_LIMIT'] ?? 3);
-        try {
-            $dbVal = DB::table('app_settings')
-                ->where('key', 'recidivism_comment_ban_limit')->value('value');
-            if ($dbVal !== null) $recidivismLimit = max(1, (int) $dbVal);
-        } catch (\Throwable) { /* table not yet migrated */ }
-
-        $banAction = 'comment_removed';
-
-        if ($newCount >= $recidivismLimit && $newCount < $recidivismLimit + 1) {
-            // ── Avviso ban imminente ──────────────────────────────────────
-            // Siamo esattamente al limite — il prossimo commento rimosso scatterà il ban
-            $this->postBanWarningReply(
-                platformCommentId: $comment['platform_comment_id'],
-                displayName:       $socialUser['display_name'] ?? '',
-                pageToken:         $page['page_access_token'],
-            );
-        } elseif ($newCount > $recidivismLimit) {
-            // ── Scatta il ban ─────────────────────────────────────────────
-            $banAction = $this->ban->applyUserBan(
-                socialUserId: $socialUser['id'],
-                pageId:       (int) $page['id'],
-                logId:        $logId,
-                commentId:    $commentId,
-                decidedBy:    $decidedBy,
-                adminUserId:  $adminUserId,
-                reason:       "Recidivist: {$newCount} violations",
-                categories:   $result->categories,
-            );
-
-            // Notifica il ban con durata
-            $cfg = $this->ban->getConfig();
-            $banLevel  = $this->ban->countUserBans($socialUser['id']); // già aggiornato
-            $duration  = $this->formatBanDuration($banLevel, $cfg);
-            $expiresAt = DB::table('ban_records')
-                ->where('social_user_id', $socialUser['id'])
-                ->where('ban_scope', 'user')
-                ->where('is_active', 1)
-                ->value('expires_at');
-
-            $this->postBanNotificationReply(
-                platformCommentId: $comment['platform_comment_id'],
-                displayName:       $socialUser['display_name'] ?? '',
-                duration:          $duration,
-                expiresAt:         $expiresAt,
-                pageToken:         $page['page_access_token'],
-            );
-        }
-
-        return [
-            'action'     => $banAction,
-            'comment_id' => $commentId,
-            'user_id'    => $socialUser['id'],
-            'violations' => $newCount,
-            'decided_by' => $decidedBy,
-        ];
-    }
-
-    private function removeComment(string $platformCommentId, string $pageToken): void
-    {
-        $this->meta->deleteComment($platformCommentId, $pageToken);
     }
 
     // ──────────────────────────────────────────────────────────────────

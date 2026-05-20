@@ -206,9 +206,6 @@ $app->group('/api', function ($group) {
     // Hidden comments
     $group->get('/comments/hidden',            [ModerationController::class, 'hiddenComments']);
 
-    // Removed comments (admin/supervisor)
-    $group->get('/comments/removed',           [ModerationController::class, 'removedComments']);
-
     // Appeals
     $group->get('/appeals',                    [ModerationController::class, 'appealQueue']);
     $group->post('/appeals/{id}/decide',       [ModerationController::class, 'decideAppeal']);

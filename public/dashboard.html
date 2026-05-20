@@ -57,7 +57,6 @@
       <div class="nav-item" data-screen="stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="18" y="3" width="4" height="18"/><rect x="10" y="8" width="4" height="13"/><rect x="2" y="13" width="4" height="8"/></svg>Statistiche<span id="nav-stats-pro-badge" style="display:none;font-size:9px;font-weight:600;padding:1px 6px;border-radius:10px;background:rgba(99,102,241,.2);color:var(--accent);margin-left:auto;flex-shrink:0">PRO</span></div>
       <div class="nav-item" data-screen="bans"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>Utenti bannati</div>
       <div class="nav-item" data-screen="banned-comments"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>Commenti nascosti</div>
-      <div class="nav-item" id="nav-removed-comments" data-screen="removed-comments" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>Commenti rimossi</div>
       <div class="nav-item" data-screen="approved-comments"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><polyline points="9 11 12 14 16 9"/></svg>Commenti approvati</div>
     </div>
     <div class="nav-section">
@@ -774,20 +773,6 @@
           <span class="filter-count" id="appeals-count"></span>
         </div>
         <div id="appeals-list"><div class="loading">Caricamento…</div></div>
-      </div>
-    </div>
-
-    <!-- Removed comments (admin/supervisor only) -->
-    <div class="screen" id="screen-removed-comments">
-      <div class="panel">
-        <div class="panel-head"><div class="panel-title">Commenti rimossi definitivamente</div><button class="panel-action" onclick="loadRemovedComments()">↺ Aggiorna</button></div>
-        <div class="filter-bar">
-          <button class="filter-btn active" data-removed-filter="all"   onclick="setRemovedFilter('all',this)">Tutti</button>
-          <button class="filter-btn"        data-removed-filter="ai"    onclick="setRemovedFilter('ai',this)">Solo AI</button>
-          <button class="filter-btn"        data-removed-filter="human" onclick="setRemovedFilter('human',this)">Solo umani</button>
-          <span class="filter-count" id="removed-count"></span>
-        </div>
-        <div id="removed-list"><div class="loading">Caricamento…</div></div>
       </div>
     </div>
 

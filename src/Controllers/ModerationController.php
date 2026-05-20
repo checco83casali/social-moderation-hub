@@ -301,26 +301,19 @@ class ModerationController
     }
 
     // ── POST /api/comments/{id}/decide  ─────────────────────────────
-    /** Apply a human moderation decision (allow / hide / unhide / remove). */
+    /** Apply a human moderation decision (allow / hide / unhide / keep_hidden). */
     public function decide(ServerRequestInterface $request, Response $response, array $args): ResponseInterface
     {
         $body = (array) $request->getParsedBody();
         $auth = $request->getAttribute('auth_user');
 
         $decision = $body['decision'] ?? '';
-        if (!in_array($decision, ['allow', 'remove', 'hide', 'unhide', 'keep_hidden'], true)) {
+        if (!in_array($decision, ['allow', 'hide', 'unhide', 'keep_hidden'], true)) {
             return $this->json($response, ['error' => 'Invalid decision.'], 422);
-        }
-
-        // Supervisors can hide/unhide/allow but NOT remove — only admin can remove
-        $role = $auth->role ?? '';
-        if ($decision === 'remove' && !in_array($role, ['admin', 'supervisor'], true)) {
-            return $this->json($response, ['error' => 'Admin or supervisor required to remove comments.'], 403);
         }
 
         if ($this->isDevMode()) {
             $status = match($decision) {
-                'remove' => 'dev_flagged',
                 'hide'   => 'dev_flagged',
                 default  => 'dev_approved',
             };
@@ -595,63 +588,6 @@ class ModerationController
             'per_page' => $limit,
             'items'    => $items,
         ]);
-    }
-
-    // ── GET /api/comments/removed  ──────────────────────────────────
-    /** Removed comments — admin and supervisor only. */
-    public function removedComments(ServerRequestInterface $request, Response $response): ResponseInterface
-    {
-        $auth = $request->getAttribute('auth_user');
-        if (!in_array($auth->role ?? '', ['admin', 'supervisor'], true)) {
-            return $this->json($response, ['error' => 'Admin or supervisor required'], 403);
-        }
-
-        $params    = $request->getQueryParams();
-        $limit     = min((int) ($params['limit'] ?? 25), 100);
-        $page      = max(1, (int) ($params['page'] ?? 1));
-        $decidedBy = $params['decided_by'] ?? 'all';
-
-        $query = DB::table('comments as c')
-            ->join('social_users as su', 'su.id', '=', 'c.social_user_id')
-            ->join('connected_pages as cp', 'cp.id', '=', 'c.page_id')
-            ->leftJoin('moderation_log as ml', function ($join) {
-                $join->on('ml.comment_id', '=', 'c.id')
-                     ->whereRaw('ml.id = (SELECT MAX(id) FROM moderation_log WHERE comment_id = c.id)');
-            })
-            ->leftJoin('admin_users as au', 'au.id', '=', 'ml.human_user_id')
-            ->where('c.status', 'removed');
-
-        if ($decidedBy === 'ai') {
-            $query->whereIn('ml.stage', ['haiku', 'sonnet']);
-        } elseif ($decidedBy === 'human') {
-            $query->where('ml.stage', 'human');
-        }
-
-        $total = (clone $query)->count();
-
-        $items = $query
-            ->select([
-                'c.id', 'c.content', 'c.received_at', 'c.processed_at',
-                'c.platform_comment_id', 'c.platform_post_id',
-                'su.id as social_user_id', 'su.display_name', 'su.violation_count',
-                'cp.page_name', 'cp.page_id as facebook_page_id',
-                'ml.stage as ai_stage', 'ml.ai_decision', 'ml.ai_reason',
-                'ml.ai_categories', 'ml.ai_severity', 'ml.human_decision',
-                'ml.human_note', 'ml.removal_reply_text',
-                'au.name as decided_by_name',
-            ])
-            ->orderByDesc('c.processed_at')
-            ->offset(($page - 1) * $limit)
-            ->limit($limit)
-            ->get()
-            ->map(function ($row) {
-                $arr = (array) $row;
-                $arr['ai_categories'] = json_decode($arr['ai_categories'] ?? '[]', true);
-                return $arr;
-            })
-            ->toArray();
-
-        return $this->json($response, compact('total', 'page', 'items') + ['per_page' => $limit]);
     }
 
     // ── GET /api/bans/history  ───────────────────────────────────────

@@ -59,10 +59,10 @@ OUTPUT FORMAT — REQUIRED (DO NOT OVERRIDE)
 Respond ONLY with valid JSON. No preamble, no markdown fences, no explanation outside the JSON object.
 
 {
-  "decision": "allow" | "hide" | "remove" | "uncertain" | "reportable",
+  "decision": "allow" | "hide" | "uncertain" | "reportable",
   "confidence": 0.0–1.0,
   "reason": "internal explanation for moderators (technical, precise)",
-  "public_reason": "user-facing explanation (diplomatic, no internal signals) — required for hide/remove/reportable, null for allow",
+  "public_reason": "user-facing explanation (diplomatic, no internal signals) — required for hide/reportable, null for allow",
   "categories": ["hate_speech","violence","harassment","doxxing","sexual","misinformation","spam","scam","grooming","coordinated_behaviour","journalist_criticism","outlet_criticism","illegal_content"],
   "severity": "low" | "medium" | "high",
   "editorial_category": null | "journalist_criticism" | "outlet_criticism",
@@ -74,9 +74,6 @@ Respond ONLY with valid JSON. No preamble, no markdown fences, no explanation ou
 DECISION SEMANTICS:
 - allow      → comment is acceptable, no action taken
 - hide       → violates policy: hide from public, notify user with appeal link
-- remove     → DEPRECATED — do not use. For illegal content use "reportable" instead.
-               (If returned anyway, it is treated exactly like "reportable": hidden and
-               queued for legal review, NEVER deleted.)
 - uncertain  → borderline: requires human moderator review
 - reportable → illegal or potentially criminal content (CSAM, court-ordered removal,
                incitement, hate crime, doxxing with harm intent): the comment is hidden
@@ -447,7 +444,7 @@ FC;
             );
         }
 
-        $validDecisions = ['allow', 'hide', 'remove', 'uncertain', 'reportable'];
+        $validDecisions = ['allow', 'hide', 'uncertain', 'reportable'];
         $decision = in_array($data['decision'], $validDecisions, true)
             ? $data['decision'] : 'uncertain';
 

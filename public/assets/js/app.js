@@ -28,7 +28,6 @@ document.querySelectorAll('.nav-item[data-screen]').forEach(item => {
       bans:               'Utenti bannati',
       'banned-comments':  'Commenti nascosti',
       'hidden-comments':  'Commenti nascosti',
-      'removed-comments': 'Commenti rimossi',
       'approved-comments':'Commenti approvati',
       settings:           'Impostazioni',
       appeals:            'Ricorsi',
@@ -42,7 +41,6 @@ document.querySelectorAll('.nav-item[data-screen]').forEach(item => {
     if (sc === 'bans')              { loadBans(); loadBanStats(); }
     if (sc === 'banned-comments')   loadHiddenComments();
     if (sc === 'hidden-comments')   loadHiddenComments();
-    if (sc === 'removed-comments')  loadRemovedComments();
     if (sc === 'approved-comments') loadApprovedComments();
     if (sc === 'settings')          loadSettings();
     if (sc === 'appeals')           loadAppeals();
@@ -73,11 +71,6 @@ async function initApp() {
       if (rp) rp.style.display = 'block';
     }
 
-    // Admin and supervisor can see removed comments
-    if (['admin', 'supervisor'].includes(currentUserRole)) {
-      const navRemoved = document.getElementById('nav-removed-comments');
-      if (navRemoved) navRemoved.style.display = 'flex';
-    }
 
     if (me.has_password) {
       const el = document.getElementById('pwd-has-password');

@@ -799,11 +799,6 @@ async function loadHiddenComments() {
           ${replyBlock}
           <div class="bc-footer" style="margin-top:10px">
             ${cats}
-            ${isAdminOrSupervisor ? `
-            <button class="btn btn-remove" style="margin-left:auto;padding:5px 12px;font-size:12px"
-              onclick="permanentlyDeleteComment(${c.id}, '${esc(c.display_name||'Anonimo')}')">
-              🗑 Elimina definitivamente
-            </button>` : ''}
           </div>
         </div>`;
     }).join('');
@@ -812,72 +807,3 @@ async function loadHiddenComments() {
   }
 }
 
-// ── Removed comments (admin/supervisor only) ──────────────────────
-let currentRemovedFilter = 'all';
-
-async function loadRemovedComments() {
-  const list    = document.getElementById('removed-list');
-  const countEl = document.getElementById('removed-count');
-  if (!list) return;
-  list.innerHTML = '<div class="loading">Caricamento…</div>';
-  try {
-    const url = currentRemovedFilter === 'all'
-      ? '/comments/removed?limit=50'
-      : `/comments/removed?limit=50&decided_by=${currentRemovedFilter}`;
-    const d = await api(url);
-    countEl && (countEl.textContent = `${d.total} commenti`);
-    if (!d.items?.length) {
-      list.innerHTML = '<div class="empty">Nessun commento rimosso definitivamente</div>';
-      return;
-    }
-    const stageLabel = { haiku:'Haiku', sonnet:'Sonnet', human:'Umano' };
-    list.innerHTML = d.items.map(c => {
-      const cats    = (c.ai_categories||[]).map(cat => `<span class="chip chip-warn">${CAT_LABELS[cat]||cat}</span>`).join(' ');
-      const decider = c.ai_stage === 'human'
-        ? `<span class="badge-human">Umano${c.decided_by_name ? ': '+esc(c.decided_by_name) : ''}</span>`
-        : `<span class="badge-ai">AI · ${stageLabel[c.ai_stage]||c.ai_stage||'?'}</span>`;
-      const replyBlock = c.removal_reply_text
-        ? `<div style="margin-top:8px;background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.2);border-radius:6px;padding:10px 12px">
-             <div style="font-size:10px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">💬 Risposta inviata automaticamente</div>
-             <div style="font-size:12.5px;color:var(--text);line-height:1.5;white-space:pre-wrap">${esc(c.removal_reply_text)}</div>
-           </div>`
-        : '';
-      return `
-        <div class="bc-item">
-          <div class="bc-header">
-            <div class="ban-avatar" style="width:26px;height:26px;font-size:10px;background:#f75252">${(c.display_name||'?')[0].toUpperCase()}</div>
-            <span class="bc-user">${esc(c.display_name||'Anonimo')}</span>
-            <span class="bc-page">${esc(c.page_name)}</span>
-            ${decider}
-            <span class="bc-time">${relTime(c.processed_at||c.received_at)}</span>
-          </div>
-          <div class="bc-content">${esc(c.content)}</div>
-          ${c.ai_reason ? `<div style="font-size:11px;color:var(--muted);margin-top:4px">${esc(c.ai_reason)}</div>` : ''}
-          ${c.human_note ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">Nota: ${esc(c.human_note)}</div>` : ''}
-          ${replyBlock}
-          <div class="bc-footer" style="margin-top:8px">${cats}</div>
-        </div>`;
-    }).join('');
-  } catch (e) {
-    list.innerHTML = '<div class="empty">Errore nel caricamento</div>';
-  }
-}
-
-function setRemovedFilter(val, el) {
-  currentRemovedFilter = val;
-  document.querySelectorAll('[data-removed-filter]').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-  loadRemovedComments();
-}
-
-async function permanentlyDeleteComment(commentId, userName) {
-  if (!confirm(`Eliminare definitivamente il commento di ${userName}?\nQuesta azione è irreversibile.`)) return;
-  try {
-    await api(`/comments/${commentId}/decide`, 'POST', { decision: 'remove', note: 'Eliminazione definitiva da admin' });
-    toast('Commento eliminato definitivamente', 'ok');
-    document.getElementById(`hc-${commentId}`)?.remove();
-    loadStats();
-  } catch (e) {
-    toast('Errore: ' + e.message, 'err');
-  }
-}
