@@ -366,18 +366,10 @@ function openFactcheckReply() {
     ? currentComment.ai_fact_check_sources.filter(s => s && s.url)
     : [];
 
-  // Costruisce il testo finale: draft + fonti accodate in formato leggibile su Facebook
-  let fullText = draft;
-  if (sources.length) {
-    const sourcesText = sources
-      .map((s, i) => `[${i + 1}] ${s.title} — ${s.url}`)
-      .join('\n');
-    fullText = draft
-      ? `${draft}\n\nFonti:\n${sourcesText}`
-      : `Fonti:\n${sourcesText}`;
-  }
-
-  document.getElementById('factcheck-reply-text').value = fullText;
+  // IMPORTANTE: Facebook filtra/rifiuta i commenti delle Pagine che contengono URL
+  // (anti-spam). Il testo pubblicato è quindi SOLO la bozza, senza link grezzi;
+  // le fonti restano come riferimento interno nel pannello qui accanto.
+  document.getElementById('factcheck-reply-text').value = draft;
   document.getElementById('factcheck-reply-err').style.display = 'none';
 
   // Pannello fonti in sola lettura — riferimento visivo per il moderatore
