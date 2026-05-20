@@ -568,11 +568,12 @@ class ModerationController
         $page = DB::table('connected_pages')->find($comment->page_id);
         if (!$page) return $this->json($response, ['error' => 'Page not found.'], 404);
 
-        $sent = $this->meta->replyToComment(
+        $res  = $this->meta->replyToCommentResult(
             $comment->platform_comment_id,
             $text,
             $page->page_access_token,
         );
+        $sent = $res['ok'];
 
         $log = DB::table('moderation_log')
             ->where('comment_id', $comment->id)
@@ -587,8 +588,7 @@ class ModerationController
 
         if (!$sent) {
             return $this->json($response, [
-                'error' => 'Facebook ha rifiutato la pubblicazione della risposta. '
-                    . 'Verifica i permessi della pagina (pages_manage_engagement), la validità del token e il log del server.',
+                'error' => 'Facebook ha rifiutato la risposta: ' . ($res['error'] ?? 'motivo sconosciuto'),
                 'sent'  => false,
             ], 502);
         }

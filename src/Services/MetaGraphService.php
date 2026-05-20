@@ -206,20 +206,41 @@ class MetaGraphService
      */
     public function replyToComment(string $commentId, string $message, string $pageToken): bool
     {
+        return $this->replyToCommentResult($commentId, $message, $pageToken)['ok'];
+    }
+
+    /**
+     * Come replyToComment(), ma ritorna anche il motivo dell'eventuale errore di
+     * Facebook (per mostrarlo al moderatore). @return array{ok:bool,error:?string}
+     */
+    public function replyToCommentResult(string $commentId, string $message, string $pageToken): array
+    {
         try {
             $response = $this->http->post("{$commentId}/comments", [
                 'query' => ['access_token' => $pageToken],
                 'json'  => ['message' => $message],
             ]);
             $data = json_decode((string) $response->getBody(), true);
-            return isset($data['id']);
+            return isset($data['id'])
+                ? ['ok' => true,  'error' => null]
+                : ['ok' => false, 'error' => 'Facebook ha risposto senza id commento'];
         } catch (GuzzleException $e) {
             // Cattura il motivo reale di Facebook (permessi, token, commento non rispondibile…)
             $detail = ($e instanceof \GuzzleHttp\Exception\RequestException && $e->getResponse())
                 ? (string) $e->getResponse()->getBody()
                 : $e->getMessage();
             error_log("[MetaGraph] replyToComment failed for {$commentId}: {$detail}");
-            return false;
+
+            // Estrae il messaggio strutturato di Facebook se presente.
+            $fbMsg = $detail;
+            $j = json_decode($detail, true);
+            if (isset($j['error']['message'])) {
+                $fbMsg = $j['error']['message'];
+                if (isset($j['error']['code']))    $fbMsg .= " (code {$j['error']['code']}";
+                if (isset($j['error']['error_subcode'])) $fbMsg .= "/{$j['error']['error_subcode']}";
+                if (isset($j['error']['code']))    $fbMsg .= ')';
+            }
+            return ['ok' => false, 'error' => $fbMsg];
         }
     }
 
