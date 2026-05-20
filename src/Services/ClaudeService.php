@@ -350,27 +350,58 @@ FC;
     {
         $start = hrtime(true);
 
+        // Strumento web_search server-side (GA, nessun beta header): Claude cerca
+        // sul web fonti reali e attuali, così le URL citate provengono dai risultati
+        // di ricerca e non sono inventate — niente più link 404 da hallucination.
+        $tools  = [[
+            'type'     => 'web_search_20260209',
+            'name'     => 'web_search',
+            'max_uses' => 5,
+        ]];
+        $system = self::FACT_CHECK_ONLY_PROMPT
+            . "\n\nUSE the web_search tool to find real, authoritative, currently-online sources before drafting. "
+            . "Only cite URLs that appear in the web_search results — never invent or guess a URL.";
+
+        $messages = [[
+            'role'    => 'user',
+            'content' => "Please fact-check the following comment and draft an editorial reply:\n\n\"{$commentText}\"",
+        ]];
+
         try {
-            $response = $this->http->post(self::API_URL, [
-                'headers' => [
-                    'x-api-key'        => $this->apiKey,
-                    'anthropic-version' => self::API_VERSION,
-                    'content-type'     => 'application/json',
-                ],
-                'json' => [
-                    'model'      => self::MODEL_SONNET,
-                    'max_tokens' => self::MAX_TOKENS_SONNET,
-                    'system'     => self::FACT_CHECK_ONLY_PROMPT,
-                    'messages'   => [
-                        ['role' => 'user', 'content' =>
-                            "Please fact-check the following comment and draft an editorial reply:\n\n\"{$commentText}\""],
+            // Il tool server-side gira in un loop lato Anthropic; se raggiunge il
+            // limite di iterazioni torna stop_reason=pause_turn → si riprende
+            // re-inviando con il contenuto assistant accumulato (nessun messaggio extra).
+            $body = null;
+            for ($turn = 0; $turn < 4; $turn++) {
+                $response = $this->http->post(self::API_URL, [
+                    'headers' => [
+                        'x-api-key'         => $this->apiKey,
+                        'anthropic-version' => self::API_VERSION,
+                        'content-type'      => 'application/json',
                     ],
-                ],
-            ]);
+                    'json' => [
+                        'model'      => self::MODEL_SONNET,
+                        'max_tokens' => self::MAX_TOKENS_SONNET,
+                        'system'     => $system,
+                        'tools'      => $tools,
+                        'messages'   => $messages,
+                    ],
+                ]);
+                $body = json_decode((string) $response->getBody(), true);
+                if (($body['stop_reason'] ?? '') !== 'pause_turn') break;
+                $messages[] = ['role' => 'assistant', 'content' => $body['content'] ?? []];
+            }
 
             $latencyMs = (int) ((hrtime(true) - $start) / 1_000_000);
-            $body      = json_decode((string) $response->getBody(), true);
-            $raw       = $body['content'][0]['text'] ?? '{}';
+
+            // Con i tool, il JSON finale è nell'ULTIMO blocco di tipo text
+            // (i precedenti sono server_tool_use / web_search_tool_result).
+            $raw = '{}';
+            foreach (($body['content'] ?? []) as $block) {
+                if (($block['type'] ?? '') === 'text' && isset($block['text'])) {
+                    $raw = $block['text'];
+                }
+            }
 
             $clean = preg_replace('/^```json\s*|\s*```$/s', '', trim($raw));
             $data  = json_decode($clean, true);
