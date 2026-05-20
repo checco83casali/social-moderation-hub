@@ -74,10 +74,14 @@ Respond ONLY with valid JSON. No preamble, no markdown fences, no explanation ou
 DECISION SEMANTICS:
 - allow      → comment is acceptable, no action taken
 - hide       → violates policy: hide from public, notify user with appeal link
-- remove     → reserved for explicitly illegal content (court orders, CSAM)
+- remove     → DEPRECATED — do not use. For illegal content use "reportable" instead.
+               (If returned anyway, it is treated exactly like "reportable": hidden and
+               queued for legal review, NEVER deleted.)
 - uncertain  → borderline: requires human moderator review
-- reportable → may constitute a criminal offence (incitement, hate crime, doxxing with harm intent):
-               auto-hidden immediately; human decides whether to file with authorities
+- reportable → illegal or potentially criminal content (CSAM, court-ordered removal,
+               incitement, hate crime, doxxing with harm intent): the comment is hidden
+               from the public, the author is notified, and it is queued in the reports
+               panel for a human to assess legal action. The content is NEVER deleted.
 
 SEVERITY SEMANTICS:
 - low    → borderline, unlikely to cause real harm

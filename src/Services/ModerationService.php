@@ -282,8 +282,7 @@ class ModerationService
             'ai_fact_check_suggested' => $result->factCheckSuggested ? 1 : 0,
             'final_action'           => match(true) {
                 $result->stage === 'human'                                         => 'pending_human',
-                in_array($result->decision, ['hide','reportable'], true)           => 'hidden',
-                $result->decision === 'remove'                                     => 'removed',
+                in_array($result->decision, ['hide','reportable','remove'], true)  => 'hidden',
                 default                                                            => 'approved',
             },
             'created_at'             => date('Y-m-d H:i:s'),
@@ -291,11 +290,12 @@ class ModerationService
 
         // 11. Act on AI decision
         return match (true) {
-            $result->stage === 'human'         => $this->escalateToHuman($commentId, $result),
-            $result->decision === 'reportable' => $this->escalateToHuman($commentId, $result, reportable: true),
-            $result->decision === 'remove'     => $this->executeRemoval(
-                $commentId, $socialUser, $page, $result, $logId, decidedBy: 'ai'
-            ),
+            $result->stage === 'human'         => $this->escalateToHuman($commentId, $result, logId: $logId),
+            // Illegal / reportable content is NEVER deleted: it is hidden, the author
+            // is notified, and it lands in the Segnalazioni queue for legal handling.
+            // 'remove' is treated as 'reportable' (no hard deletion in the AI pipeline).
+            in_array($result->decision, ['reportable', 'remove'], true)
+                                               => $this->escalateToHuman($commentId, $result, reportable: true, logId: $logId),
             $result->decision === 'hide'       => $this->executeHide(
                 $commentId, $socialUser, $page, $result, $logId, decidedBy: 'ai'
             ),
@@ -563,20 +563,69 @@ class ModerationService
         return (array) DB::table('social_users')->find($id);
     }
 
-    private function escalateToHuman(int $commentId, ModerationResult $result, bool $reportable = false): array
+    private function escalateToHuman(int $commentId, ModerationResult $result, bool $reportable = false, int $logId = 0): array
     {
         $status = $reportable ? 'escalated_reportable' : 'escalated_human';
-        DB::table('comments')->where('id', $commentId)->update(['status' => $status]);
+
         if ($reportable) {
-            $this->logger?->warning("Comment #{$commentId} flagged as REPORTABLE — requires human review");
+            // Potentially illegal content: NEVER deleted. Hide it from the public and
+            // notify the author, then leave it in the Segnalazioni queue for a human
+            // to assess legal action.
+            $this->hideAndNotifyReportable($commentId, $result, $logId);
+            $this->logger?->warning("Comment #{$commentId} flagged as REPORTABLE — hidden + queued for legal review");
         } else {
             $this->logger?->info("Comment #{$commentId} escalated to human review");
         }
+
+        DB::table('comments')->where('id', $commentId)->update(['status' => $status]);
+
         return [
             'action'     => $reportable ? 'escalated_reportable' : 'escalated_human',
             'comment_id' => $commentId,
             'stage'      => $result->stage,
         ];
+    }
+
+    /**
+     * Reportable (potentially illegal) content is never deleted. Hide it from the
+     * public timeline and notify the author with the reason + appeal link — exactly
+     * like a hide — but the comment keeps the 'escalated_reportable' status so it
+     * stays in the Segnalazioni queue for a human to assess legal action.
+     */
+    private function hideAndNotifyReportable(int $commentId, ModerationResult $result, int $logId = 0): void
+    {
+        if ($this->isDevMode()) {
+            $this->logger?->info("[DEV MODE] Would hide+notify reportable comment #{$commentId}");
+            return;
+        }
+
+        $comment = DB::table('comments')->find($commentId);
+        if (!$comment) return;
+        $page    = DB::table('connected_pages')->find($comment->page_id);
+        if (!$page) return;
+        $socialUser = DB::table('social_users')->find($comment->social_user_id);
+
+        $platformId  = $comment->platform_comment_id ?? '';
+        $displayName = $socialUser->display_name ?? 'utente';
+
+        // Notify the author (reportable template + appeal link) while the comment exists.
+        $appealToken = $this->generateAppealToken($commentId, (int) $comment->social_user_id);
+        $this->postHideReply(
+            platformCommentId: $platformId,
+            displayName:       $displayName,
+            publicReason:      $result->publicReason ?? $result->reason ?? '',
+            appealToken:       $appealToken,
+            pageToken:         $page->page_access_token,
+            reportable:        true,
+            logId:             $logId,
+        );
+
+        // Hide from the public timeline (NOT deleted).
+        if ($platformId) {
+            $this->meta->hideComment($platformId, $page->page_access_token);
+        }
+
+        DB::table('comments')->where('id', $commentId)->update(['appeal_token' => $appealToken]);
     }
 
     private function approveComment(int $commentId, ModerationResult $result, array $page = [], array $socialUser = [], int $logId = 0): array
