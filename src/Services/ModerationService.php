@@ -633,14 +633,18 @@ class ModerationService
 
             $highConfidence = $result->factCheckConfidence >= $threshold;
 
-            // Solo con confidenza alta: scarica le fonti citate e tiene SOLO quelle
-            // che esistono davvero E il cui contenuto sostiene la correzione (così
-            // cadono URL inventate, soft-404 e pagine non pertinenti).
+            // GATING COSTI: la ricerca web (costosa) parte SOLO se la confidenza è
+            // già alta abbastanza da puntare all'auto-pubblicazione. Sotto soglia →
+            // coda umana diretta con la bozza, senza spendere ricerche.
+            //   Fase B: groundFactCheck (web search) → fonti reali candidate
+            //   poi verifyAndFilterSources → tiene solo le esistenti+pertinenti
+            //   (scarta URL inventate, soft-404 e pagine fuori tema).
             $verifiedSources = [];
             if ($highConfidence) {
-                $claim = (string) (DB::table('comments')->where('id', $commentId)->value('content') ?? '');
+                $claim      = (string) (DB::table('comments')->where('id', $commentId)->value('content') ?? '');
+                $candidates = $this->claude->groundFactCheck($claim, $result->factCheckDraft);
                 $verifiedSources = $this->claude->verifyAndFilterSources(
-                    $claim, $result->factCheckDraft, $result->factCheckSources,
+                    $claim, $result->factCheckDraft, $candidates,
                 );
             }
 

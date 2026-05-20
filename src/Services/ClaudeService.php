@@ -180,32 +180,6 @@ INST;
      *
      * Returns a ModerationResult with stage, decision, confidence, etc.
      */
-    // ── Prompt dedicato fact-check (solo Sonnet) ──────────────────────
-    // Chiamato SOLO quando Haiku ha già approvato il commento ma ha
-    // segnalato fact_check_suggested = true. Non ri-modera — produce
-    // solo draft, fonti e una confidence sul fact-check.
-    private const FACT_CHECK_ONLY_PROMPT = <<<'FC'
-You are a fact-checking assistant for a news outlet's social media team.
-A comment has already been approved by the moderation system. Your ONLY task is to
-verify a factual claim it contains and draft a public editorial reply.
-
-Respond ONLY with valid JSON, no markdown fences:
-
-{
-  "fact_check_confidence": 0.0–1.0,
-  "fact_check_sources": [{"title":"...","url":"https://...","summary":"one sentence in Italian"}],
-  "fact_check_draft": "ready-to-publish reply in Italian (max 3 sentences, neutral tone, no raw URLs)"
-}
-
-RULES:
-- fact_check_confidence: your confidence that the claim is verifiably inaccurate AND that your reply is factually correct. Be conservative — only go above 0.85 when you are certain of both.
-- fact_check_sources: 1–3 real, authoritative sources (government sites, major outlets, scientific journals).
-    IMPORTANT: Only include URLs you are highly confident exist. Prefer stable canonical paths over deep article links.
-    Omit a source entirely if you are not certain of the exact URL — do not guess.
-- fact_check_draft: written as the page editor. Acknowledge the topic, state the correct data, mention the source briefly. Never call the user a liar or wrong. Always in Italian.
-- All summaries in Italian.
-FC;
-
     public function moderate(
         string $commentText,
         string $moderationPrompt,
@@ -341,36 +315,95 @@ FC;
     }
 
     /**
-     * Secondo passaggio Sonnet dedicato esclusivamente al fact-check.
-     * Chiamato solo quando Haiku ha approvato con factCheckSuggested = true.
-     * Non rimette in discussione la decisione di moderazione.
-     * Popola factCheckDraft, factCheckSources, factCheckConfidence sul result.
+     * FASE A del fact-check (economica, NESSUNA ricerca web): Sonnet valuta il
+     * claim e redige una bozza di correzione + una confidenza. Le fonti REALI
+     * vengono cercate solo dopo, e solo se la confidenza è alta (gating costi —
+     * vedi groundFactCheck()). Chiamato quando Haiku approva con factCheckSuggested.
      */
     private function callClaudeFactCheck(string $commentText, ModerationResult $haikuResult): ModerationResult
     {
-        $start = hrtime(true);
+        $start  = hrtime(true);
+        $system = <<<'FCASSESS'
+You are a fact-checking assistant for a news outlet's social media team.
+A comment has already been approved by moderation. Assess a verifiable factual claim it contains.
+Respond ONLY with valid JSON, no markdown fences:
+{
+  "fact_check_confidence": 0.0-1.0,
+  "fact_check_draft": "ready-to-publish reply in Italian (max 3 sentences, neutral, factual, no URLs)"
+}
+RULES:
+- fact_check_confidence: your confidence that the claim is verifiably inaccurate AND that your correction is factually correct. Be conservative — only above 0.85 when you are certain of both.
+- fact_check_draft: written as the page editor. Acknowledge the topic, state the correct information, neutral non-accusatory tone, always in Italian. Do NOT include any URLs (sources are attached separately, later).
+FCASSESS;
 
-        // Strumento web_search server-side (GA, nessun beta header): Claude cerca
-        // sul web fonti reali e attuali, così le URL citate provengono dai risultati
-        // di ricerca e non sono inventate — niente più link 404 da hallucination.
-        $tools  = [[
-            'type'     => 'web_search_20260209',
-            'name'     => 'web_search',
-            'max_uses' => 5,
-        ]];
-        $system = self::FACT_CHECK_ONLY_PROMPT
-            . "\n\nUSE the web_search tool to find real, authoritative, currently-online sources before drafting. "
-            . "Only cite URLs that appear in the web_search results — never invent or guess a URL.";
+        try {
+            $response = $this->http->post(self::API_URL, [
+                'headers' => [
+                    'x-api-key'         => $this->apiKey,
+                    'anthropic-version' => self::API_VERSION,
+                    'content-type'      => 'application/json',
+                ],
+                'json' => [
+                    'model'      => self::MODEL_SONNET,
+                    'max_tokens' => 1200,
+                    'system'     => $system,
+                    'messages'   => [[
+                        'role'    => 'user',
+                        'content' => "Assess the factual claim in this comment and draft an editorial correction:\n\n\"{$commentText}\"",
+                    ]],
+                ],
+            ]);
 
+            $latencyMs = (int) ((hrtime(true) - $start) / 1_000_000);
+            $body      = json_decode((string) $response->getBody(), true);
+            $raw       = $body['content'][0]['text'] ?? '{}';
+            $clean     = preg_replace('/^```json\s*|\s*```$/s', '', trim($raw));
+            $data      = json_decode($clean, true);
+
+            if (!is_array($data)) {
+                $this->logger?->warning("Fact-check assess returned unparseable response: {$raw}");
+                return $haikuResult;
+            }
+
+            $haikuResult->factCheckDraft      = $data['fact_check_draft'] ?? null;
+            $haikuResult->factCheckConfidence = min(1.0, max(0.0, (float) ($data['fact_check_confidence'] ?? 0.0)));
+            $haikuResult->factCheckSources    = []; // fonti reali aggiunte da groundFactCheck() se la confidenza è alta
+            $haikuResult->factCheckSuggested  = true;
+            $haikuResult->factCheckLatencyMs  = $latencyMs;
+
+        } catch (GuzzleException $e) {
+            $this->logger?->warning("Fact-check assess call failed: " . $e->getMessage());
+            // Non fatale — restituisce il result senza bozza
+        }
+
+        return $haikuResult;
+    }
+
+    /**
+     * FASE B del fact-check — web search server-side (costosa, eseguita SOLO dopo
+     * il gating sulla confidenza). Data la coppia claim + bozza, cerca sul web
+     * fonti reali a sostegno della correzione e ritorna SOLO URL effettivamente
+     * presenti tra i risultati di ricerca (niente URL inventate/alterate). La
+     * verifica di pertinenza vera e propria avviene poi in verifyAndFilterSources().
+     *
+     * @return list<array{title:string,url:string,summary:string}>
+     */
+    public function groundFactCheck(string $claim, string $draft): array
+    {
+        $tools  = [['type' => 'web_search_20260209', 'name' => 'web_search', 'max_uses' => 5]];
+        $system = <<<'FCSOURCES'
+You find authoritative web sources. Given a user comment (the claim) and a drafted correction, USE the web_search tool to find 1-3 real, authoritative, currently-online sources that substantiate the correction (government sites, major outlets, scientific journals).
+Respond ONLY with valid JSON, no markdown fences:
+{"fact_check_sources": [{"title":"publication + title","url":"https://...","summary":"one sentence in Italian"}]}
+Only cite URLs that appear in the web_search results — never invent, guess, or modify a URL.
+FCSOURCES;
         $messages = [[
             'role'    => 'user',
-            'content' => "Please fact-check the following comment and draft an editorial reply:\n\n\"{$commentText}\"",
+            'content' => "CLAIM:\n{$claim}\n\nDRAFTED CORRECTION:\n{$draft}\n\nFind sources that substantiate the correction.",
         ]];
 
         try {
-            // Il tool server-side gira in un loop lato Anthropic; se raggiunge il
-            // limite di iterazioni torna stop_reason=pause_turn → si riprende
-            // re-inviando con il contenuto assistant accumulato (nessun messaggio extra).
+            // Loop per stop_reason=pause_turn (vedi sopra).
             $body = null;
             for ($turn = 0; $turn < 4; $turn++) {
                 $response = $this->http->post(self::API_URL, [
@@ -392,39 +425,24 @@ FC;
                 $messages[] = ['role' => 'assistant', 'content' => $body['content'] ?? []];
             }
 
-            $latencyMs = (int) ((hrtime(true) - $start) / 1_000_000);
-
-            // Con i tool, il JSON finale è nell'ULTIMO blocco di tipo text
-            // (i precedenti sono server_tool_use / web_search_tool_result).
-            $raw = '{}';
+            // URL realmente restituite dalla ricerca (whitelist) + ultimo blocco text (JSON).
+            $realUrls = [];
+            $raw      = '{}';
             foreach (($body['content'] ?? []) as $block) {
-                if (($block['type'] ?? '') === 'text' && isset($block['text'])) {
+                $type = $block['type'] ?? '';
+                if ($type === 'web_search_tool_result') {
+                    foreach (($block['content'] ?? []) as $r) {
+                        if (!empty($r['url'])) $realUrls[rtrim((string) $r['url'], '/')] = true;
+                    }
+                } elseif ($type === 'text' && isset($block['text'])) {
                     $raw = $block['text'];
                 }
             }
 
             $clean = preg_replace('/^```json\s*|\s*```$/s', '', trim($raw));
             $data  = json_decode($clean, true);
+            if (!is_array($data)) return [];
 
-            if (!is_array($data)) {
-                $this->logger?->warning("Fact-check Sonnet returned unparseable response: {$raw}");
-                return $haikuResult;
-            }
-
-            // URL realmente restituite dalla ricerca web: filtriamo le fonti citate
-            // dal modello tenendo solo quelle effettivamente presenti tra i risultati
-            // (confronto normalizzato), per scartare URL alterate o inventate.
-            $realUrls = [];
-            foreach (($body['content'] ?? []) as $block) {
-                if (($block['type'] ?? '') === 'web_search_tool_result') {
-                    foreach (($block['content'] ?? []) as $r) {
-                        if (!empty($r['url'])) $realUrls[rtrim((string) $r['url'], '/')] = true;
-                    }
-                }
-            }
-
-            // Inietta i campi fact-check nel result di Haiku (decisione invariata)
-            $haikuResult->factCheckDraft   = $data['fact_check_draft'] ?? null;
             $sources = $this->sanitizeSources($data['fact_check_sources'] ?? []);
             if (!empty($realUrls)) {
                 $sources = array_values(array_filter(
@@ -432,17 +450,12 @@ FC;
                     fn($s) => isset($realUrls[rtrim($s['url'], '/')]),
                 ));
             }
-            $haikuResult->factCheckSources    = $sources;
-            $haikuResult->factCheckConfidence = min(1.0, max(0.0, (float) ($data['fact_check_confidence'] ?? 0.0)));
-            $haikuResult->factCheckSuggested  = true;
-            $haikuResult->factCheckLatencyMs  = $latencyMs;
+            return $sources;
 
-        } catch (GuzzleException $e) {
-            $this->logger?->warning("Fact-check Sonnet call failed: " . $e->getMessage());
-            // Non fatale — restituisce il result di Haiku senza draft
+        } catch (\Throwable $e) {
+            $this->logger?->warning("Fact-check grounding (web search) failed: " . $e->getMessage());
+            return [];
         }
-
-        return $haikuResult;
     }
 
     /**
