@@ -619,20 +619,24 @@ class ModerationService
 
     private function approveComment(int $commentId, ModerationResult $result, array $page = [], array $socialUser = [], int $logId = 0): array
     {
-        // ── Auto-pubblica risposta fact-check se confidenza >= soglia ────
-        if (
-            $result->factCheckSuggested
-            && $result->factCheckDraft !== null
-            && $result->factCheckConfidence > 0.0
-        ) {
+        // ── Fact-check: bozza di risposta editoriale anti-disinformazione ──
+        // Il valore primario è proporre al moderatore una risposta già pronta,
+        // quindi la bozza non deve MAI perdersi. Auto-pubblica solo con
+        // confidenza alta E fonti verificate raggiungibili; in ogni altro caso
+        // (inclusa la moderazione Sonnet, dove confidence resta 0) → coda umana.
+        if ($result->factCheckSuggested && $result->factCheckDraft !== null) {
             $threshold = 0.90;
             try {
                 $t = DB::table('app_settings')->where('key', 'fact_check_auto_publish_threshold')->value('value');
                 if ($t !== null) $threshold = (float) $t;
             } catch (\Throwable) {}
 
-            if ($result->factCheckConfidence >= $threshold) {
-                // Pubblica automaticamente la risposta su Facebook
+            $highConfidence  = $result->factCheckConfidence >= $threshold;
+            // Verifica le fonti solo se serve (confidenza alta) per non sprecare richieste.
+            $sourcesVerified = $highConfidence && $this->verifyFactCheckSources($result->factCheckSources);
+
+            if ($highConfidence && $sourcesVerified) {
+                // Pubblica automaticamente la bozza (solo testo editoriale, niente URL inline)
                 $autoPublished = false;
                 if (!$this->isDevMode() && !empty($page['page_access_token'])) {
                     $comment = DB::table('comments')->find($commentId);
@@ -660,18 +664,19 @@ class ModerationService
 
                 $this->logger?->info(
                     "Comment #{$commentId} approved + fact-check auto-published " .
-                    "(confidence: {$result->factCheckConfidence}, dev: " . ($this->isDevMode() ? 'yes' : 'no') . ")"
+                    "(confidence: {$result->factCheckConfidence}, fonti verificate, dev: " . ($this->isDevMode() ? 'yes' : 'no') . ")"
                 );
 
                 return [
-                    'action'                  => 'auto_fact_checked',
-                    'comment_id'              => $commentId,
-                    'fact_check_published'    => $autoPublished,
-                    'fact_check_confidence'   => $result->factCheckConfidence,
+                    'action'                => 'auto_fact_checked',
+                    'comment_id'            => $commentId,
+                    'fact_check_published'  => $autoPublished,
+                    'fact_check_confidence' => $result->factCheckConfidence,
                 ];
             }
 
-            // Confidenza insufficiente → coda umana con draft pronto
+            // Non auto-pubblicato (confidenza bassa OPPURE fonti non verificate) →
+            // coda umana con la bozza già pronta da rivedere/pubblicare.
             DB::table('comments')->where('id', $commentId)->update([
                 'status'       => 'escalated_human',
                 'processed_at' => date('Y-m-d H:i:s'),
@@ -680,15 +685,16 @@ class ModerationService
                 DB::table('moderation_log')->where('id', $logId)->update(['final_action' => 'pending_human']);
             }
 
-            $this->logger?->info(
-                "Comment #{$commentId} queued for human review — fact-check draft ready " .
-                "(confidence: {$result->factCheckConfidence} < threshold: {$threshold})"
-            );
+            $reason = !$highConfidence
+                ? "confidenza {$result->factCheckConfidence} < soglia {$threshold}"
+                : 'fonti non verificate/raggiungibili';
+            $this->logger?->info("Comment #{$commentId} → coda umana con bozza fact-check ({$reason})");
 
             return [
                 'action'                => 'fact_check_queued_human',
                 'comment_id'            => $commentId,
                 'fact_check_confidence' => $result->factCheckConfidence,
+                'reason'                => $reason,
             ];
         }
 
@@ -698,6 +704,42 @@ class ModerationService
             'processed_at' => date('Y-m-d H:i:s'),
         ]);
         return ['action' => 'approved', 'comment_id' => $commentId, 'stage' => $result->stage];
+    }
+
+    /**
+     * Verifica che le fonti del fact-check siano raggiungibili prima di una
+     * auto-pubblicazione: se manca una fonte o anche una sola URL non risponde
+     * 2xx/3xx, ritorna false → il commento va in coda umana invece di pubblicare
+     * una correzione basata su fonti inventate o link morti.
+     * NB: verifica la RAGGIUNGIBILITÀ, non la pertinenza del contenuto.
+     */
+    private function verifyFactCheckSources(array $sources): bool
+    {
+        if (empty($sources)) return false; // nessuna fonte = niente auto-publish
+
+        $client = new \GuzzleHttp\Client([
+            'timeout'         => 6,
+            'connect_timeout' => 4,
+            'allow_redirects' => true,
+            'http_errors'     => false,
+            'headers'         => ['User-Agent' => 'ModerationHub/1.0 (+fact-check source check)'],
+        ]);
+
+        foreach ($sources as $s) {
+            $url = is_array($s) ? ($s['url'] ?? '') : '';
+            if ($url === '' || !filter_var($url, FILTER_VALIDATE_URL)) return false;
+            try {
+                $code = $client->head($url)->getStatusCode();
+                // Alcuni server rifiutano HEAD → riprova con GET
+                if (in_array($code, [403, 405, 501], true)) {
+                    $code = $client->get($url)->getStatusCode();
+                }
+                if ($code < 200 || $code >= 400) return false;
+            } catch (\Throwable) {
+                return false; // errore di rete/DNS → trattata come non verificata
+            }
+        }
+        return true;
     }
 
     // ──────────────────────────────────────────────────────────────────
