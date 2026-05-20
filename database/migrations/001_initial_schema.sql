@@ -229,7 +229,7 @@ CREATE TABLE IF NOT EXISTS `comments` (
     `social_user_id`   INT UNSIGNED NOT NULL,
     `content`          TEXT NOT NULL,
     `content_hash`     CHAR(64) NOT NULL COMMENT 'SHA256 for dedup',
-    `status`           ENUM('pending','approved','removed','escalated_sonnet','escalated_human','escalated_reportable','hidden','hidden_reportable','appeal_pending','dev_flagged') NOT NULL DEFAULT 'pending',
+    `status`           ENUM('pending','approved','removed','escalated_sonnet','escalated_human','escalated_reportable','hidden','hidden_reportable','reported_legal','appeal_pending','dev_flagged') NOT NULL DEFAULT 'pending',
     `received_at`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `processed_at`     TIMESTAMP NULL,
     `appeal_token`     VARCHAR(512) NULL COMMENT 'Signed token for appeal link — set on hide',
@@ -430,7 +430,7 @@ CREATE TABLE IF NOT EXISTS `license_cache` (
 --   MODIFY `final_action` ENUM('approved','removed','hidden','pending_human','comment_edited','auto_fact_checked') NOT NULL DEFAULT 'pending_human';
 --
 -- ALTER TABLE `comments`
---   MODIFY `status` ENUM('pending','approved','removed','escalated_sonnet','escalated_human','escalated_reportable','hidden','hidden_reportable','appeal_pending','dev_flagged') NOT NULL DEFAULT 'pending';
+--   MODIFY `status` ENUM('pending','approved','removed','escalated_sonnet','escalated_human','escalated_reportable','hidden','hidden_reportable','reported_legal','appeal_pending','dev_flagged') NOT NULL DEFAULT 'pending';
 --
 -- INSERT IGNORE INTO `app_settings` (`key`, `value`) VALUES
 -- ('fact_check_auto_publish_threshold', '0.90'),

@@ -157,13 +157,72 @@ async function resolveReportable(commentId, action) {
       await api(`/comments/${commentId}/decide`, 'POST', { decision: 'keep_hidden', note: 'Confermato nascosto — iter segnalazione non avviato' });
       toast('Commento mantenuto nascosto', 'ok');
     } else if (action === 'report') {
-      await api(`/comments/${commentId}/decide`, 'POST', { decision: 'keep_hidden', note: 'Iter segnalazione avviato — in attesa di ufficio legale' });
-      toast('Segnalazione avviata — commento mantenuto nascosto per l\'iter legale', 'ok');
+      await api(`/comments/${commentId}/report-legal`, 'POST', { note: 'Iter segnalazione avviato — in attesa di ufficio legale' });
+      toast('Iter avviato — scarico il dossier PDF', 'ok');
+      await downloadLegalDossier(commentId);
+      loadReportableArchive();
     }
     document.getElementById(`rep-${commentId}`)?.remove();
     loadStats();
   } catch (e) {
     toast('Errore: ' + e.message, 'err');
+  }
+}
+
+// Scarica il dossier PDF (richiede header Authorization, quindi fetch + blob).
+async function downloadLegalDossier(commentId) {
+  try {
+    const r = await fetch(HUB_URL + '/api/comments/' + commentId + '/legal-dossier', {
+      headers: { 'Authorization': 'Bearer ' + TOKEN },
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const blob = await r.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = `dossier-segnalazione-${commentId}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    toast('Errore nel download del dossier', 'err');
+  }
+}
+
+async function loadReportableArchive() {
+  const list    = document.getElementById('reportable-archive-list');
+  const countEl = document.getElementById('reportable-archive-count');
+  if (!list) return;
+  list.innerHTML = '<div class="loading">Caricamento…</div>';
+  try {
+    const d = await api('/queue/reportable/archive?limit=50');
+    countEl && (countEl.textContent = `${d.total} segnalati`);
+    if (!d.items?.length) {
+      list.innerHTML = '<div class="empty">Nessuna segnalazione inoltrata alle autorità.</div>';
+      return;
+    }
+    list.innerHTML = d.items.map(c => {
+      const cats = (c.ai_categories||[]).map(cat => `<span class="chip chip-warn">${CAT_LABELS[cat]||cat}</span>`).join(' ');
+      return `
+        <div class="bc-item">
+          <div class="bc-header">
+            <span class="bc-user">${esc(c.display_name||'Anonimo')}</span>
+            <span class="bc-page">${esc(c.page_name)}</span>
+            <span class="chip chip-danger">⚠️ segnalato alle autorità</span>
+            <span class="bc-time">${relTime(c.processed_at||c.received_at)}</span>
+          </div>
+          <div class="bc-content">${esc(c.content)}</div>
+          ${c.human_note ? `<div style="font-size:11px;color:var(--muted);margin-top:4px">Nota: ${esc(c.human_note)}</div>` : ''}
+          <div class="bc-footer" style="margin-top:10px">
+            ${cats}
+            <button class="btn btn-sm" style="margin-left:auto;padding:5px 12px;font-size:12px"
+              onclick="downloadLegalDossier(${c.id})">📄 Scarica dossier PDF</button>
+          </div>
+        </div>`;
+    }).join('');
+  } catch (e) {
+    list.innerHTML = '<div class="empty">Errore nel caricamento</div>';
   }
 }
 

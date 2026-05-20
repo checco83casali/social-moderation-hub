@@ -34,7 +34,7 @@ document.querySelectorAll('.nav-item[data-screen]').forEach(item => {
     };
     document.getElementById('topbar-title').textContent = titles[sc] || sc;
     if (sc === 'queue')             { loadQueue(); loadStats(); }
-    if (sc === 'reportable')        { loadReportableQueue(); loadStats(); }
+    if (sc === 'reportable')        { loadReportableQueue(); loadReportableArchive(); loadStats(); }
     if (sc === 'stats')             loadStatsScreen();
     if (sc === 'pages')             loadPages();
     if (sc === 'policy')            { loadPolicies(); loadActivePolicyPrompt(); }

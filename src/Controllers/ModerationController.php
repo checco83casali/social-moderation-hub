@@ -127,6 +127,208 @@ class ModerationController
         ]);
     }
 
+    // ── GET /api/queue/reportable/archive  ───────────────────────────
+    /** Historical reports already escalated to the legal team (reported_legal). */
+    public function reportableArchive(ServerRequestInterface $request, Response $response): ResponseInterface
+    {
+        $params = $request->getQueryParams();
+        $limit  = min((int) ($params['limit'] ?? 50), 100);
+        $page   = max(1, (int) ($params['page'] ?? 1));
+
+        $total = DB::table('comments')->where('status', 'reported_legal')->count();
+
+        $items = DB::table('comments as c')
+            ->join('social_users as su', 'su.id', '=', 'c.social_user_id')
+            ->join('connected_pages as cp', 'cp.id', '=', 'c.page_id')
+            ->leftJoin('moderation_log as ml', function ($join) {
+                $join->on('ml.comment_id', '=', 'c.id')
+                     ->whereRaw('ml.id = (SELECT MAX(id) FROM moderation_log WHERE comment_id = c.id)');
+            })
+            ->leftJoin('admin_users as au', 'au.id', '=', 'ml.human_user_id')
+            ->where('c.status', 'reported_legal')
+            ->select([
+                'c.id', 'c.content', 'c.received_at', 'c.processed_at', 'c.platform_comment_id',
+                'su.display_name', 'su.violation_count',
+                'cp.page_name',
+                'ml.ai_categories', 'ml.ai_severity', 'ml.human_note', 'ml.human_decided_at',
+                'au.name as reported_by',
+            ])
+            ->orderByDesc('c.processed_at')
+            ->offset(($page - 1) * $limit)
+            ->limit($limit)
+            ->get()
+            ->map(function ($row) {
+                $arr = (array) $row;
+                $arr['ai_categories'] = json_decode($arr['ai_categories'] ?? '[]', true);
+                return $arr;
+            })
+            ->toArray();
+
+        return $this->json($response, compact('total', 'page', 'items') + ['per_page' => $limit]);
+    }
+
+    // ── POST /api/comments/{id}/report-legal  ────────────────────────
+    /**
+     * Start the legal-reporting procedure for an illegal comment.
+     * The comment stays hidden (never deleted); status becomes reported_legal
+     * and it moves to the reports archive. A PDF dossier is downloadable from
+     * GET /api/comments/{id}/legal-dossier. The user can still appeal (GDPR).
+     */
+    public function reportLegal(ServerRequestInterface $request, Response $response, array $args): ResponseInterface
+    {
+        $auth = $request->getAttribute('auth_user');
+        if (!in_array($auth->role ?? '', ['admin', 'supervisor'], true)) {
+            return $this->json($response, ['error' => 'Admin or supervisor required'], 403);
+        }
+
+        $commentId = (int) $args['id'];
+        $comment   = DB::table('comments')->find($commentId);
+        if (!$comment) {
+            return $this->json($response, ['error' => 'Not found'], 404);
+        }
+
+        $note = (string) (((array) $request->getParsedBody())['note'] ?? '');
+        $now  = date('Y-m-d H:i:s');
+
+        DB::table('comments')->where('id', $commentId)->update([
+            'status'       => 'reported_legal',
+            'processed_at' => $now,
+        ]);
+
+        $policyId = DB::table('policies')->where('is_active', 1)->value('id') ?? 1;
+        DB::table('moderation_log')->insert([
+            'comment_id'       => $commentId,
+            'stage'            => 'human',
+            'policy_id'        => $policyId,
+            'human_user_id'    => $auth->sub,
+            'human_decision'   => 'report_legal',
+            'human_note'       => $note ?: 'Iter di segnalazione alle autorità avviato',
+            'human_decided_at' => $now,
+            'final_action'     => 'reported_legal',
+            'created_at'       => $now,
+        ]);
+
+        return $this->json($response, [
+            'ok'          => true,
+            'comment_id'  => $commentId,
+            'dossier_url' => '/api/comments/' . $commentId . '/legal-dossier',
+        ]);
+    }
+
+    // ── GET /api/comments/{id}/legal-dossier  ────────────────────────
+    /** Generate (on demand, always re-downloadable) the PDF dossier for the legal team. */
+    public function legalDossier(ServerRequestInterface $request, Response $response, array $args): ResponseInterface
+    {
+        $auth = $request->getAttribute('auth_user');
+        if (!in_array($auth->role ?? '', ['admin', 'supervisor'], true)) {
+            return $this->json($response, ['error' => 'Admin or supervisor required'], 403);
+        }
+
+        $commentId = (int) $args['id'];
+        $row = DB::table('comments as c')
+            ->join('social_users as su', 'su.id', '=', 'c.social_user_id')
+            ->join('connected_pages as cp', 'cp.id', '=', 'c.page_id')
+            ->leftJoin('moderation_log as ml', function ($join) {
+                $join->on('ml.comment_id', '=', 'c.id')
+                     ->whereRaw("ml.id = (SELECT MAX(id) FROM moderation_log WHERE comment_id = c.id AND stage IN ('haiku','sonnet'))");
+            })
+            ->where('c.id', $commentId)
+            ->select([
+                'c.id', 'c.content', 'c.received_at', 'c.processed_at',
+                'c.platform_comment_id', 'c.platform_post_id',
+                'su.display_name', 'su.platform_user_id', 'su.violation_count', 'su.ban_status',
+                'cp.page_name', 'cp.page_id as facebook_page_id',
+                'ml.stage', 'ml.ai_model', 'ml.ai_decision', 'ml.ai_confidence',
+                'ml.ai_reason', 'ml.ai_public_reason', 'ml.ai_categories', 'ml.ai_severity',
+            ])
+            ->first();
+
+        if (!$row) {
+            return $this->json($response, ['error' => 'Not found'], 404);
+        }
+
+        // Who started the legal procedure, and when
+        $report = DB::table('moderation_log as ml')
+            ->leftJoin('admin_users as au', 'au.id', '=', 'ml.human_user_id')
+            ->where('ml.comment_id', $commentId)
+            ->where('ml.final_action', 'reported_legal')
+            ->orderByDesc('ml.id')
+            ->select(['ml.human_decided_at', 'ml.human_note', 'au.name as reported_by'])
+            ->first();
+
+        $html = $this->buildLegalDossierHtml((array) $row, $report ? (array) $report : []);
+
+        $dompdf = new \Dompdf\Dompdf(['isRemoteEnabled' => false]);
+        $dompdf->loadHtml($html, 'UTF-8');
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        $response->getBody()->write($dompdf->output());
+        return $response
+            ->withHeader('Content-Type', 'application/pdf')
+            ->withHeader('Content-Disposition', 'attachment; filename="dossier-segnalazione-' . $commentId . '.pdf"');
+    }
+
+    /** Build the HTML for the legal dossier PDF. */
+    private function buildLegalDossierHtml(array $c, array $report): string
+    {
+        $e = fn($v) => htmlspecialchars((string) ($v ?? ''), ENT_QUOTES, 'UTF-8');
+        $cats = is_array($c['ai_categories'] ?? null)
+            ? $c['ai_categories']
+            : (json_decode($c['ai_categories'] ?? '[]', true) ?: []);
+        $catsStr   = $e(implode(', ', $cats));
+        $generated = date('d/m/Y H:i');
+
+        $row = fn($label, $val) =>
+            '<tr><td style="font-weight:bold;width:38%;background:#f4f4f4;padding:6px 8px;border:1px solid #ccc">'
+            . $e($label) . '</td><td style="padding:6px 8px;border:1px solid #ccc">' . $val . '</td></tr>';
+
+        return '<!DOCTYPE html><html><head><meta charset="utf-8"><style>'
+            . 'body{font-family:DejaVu Sans,sans-serif;font-size:11px;color:#222}'
+            . 'h1{font-size:16px;margin:0 0 2px}h2{font-size:12px;margin:16px 0 6px;color:#444}'
+            . 'table{border-collapse:collapse;width:100%}.muted{color:#777;font-size:9px}'
+            . '.box{border:1px solid #ccc;background:#fafafa;padding:8px;white-space:pre-wrap}'
+            . '</style></head><body>'
+            . '<h1>Dossier di segnalazione — contenuto illecito</h1>'
+            . '<div class="muted">Documento generato automaticamente il ' . $generated
+            . ' · Riferimento commento #' . $e($c['id']) . '</div>'
+            . '<h2>Procedura</h2><table>'
+            . $row('Avviata da', $e($report['reported_by'] ?? '—'))
+            . $row('Data avvio iter', $e($report['human_decided_at'] ?? $c['processed_at'] ?? '—'))
+            . $row('Note moderatore', $e($report['human_note'] ?? '—'))
+            . '</table>'
+            . '<h2>Pagina</h2><table>'
+            . $row('Nome pagina', $e($c['page_name']))
+            . $row('ID pagina Facebook', $e($c['facebook_page_id']))
+            . $row('ID post', $e($c['platform_post_id']))
+            . '</table>'
+            . '<h2>Autore del commento</h2><table>'
+            . $row('Nome visualizzato', $e($c['display_name']))
+            . $row('Identificativo pseudonimizzato', $e($c['platform_user_id']))
+            . $row('Violazioni totali', $e($c['violation_count']))
+            . $row('Stato ban', $e($c['ban_status']))
+            . '</table>'
+            . '<h2>Commento</h2>'
+            . $row('ID commento Facebook', $e($c['platform_comment_id']))
+            . '<div class="box">' . $e($c['content']) . '</div>'
+            . '<table style="margin-top:6px">'
+            . $row('Ricevuto il', $e($c['received_at']))
+            . $row('Nascosto/segnalato il', $e($c['processed_at']))
+            . '</table>'
+            . '<h2>Analisi AI</h2><table>'
+            . $row('Modello / stadio', $e(($c['ai_model'] ?? '—') . ' (' . ($c['stage'] ?? '—') . ')'))
+            . $row('Decisione', $e($c['ai_decision']))
+            . $row('Confidenza', $e($c['ai_confidence']))
+            . $row('Severità', $e($c['ai_severity']))
+            . $row('Categorie', $catsStr)
+            . $row('Motivazione interna', $e($c['ai_reason']))
+            . $row('Motivazione pubblica', $e($c['ai_public_reason']))
+            . '</table>'
+            . '<p class="muted" style="margin-top:18px">Il commento è stato nascosto al pubblico e non eliminato. '
+            . 'I dati identificativi diretti sono pseudonimizzati secondo la policy GDPR dell\'installazione.</p>'
+            . '</body></html>';
+    }
+
     // ── GET /api/appeals  ───────────────────────────────────────────
     /** Returns pending appeal requests, newest first. */
     public function appealQueue(ServerRequestInterface $request, Response $response): ResponseInterface
