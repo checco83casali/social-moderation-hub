@@ -585,7 +585,15 @@ class ModerationController
             ]);
         }
 
-        return $this->json($response, ['sent' => $sent]);
+        if (!$sent) {
+            return $this->json($response, [
+                'error' => 'Facebook ha rifiutato la pubblicazione della risposta. '
+                    . 'Verifica i permessi della pagina (pages_manage_engagement), la validità del token e il log del server.',
+                'sent'  => false,
+            ], 502);
+        }
+
+        return $this->json($response, ['sent' => true]);
     }
 
     // ── GET /api/users/{id}  ─────────────────────────────────────────

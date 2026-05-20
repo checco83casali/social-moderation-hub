@@ -213,7 +213,12 @@ class MetaGraphService
             ]);
             $data = json_decode((string) $response->getBody(), true);
             return isset($data['id']);
-        } catch (GuzzleException) {
+        } catch (GuzzleException $e) {
+            // Cattura il motivo reale di Facebook (permessi, token, commento non rispondibile…)
+            $detail = ($e instanceof \GuzzleHttp\Exception\RequestException && $e->getResponse())
+                ? (string) $e->getResponse()->getBody()
+                : $e->getMessage();
+            error_log("[MetaGraph] replyToComment failed for {$commentId}: {$detail}");
             return false;
         }
     }

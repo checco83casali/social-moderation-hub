@@ -422,12 +422,19 @@ async function confirmFactcheckReply() {
   btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px"></span>Pubblicazione…';
 
   try {
-    // 1. Pubblica la risposta su Facebook
-    await api(`/comments/${currentComment.id}/reply`, 'POST', { text });
+    // 1. Pubblica la risposta su Facebook (reply() ritorna 502 se FB rifiuta → throw).
+    const r = await api(`/comments/${currentComment.id}/reply`, 'POST', { text });
 
-    // 2. Approva il commento — esce dalla coda.
-    // Il fact-check è stato inviato: la misinformazione è corretta,
-    // il commento (approvato da Haiku) non ha altri problemi.
+    // Dev mode: nulla è stato inviato davvero → non approvare né dichiarare pubblicato.
+    if (r && r.dev_mode) {
+      closeModal('modal-factcheck-reply');
+      toast('Dev mode attivo: la risposta NON è stata inviata su Facebook', 'err');
+      btn.disabled = false;
+      btn.textContent = originalLabel;
+      return;
+    }
+
+    // 2. Approva il commento — esce dalla coda (solo se la risposta è stata pubblicata).
     await api(`/comments/${currentComment.id}/decide`, 'POST', {
       decision: 'allow',
       note:     'Approvato dopo risposta fact-check inviata dal moderatore',
