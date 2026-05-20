@@ -255,10 +255,16 @@ class ModerationService
         // Operator-editable moderation rules (the technical block is appended in ClaudeService).
         $moderationPrompt = $policy->moderation_prompt;
 
+        // Per-page AI threshold / fact-check overrides (Pro). null = use global.
+        [$pgHaiku, $pgSonnet, $pgFactCheck] = $this->pageThresholdOverrides((int) ($page['id'] ?? 0));
+
         $result = $this->claude->moderate(
             commentText:      $commentContext,
             moderationPrompt: $moderationPrompt,
             reasonMaxWords:   $reasonMaxWords,
+            haikuThreshold:   $pgHaiku,
+            sonnetThreshold:  $pgSonnet,
+            factCheckEnabled: $pgFactCheck,
         );
 
         // 10. Persist moderation log
@@ -561,6 +567,27 @@ class ModerationService
         ]);
 
         return (array) DB::table('social_users')->find($id);
+    }
+
+    /**
+     * Per-page AI threshold overrides (Pro feature `per_page_thresholds`).
+     * Returns [haiku, sonnet, factCheckEnabled]; each value is null when not set
+     * for the page, so ClaudeService falls back to the global settings.
+     */
+    private function pageThresholdOverrides(int $pageId): array
+    {
+        try {
+            $ps = DB::table('page_settings')->where('page_id', $pageId)->first();
+        } catch (\Throwable) {
+            return [null, null, null]; // table not migrated yet
+        }
+        if (!$ps) return [null, null, null];
+
+        return [
+            $ps->haiku_confidence_threshold  !== null ? (float) $ps->haiku_confidence_threshold  : null,
+            $ps->sonnet_confidence_threshold !== null ? (float) $ps->sonnet_confidence_threshold : null,
+            isset($ps->fact_check_enabled)   ? (bool) $ps->fact_check_enabled : null,
+        ];
     }
 
     private function escalateToHuman(int $commentId, ModerationResult $result, bool $reportable = false, int $logId = 0): array
@@ -1226,10 +1253,15 @@ class ModerationService
 
         $reModPrompt = $policy?->moderation_prompt ?? '';
 
+        [$pgHaiku, $pgSonnet, $pgFactCheck] = $this->pageThresholdOverrides((int) ($page['id'] ?? 0));
+
         $result = $this->claude->moderate(
             commentText:      $commentContext,
             moderationPrompt: $reModPrompt,
             reasonMaxWords:   $reasonMaxWords,
+            haikuThreshold:   $pgHaiku,
+            sonnetThreshold:  $pgSonnet,
+            factCheckEnabled: $pgFactCheck,
         );
 
         $reAnalysisLogId = DB::table('moderation_log')->insertGetId([

@@ -209,10 +209,23 @@ RULES:
 - All summaries in Italian.
 FC;
 
-    public function moderate(string $commentText, string $moderationPrompt, int $reasonMaxWords = 40): ModerationResult
-    {
-        $systemPrompt      = $this->composeSystemPrompt($moderationPrompt, $reasonMaxWords);
-        $factCheckLicensed = $this->license?->hasFeature('fact_check') ?? true;
+    public function moderate(
+        string $commentText,
+        string $moderationPrompt,
+        int    $reasonMaxWords   = 40,
+        ?float $haikuThreshold   = null,
+        ?float $sonnetThreshold  = null,
+        ?bool  $factCheckEnabled = null,
+    ): ModerationResult {
+        $systemPrompt = $this->composeSystemPrompt($moderationPrompt, $reasonMaxWords);
+
+        // Per-page overrides fall back to the global (constructor) values when null.
+        $haikuTh  = $haikuThreshold  ?? $this->haikuThreshold;
+        $sonnetTh = $sonnetThreshold ?? $this->sonnetThreshold;
+
+        // Fact-check requires both the Pro feature AND the per-page toggle (default on).
+        $factCheckLicensed = ($this->license?->hasFeature('fact_check') ?? true)
+            && ($factCheckEnabled ?? true);
 
         // Stage 1: Haiku — fact_check_suggested abilitato (solo flag booleano),
         // draft e fonti disabilitati (qualità insufficiente su Haiku)
@@ -227,7 +240,7 @@ FC;
         }
 
         // Haiku approva con confidenza sufficiente
-        if ($haiku->decision !== 'uncertain' && $haiku->confidence >= $this->haikuThreshold) {
+        if ($haiku->decision !== 'uncertain' && $haiku->confidence >= $haikuTh) {
             $haiku->stage = 'haiku';
 
             // Secondo passaggio Sonnet dedicato al solo fact-check
@@ -250,7 +263,7 @@ FC;
             return $sonnet;
         }
 
-        if ($sonnet->decision !== 'uncertain' && $sonnet->confidence >= $this->sonnetThreshold) {
+        if ($sonnet->decision !== 'uncertain' && $sonnet->confidence >= $sonnetTh) {
             $sonnet->stage = 'sonnet';
             return $sonnet;
         }
