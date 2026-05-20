@@ -415,6 +415,89 @@ FC;
         ));
     }
 
+    /**
+     * Ultimo cancello prima dell'auto-pubblicazione di un fact-check: scarica il
+     * testo delle fonti citate e chiede a Sonnet se SOSTANZIANO davvero la
+     * correzione redatta. Ritorna true solo se il modello conferma con confidenza
+     * sufficiente. Qualsiasi dubbio / fetch fallito → false (si va in coda umana).
+     */
+    public function factCheckSourcesSupport(string $claim, string $draft, array $sources): bool
+    {
+        $excerpts = [];
+        foreach ($sources as $i => $s) {
+            $url = is_array($s) ? ($s['url'] ?? '') : '';
+            if ($url === '') continue;
+            $text = $this->fetchUrlText($url);
+            if ($text === '') return false; // fonte non leggibile → non sostanziata
+            $excerpts[] = 'FONTE ' . ($i + 1) . " ({$url}):\n" . mb_substr($text, 0, 3000);
+        }
+        if (empty($excerpts)) return false;
+
+        $system = <<<'V'
+You are a strict verification assistant. You are given a user comment (the claim), a drafted editorial correction, and excerpts from the cited sources.
+Decide whether the SOURCE EXCERPTS substantiate the factual statements in the drafted correction.
+Respond ONLY with JSON, no markdown: {"supported": true|false, "confidence": 0.0-1.0}
+- supported = true ONLY if the excerpts clearly contain information backing the correction.
+- If the sources are off-topic, generic, paywalled/empty, or do not contain the relevant facts, supported = false.
+- Be strict: when in doubt, supported = false.
+V;
+
+        $userMsg = "CLAIM (user comment):\n{$claim}\n\nDRAFTED CORRECTION:\n{$draft}\n\nSOURCE EXCERPTS:\n"
+            . implode("\n\n---\n\n", $excerpts);
+
+        try {
+            $response = $this->http->post(self::API_URL, [
+                'headers' => [
+                    'x-api-key'         => $this->apiKey,
+                    'anthropic-version' => self::API_VERSION,
+                    'content-type'      => 'application/json',
+                ],
+                'json' => [
+                    'model'      => self::MODEL_SONNET,
+                    'max_tokens' => 200,
+                    'system'     => $system,
+                    'messages'   => [['role' => 'user', 'content' => $userMsg]],
+                ],
+            ]);
+
+            $body  = json_decode((string) $response->getBody(), true);
+            $raw   = $body['content'][0]['text'] ?? '{}';
+            $clean = preg_replace('/^```json\s*|\s*```$/s', '', trim($raw));
+            $data  = json_decode($clean, true);
+            if (!is_array($data)) return false;
+
+            return ((bool) ($data['supported'] ?? false))
+                && ((float) ($data['confidence'] ?? 0.0) >= 0.7);
+        } catch (\Throwable $e) {
+            $this->logger?->warning('Fact-check relevance check failed: ' . $e->getMessage());
+            return false; // in dubbio non si auto-pubblica
+        }
+    }
+
+    /** Scarica una pagina e ne estrae il testo (HTML ripulito), stringa vuota se non leggibile. */
+    private function fetchUrlText(string $url): string
+    {
+        try {
+            $resp = $this->http->get($url, [
+                'timeout'         => 8,
+                'connect_timeout' => 4,
+                'http_errors'     => false,
+                'allow_redirects' => true,
+                'headers'         => ['User-Agent' => 'ModerationHub/1.0 (+fact-check verifier)'],
+            ]);
+            if ($resp->getStatusCode() >= 400) return '';
+            $ctype = $resp->getHeaderLine('Content-Type');
+            if ($ctype !== '' && stripos($ctype, 'html') === false && stripos($ctype, 'text') === false) {
+                return ''; // non è una pagina testuale (PDF, immagine, ecc.)
+            }
+            $html = (string) $resp->getBody();
+            $html = preg_replace('#<(script|style|noscript)\b[^>]*>.*?</\1>#is', ' ', $html) ?? $html;
+            return trim(preg_replace('/\s+/', ' ', strip_tags($html)) ?? '');
+        } catch (\Throwable) {
+            return '';
+        }
+    }
+
     private function buildEscalationPrompt(string $commentText, ModerationResult $prev): string
     {
         return <<<TXT

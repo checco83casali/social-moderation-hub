@@ -631,11 +631,20 @@ class ModerationService
                 if ($t !== null) $threshold = (float) $t;
             } catch (\Throwable) {}
 
-            $highConfidence  = $result->factCheckConfidence >= $threshold;
-            // Verifica le fonti solo se serve (confidenza alta) per non sprecare richieste.
-            $sourcesVerified = $highConfidence && $this->verifyFactCheckSources($result->factCheckSources);
+            $highConfidence = $result->factCheckConfidence >= $threshold;
+            // Cancelli progressivi, eseguiti solo con confidenza alta (per non sprecare risorse):
+            //   1) fonti raggiungibili (HTTP)
+            //   2) fonti che SOSTANZIANO davvero la correzione (fetch + Sonnet)
+            $sourcesLive    = $highConfidence && $this->verifyFactCheckSources($result->factCheckSources);
+            $sourcesSupport = false;
+            if ($sourcesLive) {
+                $claim = (string) (DB::table('comments')->where('id', $commentId)->value('content') ?? '');
+                $sourcesSupport = $this->claude->factCheckSourcesSupport(
+                    $claim, $result->factCheckDraft, $result->factCheckSources,
+                );
+            }
 
-            if ($highConfidence && $sourcesVerified) {
+            if ($highConfidence && $sourcesLive && $sourcesSupport) {
                 // Pubblica automaticamente la bozza (solo testo editoriale, niente URL inline)
                 $autoPublished = false;
                 if (!$this->isDevMode() && !empty($page['page_access_token'])) {
@@ -687,7 +696,9 @@ class ModerationService
 
             $reason = !$highConfidence
                 ? "confidenza {$result->factCheckConfidence} < soglia {$threshold}"
-                : 'fonti non verificate/raggiungibili';
+                : (!$sourcesLive
+                    ? 'fonti non raggiungibili'
+                    : 'le fonti non confermano la correzione');
             $this->logger?->info("Comment #{$commentId} → coda umana con bozza fact-check ({$reason})");
 
             return [
