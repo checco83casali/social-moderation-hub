@@ -11,26 +11,37 @@
 --   this script ALSO wipes `connected_pages` and `page_settings`,
 --   so you have to re-connect the Facebook pages afterwards.
 --
+-- NOTE: uses DELETE (not TRUNCATE) in foreign-key dependency order.
+-- TRUNCATE fails with error #1701 on tables referenced by a FK, and
+-- SET FOREIGN_KEY_CHECKS=0 is lost between statements in phpMyAdmin.
+-- Ordered DELETE works everywhere (CLI and phpMyAdmin).
+--
 -- ALWAYS take a backup first:
 --   mysqldump -u <user> -p moderation_hub > backup_$(date +%F).sql
 --
 -- Usage:
 --   mysql -u <user> -p moderation_hub < database/scripts/reset-full-operational.sql
--- or paste into phpMyAdmin / TablePlus on the moderation_hub database.
 -- ============================================================
 
-SET FOREIGN_KEY_CHECKS = 0;
+-- Delete in child -> parent order so foreign keys are satisfied.
+DELETE FROM `appeal_records`;
+DELETE FROM `ban_records`;
+DELETE FROM `moderation_log`;
+DELETE FROM `page_settings`;
+DELETE FROM `comments`;
+DELETE FROM `connected_pages`;
+DELETE FROM `social_users`;
+DELETE FROM `webhook_events`;
 
-TRUNCATE TABLE `appeal_records`;
-TRUNCATE TABLE `moderation_log`;
-TRUNCATE TABLE `ban_records`;
-TRUNCATE TABLE `comments`;
-TRUNCATE TABLE `social_users`;
-TRUNCATE TABLE `webhook_events`;
-TRUNCATE TABLE `page_settings`;
-TRUNCATE TABLE `connected_pages`;
-
-SET FOREIGN_KEY_CHECKS = 1;
+-- Reset auto-increment counters for a clean "new DB" feel.
+ALTER TABLE `appeal_records`  AUTO_INCREMENT = 1;
+ALTER TABLE `ban_records`     AUTO_INCREMENT = 1;
+ALTER TABLE `moderation_log`  AUTO_INCREMENT = 1;
+ALTER TABLE `page_settings`   AUTO_INCREMENT = 1;
+ALTER TABLE `comments`        AUTO_INCREMENT = 1;
+ALTER TABLE `connected_pages` AUTO_INCREMENT = 1;
+ALTER TABLE `social_users`    AUTO_INCREMENT = 1;
+ALTER TABLE `webhook_events`  AUTO_INCREMENT = 1;
 
 -- Tables intentionally NOT touched (configuration kept):
 --   admin_users, policies, app_settings, license_cache
