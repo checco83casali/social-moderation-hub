@@ -82,10 +82,11 @@ async function openPageSettings(id) {
       <label class="form-label">Soglia Sonnet <span style="color:var(--muted);font-weight:400">(globale: ${d.global_sonnet})</span></label>
       <input class="form-input" type="number" id="ps-sonnet" min="0.01" max="1.00" step="0.01" value="${d.sonnet_confidence_threshold ? d.sonnet_confidence_threshold : ''}" placeholder="${d.global_sonnet}">
       <div style="font-size:11px;color:var(--muted);margin:5px 0 16px">Se confidence ≥ soglia → Sonnet decide da solo. Sotto → revisione umana. Deve essere inferiore alla soglia Haiku.</div>
+      ${d.fact_check_available ? `
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
         <input type="checkbox" id="ps-factcheck" ${d.fact_check_enabled ? 'checked' : ''} style="width:16px;height:16px">
         Fact-check AI attivo su questa pagina
-      </label>`;
+      </label>` : ''}`;
   } catch (e) {
     if ((e.message || '').toLowerCase().includes('pro license')) {
       saveBtn.style.display = 'none';
@@ -124,8 +125,10 @@ async function savePageSettings() {
   const payload = {
     haiku_confidence_threshold:  haiku  === '' ? null : parseFloat(haiku),
     sonnet_confidence_threshold: sonnet === '' ? null : parseFloat(sonnet),
-    fact_check_enabled:          fcEl ? fcEl.checked : true,
   };
+  // Invia il toggle fact-check solo se la feature è attiva (checkbox presente),
+  // altrimenti non tocchiamo il valore salvato.
+  if (fcEl) payload.fact_check_enabled = fcEl.checked;
 
   const btn = document.getElementById('page-settings-save-btn');
   btn.disabled = true;

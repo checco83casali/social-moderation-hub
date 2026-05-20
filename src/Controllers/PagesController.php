@@ -395,6 +395,8 @@ class PagesController
             'haiku_confidence_threshold'  => $ps ? (float) $ps->haiku_confidence_threshold  : null,
             'sonnet_confidence_threshold' => $ps ? (float) $ps->sonnet_confidence_threshold : null,
             'fact_check_enabled'          => $ps ? (bool)  $ps->fact_check_enabled          : true,
+            // Whether the fact-check Pro feature is active (controls UI visibility)
+            'fact_check_available'        => $this->license->hasFeature('fact_check'),
             // Effective values (null = using global)
             'effective_haiku'             => $ps?->haiku_confidence_threshold  !== null ? (float) $ps->haiku_confidence_threshold  : $globalHaiku,
             'effective_sonnet'            => $ps?->sonnet_confidence_threshold !== null ? (float) $ps->sonnet_confidence_threshold : $globalSonnet,
