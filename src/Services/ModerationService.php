@@ -632,19 +632,22 @@ class ModerationService
             } catch (\Throwable) {}
 
             $highConfidence = $result->factCheckConfidence >= $threshold;
-            // Cancelli progressivi, eseguiti solo con confidenza alta (per non sprecare risorse):
-            //   1) fonti raggiungibili (HTTP)
-            //   2) fonti che SOSTANZIANO davvero la correzione (fetch + Sonnet)
-            $sourcesLive    = $highConfidence && $this->verifyFactCheckSources($result->factCheckSources);
-            $sourcesSupport = false;
-            if ($sourcesLive) {
+
+            // Solo con confidenza alta: scarica le fonti citate e tiene SOLO quelle
+            // che esistono davvero E il cui contenuto sostiene la correzione (così
+            // cadono URL inventate, soft-404 e pagine non pertinenti).
+            $verifiedSources = [];
+            if ($highConfidence) {
                 $claim = (string) (DB::table('comments')->where('id', $commentId)->value('content') ?? '');
-                $sourcesSupport = $this->claude->factCheckSourcesSupport(
+                $verifiedSources = $this->claude->verifyAndFilterSources(
                     $claim, $result->factCheckDraft, $result->factCheckSources,
                 );
             }
 
-            if ($highConfidence && $sourcesLive && $sourcesSupport) {
+            if ($highConfidence && count($verifiedSources) >= 1) {
+                // Conserva solo le fonti verificate (le altre vengono scartate).
+                $result->factCheckSources = $verifiedSources;
+
                 // Pubblica automaticamente la bozza (solo testo editoriale, niente URL inline)
                 $autoPublished = false;
                 if (!$this->isDevMode() && !empty($page['page_access_token'])) {
@@ -660,9 +663,10 @@ class ModerationService
 
                 if ($logId) {
                     DB::table('moderation_log')->where('id', $logId)->update([
-                        'final_action'       => 'auto_fact_checked',
-                        'removal_reply_sent' => $autoPublished ? 1 : 0,
-                        'removal_reply_text' => $result->factCheckDraft,
+                        'final_action'          => 'auto_fact_checked',
+                        'removal_reply_sent'    => $autoPublished ? 1 : 0,
+                        'removal_reply_text'    => $result->factCheckDraft,
+                        'ai_fact_check_sources' => json_encode($verifiedSources),
                     ]);
                 }
 
@@ -673,7 +677,7 @@ class ModerationService
 
                 $this->logger?->info(
                     "Comment #{$commentId} approved + fact-check auto-published " .
-                    "(confidence: {$result->factCheckConfidence}, fonti verificate, dev: " . ($this->isDevMode() ? 'yes' : 'no') . ")"
+                    "(confidence: {$result->factCheckConfidence}, " . count($verifiedSources) . " fonti verificate, dev: " . ($this->isDevMode() ? 'yes' : 'no') . ")"
                 );
 
                 return [
@@ -681,11 +685,11 @@ class ModerationService
                     'comment_id'            => $commentId,
                     'fact_check_published'  => $autoPublished,
                     'fact_check_confidence' => $result->factCheckConfidence,
+                    'verified_sources'      => count($verifiedSources),
                 ];
             }
 
-            // Non auto-pubblicato (confidenza bassa OPPURE fonti non verificate) →
-            // coda umana con la bozza già pronta da rivedere/pubblicare.
+            // Non auto-pubblicato → coda umana con la bozza già pronta da rivedere.
             DB::table('comments')->where('id', $commentId)->update([
                 'status'       => 'escalated_human',
                 'processed_at' => date('Y-m-d H:i:s'),
@@ -696,9 +700,7 @@ class ModerationService
 
             $reason = !$highConfidence
                 ? "confidenza {$result->factCheckConfidence} < soglia {$threshold}"
-                : (!$sourcesLive
-                    ? 'fonti non raggiungibili'
-                    : 'le fonti non confermano la correzione');
+                : 'nessuna fonte verificata (URL inesistenti, soft-404 o non pertinenti)';
             $this->logger?->info("Comment #{$commentId} → coda umana con bozza fact-check ({$reason})");
 
             return [
@@ -715,42 +717,6 @@ class ModerationService
             'processed_at' => date('Y-m-d H:i:s'),
         ]);
         return ['action' => 'approved', 'comment_id' => $commentId, 'stage' => $result->stage];
-    }
-
-    /**
-     * Verifica che le fonti del fact-check siano raggiungibili prima di una
-     * auto-pubblicazione: se manca una fonte o anche una sola URL non risponde
-     * 2xx/3xx, ritorna false → il commento va in coda umana invece di pubblicare
-     * una correzione basata su fonti inventate o link morti.
-     * NB: verifica la RAGGIUNGIBILITÀ, non la pertinenza del contenuto.
-     */
-    private function verifyFactCheckSources(array $sources): bool
-    {
-        if (empty($sources)) return false; // nessuna fonte = niente auto-publish
-
-        $client = new \GuzzleHttp\Client([
-            'timeout'         => 6,
-            'connect_timeout' => 4,
-            'allow_redirects' => true,
-            'http_errors'     => false,
-            'headers'         => ['User-Agent' => 'ModerationHub/1.0 (+fact-check source check)'],
-        ]);
-
-        foreach ($sources as $s) {
-            $url = is_array($s) ? ($s['url'] ?? '') : '';
-            if ($url === '' || !filter_var($url, FILTER_VALIDATE_URL)) return false;
-            try {
-                $code = $client->head($url)->getStatusCode();
-                // Alcuni server rifiutano HEAD → riprova con GET
-                if (in_array($code, [403, 405, 501], true)) {
-                    $code = $client->get($url)->getStatusCode();
-                }
-                if ($code < 200 || $code >= 400) return false;
-            } catch (\Throwable) {
-                return false; // errore di rete/DNS → trattata come non verificata
-            }
-        }
-        return true;
     }
 
     // ──────────────────────────────────────────────────────────────────

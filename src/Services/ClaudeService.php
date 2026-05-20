@@ -411,9 +411,28 @@ FC;
                 return $haikuResult;
             }
 
+            // URL realmente restituite dalla ricerca web: filtriamo le fonti citate
+            // dal modello tenendo solo quelle effettivamente presenti tra i risultati
+            // (confronto normalizzato), per scartare URL alterate o inventate.
+            $realUrls = [];
+            foreach (($body['content'] ?? []) as $block) {
+                if (($block['type'] ?? '') === 'web_search_tool_result') {
+                    foreach (($block['content'] ?? []) as $r) {
+                        if (!empty($r['url'])) $realUrls[rtrim((string) $r['url'], '/')] = true;
+                    }
+                }
+            }
+
             // Inietta i campi fact-check nel result di Haiku (decisione invariata)
-            $haikuResult->factCheckDraft      = $data['fact_check_draft']      ?? null;
-            $haikuResult->factCheckSources    = $this->sanitizeSources($data['fact_check_sources'] ?? []);
+            $haikuResult->factCheckDraft   = $data['fact_check_draft'] ?? null;
+            $sources = $this->sanitizeSources($data['fact_check_sources'] ?? []);
+            if (!empty($realUrls)) {
+                $sources = array_values(array_filter(
+                    $sources,
+                    fn($s) => isset($realUrls[rtrim($s['url'], '/')]),
+                ));
+            }
+            $haikuResult->factCheckSources    = $sources;
             $haikuResult->factCheckConfidence = min(1.0, max(0.0, (float) ($data['fact_check_confidence'] ?? 0.0)));
             $haikuResult->factCheckSuggested  = true;
             $haikuResult->factCheckLatencyMs  = $latencyMs;
@@ -447,33 +466,42 @@ FC;
     }
 
     /**
-     * Ultimo cancello prima dell'auto-pubblicazione di un fact-check: scarica il
-     * testo delle fonti citate e chiede a Sonnet se SOSTANZIANO davvero la
-     * correzione redatta. Ritorna true solo se il modello conferma con confidenza
-     * sufficiente. Qualsiasi dubbio / fetch fallito → false (si va in coda umana).
+     * Ultimo cancello prima dell'auto-pubblicazione: scarica il testo di OGNI
+     * fonte citata e chiede a Sonnet, fonte per fonte, se ne sostanzia il
+     * contenuto la correzione. Ritorna SOLO le fonti confermate (esistenti,
+     * leggibili e pertinenti) — così cadono URL inventate, soft-404 (HTTP 200
+     * ma pagina d'errore) e pagine fuori tema. Lista vuota = niente auto-publish.
      */
-    public function factCheckSourcesSupport(string $claim, string $draft, array $sources): bool
+    public function verifyAndFilterSources(string $claim, string $draft, array $sources): array
     {
-        $excerpts = [];
-        foreach ($sources as $i => $s) {
+        // 1. Scarica il contenuto; tieni solo le fonti con testo leggibile.
+        $fetched = [];
+        foreach ($sources as $s) {
             $url = is_array($s) ? ($s['url'] ?? '') : '';
-            if ($url === '') continue;
+            if ($url === '' || !filter_var($url, FILTER_VALIDATE_URL)) continue;
             $text = $this->fetchUrlText($url);
-            if ($text === '') return false; // fonte non leggibile → non sostanziata
-            $excerpts[] = 'FONTE ' . ($i + 1) . " ({$url}):\n" . mb_substr($text, 0, 3000);
+            if ($text === '') continue; // irraggiungibile
+            $fetched[] = ['src' => $s, 'text' => mb_substr($text, 0, 3000)];
         }
-        if (empty($excerpts)) return false;
+        if (empty($fetched)) return [];
+
+        // 2. Una sola chiamata Sonnet con verdetto per-fonte.
+        $excerpts = [];
+        foreach ($fetched as $i => $f) {
+            $excerpts[] = 'SOURCE ' . ($i + 1) . ' (' . ($f['src']['url'] ?? '') . "):\n" . $f['text'];
+        }
 
         $system = <<<'V'
-You are a strict verification assistant. You are given a user comment (the claim), a drafted editorial correction, and excerpts from the cited sources.
-Decide whether the SOURCE EXCERPTS substantiate the factual statements in the drafted correction.
-Respond ONLY with JSON, no markdown: {"supported": true|false, "confidence": 0.0-1.0}
-- supported = true ONLY if the excerpts clearly contain information backing the correction.
-- If the sources are off-topic, generic, paywalled/empty, or do not contain the relevant facts, supported = false.
-- Be strict: when in doubt, supported = false.
+You are a strict source-verification assistant. You receive a user comment (the claim), a drafted editorial correction, and excerpts fetched from each cited source (numbered).
+For EACH source, decide whether ITS excerpt clearly contains information that substantiates the drafted correction.
+Respond ONLY with JSON, no markdown:
+{"results": [{"index": 1, "supports": true|false}, ...]}
+- supports = true ONLY if that specific source's excerpt clearly backs the correction's factual statements.
+- Error pages, "not found"/404 pages, login/paywall walls, generic homepages, or off-topic content = false.
+- Be strict: when in doubt for a source, supports = false.
 V;
 
-        $userMsg = "CLAIM (user comment):\n{$claim}\n\nDRAFTED CORRECTION:\n{$draft}\n\nSOURCE EXCERPTS:\n"
+        $userMsg = "CLAIM (user comment):\n{$claim}\n\nDRAFTED CORRECTION:\n{$draft}\n\nSOURCES:\n"
             . implode("\n\n---\n\n", $excerpts);
 
         try {
@@ -485,7 +513,7 @@ V;
                 ],
                 'json' => [
                     'model'      => self::MODEL_SONNET,
-                    'max_tokens' => 200,
+                    'max_tokens' => 400,
                     'system'     => $system,
                     'messages'   => [['role' => 'user', 'content' => $userMsg]],
                 ],
@@ -495,13 +523,21 @@ V;
             $raw   = $body['content'][0]['text'] ?? '{}';
             $clean = preg_replace('/^```json\s*|\s*```$/s', '', trim($raw));
             $data  = json_decode($clean, true);
-            if (!is_array($data)) return false;
+            if (!is_array($data) || !is_array($data['results'] ?? null)) return [];
 
-            return ((bool) ($data['supported'] ?? false))
-                && ((float) ($data['confidence'] ?? 0.0) >= 0.7);
+            $supported = [];
+            foreach ($data['results'] as $r) {
+                if (!empty($r['supports'])) $supported[(int) ($r['index'] ?? 0)] = true;
+            }
+
+            $kept = [];
+            foreach ($fetched as $i => $f) {
+                if (isset($supported[$i + 1])) $kept[] = $f['src'];
+            }
+            return $kept;
         } catch (\Throwable $e) {
-            $this->logger?->warning('Fact-check relevance check failed: ' . $e->getMessage());
-            return false; // in dubbio non si auto-pubblica
+            $this->logger?->warning('Fact-check source verification failed: ' . $e->getMessage());
+            return []; // in dubbio non si auto-pubblica
         }
     }
 
