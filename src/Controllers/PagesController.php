@@ -442,9 +442,10 @@ class PagesController
                 : max(0.01, min(1.0, (float) $body['sonnet_confidence_threshold'])))
             : false;
 
+        // null = not sent (leave untouched); true/false = explicit value to save.
         $factCheck = array_key_exists('fact_check_enabled', $body)
             ? (bool) $body['fact_check_enabled']
-            : false;
+            : null;
 
         // Validate that haiku > sonnet when both are set
         $haikuVal  = $haiku  !== false ? $haiku  : null;
@@ -459,7 +460,7 @@ class PagesController
         $data = ['updated_by' => $auth->sub, 'updated_at' => $now];
         if ($haiku  !== false) $data['haiku_confidence_threshold']  = $haikuVal;
         if ($sonnet !== false) $data['sonnet_confidence_threshold'] = $sonnetVal;
-        if ($factCheck !== false) $data['fact_check_enabled']       = $factCheck ? 1 : 0;
+        if ($factCheck !== null)  $data['fact_check_enabled']       = $factCheck ? 1 : 0;
 
         if ($existing) {
             DB::table('page_settings')->where('page_id', $page->id)->update($data);
