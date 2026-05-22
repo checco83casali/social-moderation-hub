@@ -258,15 +258,37 @@ class ModerationController
 
         $html = $this->buildLegalDossierHtml((array) $row, $report ? (array) $report : []);
 
-        $dompdf = new \Dompdf\Dompdf(['isRemoteEnabled' => false]);
-        $dompdf->loadHtml($html, 'UTF-8');
-        $dompdf->setPaper('A4', 'portrait');
-        $dompdf->render();
+        try {
+            // dompdf deve poter SCRIVERE la cache dei font: di default punta dentro
+            // vendor/, spesso non scrivibile dall'utente del web server (errore in
+            // render()). La spostiamo in una dir temporanea scrivibile a runtime.
+            $cacheDir = sys_get_temp_dir() . '/smh-dompdf';
+            if (!is_dir($cacheDir)) {
+                @mkdir($cacheDir, 0775, true);
+            }
 
-        $response->getBody()->write($dompdf->output());
-        return $response
-            ->withHeader('Content-Type', 'application/pdf')
-            ->withHeader('Content-Disposition', 'attachment; filename="dossier-segnalazione-' . $commentId . '.pdf"');
+            $options = new \Dompdf\Options();
+            $options->set('isRemoteEnabled', false);
+            $options->set('defaultFont', 'DejaVu Sans');
+            $options->set('tempDir', $cacheDir);
+            $options->set('fontDir', $cacheDir);
+            $options->set('fontCache', $cacheDir);
+
+            $dompdf = new \Dompdf\Dompdf($options);
+            $dompdf->loadHtml($html, 'UTF-8');
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->render();
+
+            $response->getBody()->write($dompdf->output());
+            return $response
+                ->withHeader('Content-Type', 'application/pdf')
+                ->withHeader('Content-Disposition', 'attachment; filename="dossier-segnalazione-' . $commentId . '.pdf"');
+        } catch (\Throwable $e) {
+            error_log('[legalDossier] PDF generation failed for comment ' . $commentId . ': ' . $e->getMessage());
+            return $this->json($response, [
+                'error' => 'Generazione PDF fallita: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /** Build the HTML for the legal dossier PDF. */

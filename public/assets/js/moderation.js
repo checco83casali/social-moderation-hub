@@ -175,7 +175,12 @@ async function downloadLegalDossier(commentId) {
     const r = await fetch(HUB_URL + '/api/comments/' + commentId + '/legal-dossier', {
       headers: { 'Authorization': 'Bearer ' + TOKEN },
     });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
+    if (!r.ok) {
+      // Il server risponde JSON in caso d'errore: mostra il motivo reale.
+      let msg = 'HTTP ' + r.status;
+      try { const j = await r.json(); if (j && j.error) msg = j.error; } catch (_) {}
+      throw new Error(msg);
+    }
     const blob = await r.blob();
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
@@ -186,7 +191,7 @@ async function downloadLegalDossier(commentId) {
     a.remove();
     URL.revokeObjectURL(url);
   } catch (e) {
-    toast('Errore nel download del dossier', 'err');
+    toast('Errore nel download del dossier: ' + (e.message || ''), 'err');
   }
 }
 
