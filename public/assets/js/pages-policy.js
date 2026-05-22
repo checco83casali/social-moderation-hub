@@ -149,6 +149,7 @@ async function savePageSettings() {
 let _fbSdkReady = null;          // Promise<void>, resolves once FB SDK + init done
 let _fbAvailablePages = [];      // last fetched list (rendered as checkboxes)
 let _fbUserToken = null;
+let _fbLongLivedToken = null;    // user token long-lived (dal backend) per page token che non scadono
 let _fbOwnerId = null;
 
 function _setAddPagesStep(step) {
@@ -191,6 +192,7 @@ async function openAddPagesModal() {
   // Reset state
   _fbAvailablePages = [];
   _fbUserToken = null;
+  _fbLongLivedToken = null;
   _fbOwnerId = null;
   document.getElementById('add-pages-error').style.display = 'none';
   _setAddPagesStep('login');
@@ -232,24 +234,11 @@ function fbLoginAndListPages() {
     (async () => {
     try {
       const data = await api('/pages/available', 'POST', { user_token: _fbUserToken });
+      // Il backend ha già scambiato per uno user token long-lived: lo usiamo per
+      // far risolvere lato server page token che NON scadono. Non chiediamo più i
+      // token al client (FB.api col token short-lived faceva scadere tutto in pochi giorni).
+      _fbLongLivedToken = data.long_lived_token || _fbUserToken;
       _fbAvailablePages = data.pages || [];
-      // The backend exchanged for a long-lived token but stripped per-page access_token.
-      // We need page access_tokens to connect — request them directly from FB Graph using
-      // the user token returned by FB.login (then call /pages/available only for the
-      // "already_connected" annotation).
-      const pagesResp = await new Promise(res => {
-        FB.api('/me/accounts', 'GET',
-          { fields: 'id,name,access_token,fan_count', access_token: _fbUserToken },
-          res);
-      });
-      const fbPages = (pagesResp && pagesResp.data) || [];
-      const connectedSet = new Set(
-        _fbAvailablePages.filter(p => p.already_connected).map(p => p.id)
-      );
-      _fbAvailablePages = fbPages.map(p => ({
-        ...p,
-        already_connected: connectedSet.has(p.id),
-      }));
       renderAvailablePages();
       _setAddPagesStep('list');
     } catch (e) {
@@ -285,10 +274,12 @@ async function connectSelectedPages() {
 
   const selected = Array.from(checks).map(c => _fbAvailablePages[c.dataset.idx]);
   const payload = {
+    // Lo user token long-lived: il backend risolve un page token che non scade.
+    user_token: _fbLongLivedToken,
     pages: selected.map(p => ({
       page_id:           p.id,
       page_name:         p.name,
-      page_access_token: p.access_token,
+      page_access_token: p.access_token || null, // fallback; il backend preferisce risolverlo
       owner_fb_id:       _fbOwnerId,
     })),
   };

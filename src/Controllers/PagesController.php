@@ -111,6 +111,16 @@ class PagesController
         $auth = $request->getAttribute('auth_user');
         $body = (array) $request->getParsedBody();
 
+        // Se è presente lo user token long-lived, risolvi lato server un page
+        // token che non scade (prevale su quello short-lived del client).
+        $userToken = (string) ($body['user_token'] ?? '');
+        if (!empty($body['page_id']) && $userToken !== '') {
+            $resolved = $this->meta->getPageAccessToken($body['page_id'], $userToken);
+            if ($resolved) {
+                $body['page_access_token'] = $resolved;
+            }
+        }
+
         $required = ['page_id', 'page_name', 'page_access_token'];
         foreach ($required as $field) {
             if (empty($body[$field])) {
@@ -191,6 +201,9 @@ class PagesController
         $auth = $request->getAttribute('auth_user');
         $body = (array) $request->getParsedBody();
         $pages = $body['pages'] ?? [];
+        // User token long-lived (da /pages/available): serve a risolvere lato
+        // server un page token che NON scade, ignorando quello short-lived del client.
+        $userToken = (string) ($body['user_token'] ?? '');
 
         if (!is_array($pages) || empty($pages)) {
             return $this->json($response, ['error' => 'pages array is required'], 422);
@@ -213,6 +226,15 @@ class PagesController
             $pageId    = $p['page_id']           ?? null;
             $pageName  = $p['page_name']         ?? null;
             $pageToken = $p['page_access_token'] ?? null;
+
+            // Risolvi un page token long-lived (non scade) dallo user token long-lived.
+            // Se la risoluzione riesce, prevale sul token (short-lived) inviato dal client.
+            if ($pageId && $userToken !== '') {
+                $resolved = $this->meta->getPageAccessToken($pageId, $userToken);
+                if ($resolved) {
+                    $pageToken = $resolved;
+                }
+            }
 
             if (!$pageId || !$pageName || !$pageToken) {
                 $results[] = ['page_id' => $pageId, 'status' => 'failed', 'error' => 'Missing required fields'];

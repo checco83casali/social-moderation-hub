@@ -59,6 +59,34 @@ class MetaGraphService
         return $data['data'] ?? [];
     }
 
+    /**
+     * Risolve il Page Access Token a partire da uno USER token long-lived.
+     * Un page token derivato da uno user token long-lived NON scade (finché
+     * l'utente non cambia password / revoca i permessi) — è il modo corretto
+     * per ottenere un token "permanente" da salvare. Usare questo invece del
+     * token short-lived della sessione JS SDK (che scade in poche ore/giorni).
+     * @return string|null il token, oppure null se la pagina non è gestita / errore.
+     */
+    public function getPageAccessToken(string $pageId, string $userToken): ?string
+    {
+        try {
+            $response = $this->http->get($pageId, [
+                'query' => [
+                    'access_token' => $userToken,
+                    'fields'       => 'access_token',
+                ],
+            ]);
+            $data = json_decode((string) $response->getBody(), true);
+            return $data['access_token'] ?? null;
+        } catch (GuzzleException $e) {
+            $body = ($e instanceof \GuzzleHttp\Exception\RequestException && $e->getResponse())
+                ? (string) $e->getResponse()->getBody()
+                : $e->getMessage();
+            error_log("[MetaGraph] getPageAccessToken failed for {$pageId}: {$body}");
+            return null;
+        }
+    }
+
     // ──────────────────────────────────────────────────────────────────
     // Webhook management
     // ──────────────────────────────────────────────────────────────────
