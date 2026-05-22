@@ -25,8 +25,18 @@ class MetaGraphService
     ) {
         $this->http = new Client([
             'base_uri' => self::BASE_URL . self::GRAPH_VERSION . '/',
-            'timeout'  => 15,
+            'timeout'  => 30,
         ]);
+    }
+
+    /**
+     * Rimuove il valore di access_token da URL/messaggi prima di loggarli o
+     * mostrarli: i messaggi di errore di Guzzle includono l'URL completo della
+     * richiesta, token compreso — non deve MAI finire nei log o in dashboard.
+     */
+    private function redact(string $text): string
+    {
+        return preg_replace('/(access_token=)[^&\s"]+/i', '$1[REDACTED]', $text) ?? $text;
     }
 
     // ──────────────────────────────────────────────────────────────────
@@ -82,7 +92,7 @@ class MetaGraphService
             $body = ($e instanceof \GuzzleHttp\Exception\RequestException && $e->getResponse())
                 ? (string) $e->getResponse()->getBody()
                 : $e->getMessage();
-            error_log("[MetaGraph] getPageAccessToken failed for {$pageId}: {$body}");
+            error_log("[MetaGraph] getPageAccessToken failed for {$pageId}: " . $this->redact($body));
             return null;
         }
     }
@@ -111,7 +121,7 @@ class MetaGraphService
             $body = method_exists($e, 'getResponse') && $e->getResponse()
                 ? (string) $e->getResponse()->getBody()
                 : $e->getMessage();
-            error_log("[MetaGraphService] subscribePageWebhook exception for page {$pageId}: {$body}");
+            error_log("[MetaGraphService] subscribePageWebhook exception for page {$pageId}: " . $this->redact($body));
             return false;
         }
     }
@@ -219,6 +229,7 @@ class MetaGraphService
             $detail = ($e instanceof \GuzzleHttp\Exception\RequestException && $e->getResponse())
                 ? (string) $e->getResponse()->getBody()
                 : $e->getMessage();
+            $detail = $this->redact($detail);
             error_log("[MetaGraph] hideComment failed for {$commentId}: {$detail}");
 
             $fbMsg = $detail;
@@ -281,6 +292,7 @@ class MetaGraphService
             $detail = ($e instanceof \GuzzleHttp\Exception\RequestException && $e->getResponse())
                 ? (string) $e->getResponse()->getBody()
                 : $e->getMessage();
+            $detail = $this->redact($detail);
             error_log("[MetaGraph] replyToComment failed for {$commentId}: {$detail}");
 
             // Estrae il messaggio strutturato di Facebook se presente.
