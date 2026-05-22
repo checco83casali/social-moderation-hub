@@ -340,7 +340,18 @@ async function decide(decision) {
     const payload = decision === 'hide_silent'
       ? { decision: 'hide', note, silent: true }
       : { decision, note };
-    await api(`/comments/${currentComment.id}/decide`, 'POST', payload);
+    const res = await api(`/comments/${currentComment.id}/decide`, 'POST', payload);
+
+    // Per i nascondimenti: verifica l'esito REALE su Facebook, non assumere successo.
+    if ((decision === 'hide' || decision === 'hide_silent') && res && res.fb_hidden === false) {
+      btns.forEach(b => { b.disabled = false; b.style.opacity = ''; });
+      if (clickedBtn && clickedBtn._origHTML) clickedBtn.innerHTML = clickedBtn._origHTML;
+      splash('Facebook ha rifiutato il nascondimento',
+             res.fb_error || 'Il commento non è stato nascosto online. Verifica il token della pagina o se il commento esiste ancora.',
+             { type: 'err', duration: 5000 });
+      return;
+    }
+
     const toastMsg = {
       allow:        'Commento approvato',
       hide:         'Commento nascosto · utente notificato',

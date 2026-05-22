@@ -165,6 +165,17 @@ class MetaGraphService
      */
     public function hideComment(string $commentId, string $pageToken): bool
     {
+        return $this->hideCommentResult($commentId, $pageToken)['ok'];
+    }
+
+    /**
+     * Come hideComment(), ma ritorna il motivo reale dell'eventuale errore di
+     * Facebook (token scaduto, commento non nascondibile, id stale…), così il
+     * moderatore vede perché online non è cambiato nulla.
+     * @return array{ok:bool,error:?string}
+     */
+    public function hideCommentResult(string $commentId, string $pageToken): array
+    {
         try {
             $response = $this->http->post($commentId, [
                 'query' => [
@@ -173,9 +184,22 @@ class MetaGraphService
                 ],
             ]);
             $data = json_decode((string) $response->getBody(), true);
-            return (bool) ($data['success'] ?? false);
-        } catch (GuzzleException) {
-            return false;
+            return (bool) ($data['success'] ?? false)
+                ? ['ok' => true,  'error' => null]
+                : ['ok' => false, 'error' => 'Facebook non ha confermato il nascondimento'];
+        } catch (GuzzleException $e) {
+            $detail = ($e instanceof \GuzzleHttp\Exception\RequestException && $e->getResponse())
+                ? (string) $e->getResponse()->getBody()
+                : $e->getMessage();
+            error_log("[MetaGraph] hideComment failed for {$commentId}: {$detail}");
+
+            $fbMsg = $detail;
+            $j = json_decode($detail, true);
+            if (isset($j['error']['message'])) {
+                $fbMsg = $j['error']['message'];
+                if (isset($j['error']['code'])) $fbMsg .= " (code {$j['error']['code']})";
+            }
+            return ['ok' => false, 'error' => $fbMsg];
         }
     }
 

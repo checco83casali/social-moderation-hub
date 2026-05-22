@@ -765,8 +765,9 @@ class ModerationService
         $appealToken = $this->generateAppealToken($commentId, $socialUser['id']);
 
         // 2. Post appeal reply (sub-comment, hidden from public) — skip if silent
+        $replyOk = true;
         if (!$silent) {
-            $this->postHideReply(
+            $replyOk = $this->postHideReply(
                 platformCommentId: $platformId,
                 displayName:       $displayName,
                 publicReason:      $result->publicReason ?? $result->reason ?? '',
@@ -777,9 +778,30 @@ class ModerationService
             );
         }
 
-        // 3. Hide the comment on Facebook
+        // 3. Hide the comment on Facebook — cattura l'esito reale (non assumere successo)
+        $hideRes = ['ok' => true, 'error' => null];
         if ($platformId) {
-            $this->meta->hideComment($platformId, $page['page_access_token']);
+            $hideRes = $this->meta->hideCommentResult($platformId, $page['page_access_token']);
+            if (!$hideRes['ok']) {
+                $this->logger?->warning("Comment #{$commentId}: Facebook ha rifiutato il nascondimento: {$hideRes['error']}");
+            }
+        }
+
+        // Se Facebook ha rifiutato il nascondimento il commento è ANCORA pubblico:
+        // non dichiarare un successo che non c'è. Lascia il commento in coda
+        // (nessun cambio di stato, nessun incremento violazioni) per il retry.
+        if (!$hideRes['ok']) {
+            // Resta in coda: final_action torna allo stato "in attesa" (ENUM valido).
+            DB::table('moderation_log')->where('id', $logId)->update([
+                'final_action' => 'pending_human',
+            ]);
+            return [
+                'action'        => 'hide_failed',
+                'comment_id'    => $commentId,
+                'fb_hidden'     => false,
+                'fb_reply_sent' => $silent ? null : $replyOk,
+                'fb_error'      => $hideRes['error'],
+            ];
         }
 
         // 4. Persist state
@@ -829,13 +851,17 @@ class ModerationService
         $this->logger?->info("Comment #{$commentId} hidden" . ($reportable ? ' [REPORTABLE]' : '') . ($banAction ? " + ban: {$banAction}" : ''));
 
         return [
-            'action'      => $reportable ? 'hidden_reportable' : 'hidden',
-            'comment_id'  => $commentId,
-            'user_id'     => $socialUser['id'],
-            'violations'  => $newCount,
-            'decided_by'  => $decidedBy,
-            'appeal_token'=> $appealToken,
-            'ban_action'  => $banAction,
+            'action'        => $reportable ? 'hidden_reportable' : 'hidden',
+            'comment_id'    => $commentId,
+            'user_id'       => $socialUser['id'],
+            'violations'    => $newCount,
+            'decided_by'    => $decidedBy,
+            'appeal_token'  => $appealToken,
+            'ban_action'    => $banAction,
+            // Esito reale lato Facebook (per non dichiarare un successo che non c'è stato)
+            'fb_hidden'     => $hideRes['ok'],
+            'fb_reply_sent' => $silent ? null : $replyOk,
+            'fb_error'      => $hideRes['ok'] ? null : $hideRes['error'],
         ];
     }
 
@@ -852,7 +878,7 @@ class ModerationService
         string $pageToken,
         bool   $reportable,
         int    $logId,
-    ): void {
+    ): bool {
         // Respect admin setting — default ON (GDPR recommended)
         try {
             $enabled = DB::table('app_settings')->where('key', 'removal_reply_enabled')->value('value');
@@ -861,7 +887,7 @@ class ModerationService
                     'removal_reply_sent' => 0,
                     'removal_reply_text' => null,
                 ]);
-                return;
+                return true; // disabilitato di proposito: non è un fallimento
             }
         } catch (\Throwable) {}
 
@@ -881,6 +907,8 @@ class ModerationService
             'removal_reply_sent' => $sent ? 1 : 0,
             'removal_reply_text' => $message,
         ]);
+
+        return $sent;
     }
 
     /**
