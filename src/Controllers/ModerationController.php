@@ -331,7 +331,7 @@ class ModerationController
             . $row('Stato ban', $e($c['ban_status']))
             . '</table>'
             . '<h2>Commento</h2>'
-            . $row('ID commento Facebook', $e($c['platform_comment_id']))
+            . '<table>' . $row('ID commento Facebook', $e($c['platform_comment_id'])) . '</table>'
             . '<div class="box">' . $e($c['content']) . '</div>'
             . '<table style="margin-top:6px">'
             . $row('Ricevuto il', $e($c['received_at']))
