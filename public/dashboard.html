@@ -885,6 +885,16 @@
 
 <div id="toast"></div>
 
+<!-- Splash di conferma pubblicazione (si chiude da solo) -->
+<div id="splash" onclick="closeSplash()">
+  <div class="splash-card">
+    <div class="splash-icon" id="splash-icon"></div>
+    <div class="splash-title" id="splash-title"></div>
+    <div class="splash-sub" id="splash-sub"></div>
+    <div class="splash-progress"><i id="splash-bar"></i></div>
+  </div>
+</div>
+
 <!-- Modal: Decisione ricorso -->
 <div id="modal-appeal-decision" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center">
   <div style="background:var(--bg-card);border-radius:var(--radius-lg);padding:28px 32px;width:440px;max-width:94vw;box-shadow:0 8px 32px rgba(0,0,0,.25)">

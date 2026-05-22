@@ -284,6 +284,36 @@ nav { flex: 1; padding: 12px 10px; }
 #toast.ok  { background: var(--success-bg); color: var(--success); border: 1px solid rgba(62,207,142,.2); }
 #toast.err { background: var(--danger-bg);  color: var(--danger);  border: 1px solid rgba(247,82,82,.2); }
 
+/* ── Splash di conferma (auto-chiusura) ───────────────────────── */
+#splash {
+  position: fixed; inset: 0; z-index: 1100;
+  display: none; align-items: center; justify-content: center;
+  background: rgba(8, 15, 30, .55); backdrop-filter: blur(2px);
+  opacity: 0; transition: opacity .18s ease;
+}
+#splash.show { display: flex; opacity: 1; }
+#splash .splash-card {
+  background: var(--surface, #fff); border-radius: 18px;
+  padding: 34px 40px 26px; text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,.28);
+  max-width: 360px; width: calc(100% - 48px);
+  transform: scale(.92); transition: transform .22s cubic-bezier(.2,.9,.3,1.3);
+}
+#splash.show .splash-card { transform: scale(1); }
+#splash .splash-icon {
+  width: 64px; height: 64px; margin: 0 auto 16px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: var(--success-bg, #e8faf1); color: var(--success, #1f9d57);
+}
+#splash.err .splash-icon { background: var(--danger-bg, #fff0f0); color: var(--danger, #f75252); }
+#splash .splash-icon svg { width: 34px; height: 34px; }
+#splash .splash-title { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+#splash .splash-sub   { font-size: 13px; color: var(--muted); line-height: 1.5; }
+#splash .splash-progress { height: 3px; border-radius: 3px; background: var(--border, #e5e9f0); margin-top: 20px; overflow: hidden; }
+#splash .splash-progress > i { display: block; height: 100%; background: var(--success, #1f9d57); width: 100%; transform-origin: left; }
+#splash.err .splash-progress > i { background: var(--danger, #f75252); }
+@keyframes splashDeplete { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
 /* ── Forms ────────────────────────────────────────────────────── */
 .policy-form { padding: 24px; max-width: 720px; }
 .form-group { margin-bottom: 18px; }

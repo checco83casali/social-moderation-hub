@@ -306,9 +306,11 @@ function renderDetail(c) {
           </div>`).join('')}
         </div>` : `
         <div style="font-size:11px;color:var(--muted);padding-top:8px;border-top:1px solid rgba(79,142,247,.15)">Nessuna fonte allegata da Sonnet.</div>`}
-        <button class="btn-sm activate" onclick="openFactcheckReply()">Modifica e invia risposta →</button>
+        <button class="btn" style="width:100%;background:var(--accent);color:#fff;font-weight:600;padding:12px;font-size:14px" onclick="openFactcheckReply()">📣 Pubblica risposta fact-check su Facebook →</button>
       </div>` : ''}
       <textarea class="note-input" id="mod-note" rows="2" placeholder="Nota interna opzionale…"></textarea>
+      ${c.ai_fact_check_draft ? `
+      <div style="font-size:11px;color:var(--muted);margin:4px 0 8px;text-transform:uppercase;letter-spacing:.05em">Azioni alternative</div>` : ''}
       <div class="action-grid">
         <button class="btn btn-approve" onclick="decide('allow')">✓ Approva commento</button>
         <button class="btn" style="background:#fff8e7;color:#92400e;border:1px solid rgba(247,178,68,.35)" onclick="decide('hide')">🙈 Nascondi + notifica utente</button>
@@ -433,7 +435,7 @@ async function confirmFactcheckReply() {
     });
 
     closeModal('modal-factcheck-reply');
-    toast('Risposta pubblicata e commento approvato', 'ok');
+    splash('Risposta pubblicata su Facebook', 'Commento approvato e rimosso dalla coda.', { type: 'ok' });
 
     currentComment = null;
     document.getElementById('detail-content').style.display = 'none';

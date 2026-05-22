@@ -68,6 +68,41 @@ function toast(msg, type = 'ok') {
   toastTimer = setTimeout(() => el.className = '', 3000);
 }
 
+// ── Splash di conferma (centrato, si chiude da solo) ───────────────
+const SPLASH_ICONS = {
+  ok:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  err: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+};
+let splashTimer;
+/**
+ * Mostra un riquadro di conferma centrato che si chiude in automatico.
+ * @param {string} title  riga principale
+ * @param {string} sub    sottotitolo (opzionale)
+ * @param {{type?:'ok'|'err', duration?:number}} opts
+ */
+function splash(title, sub = '', opts = {}) {
+  const type     = opts.type || 'ok';
+  const duration = opts.duration || 2500;
+  const el  = document.getElementById('splash');
+  const bar = document.getElementById('splash-bar');
+  document.getElementById('splash-icon').innerHTML  = SPLASH_ICONS[type] || SPLASH_ICONS.ok;
+  document.getElementById('splash-title').textContent = title;
+  document.getElementById('splash-sub').textContent   = sub;
+  el.className = 'show ' + type;
+  // (ri)avvia l'animazione della barra di avanzamento
+  bar.style.animation = 'none';
+  // eslint-disable-next-line no-unused-expressions
+  bar.offsetHeight; // reflow
+  bar.style.animation = `splashDeplete ${duration}ms linear forwards`;
+  clearTimeout(splashTimer);
+  splashTimer = setTimeout(closeSplash, duration);
+}
+function closeSplash() {
+  clearTimeout(splashTimer);
+  const el = document.getElementById('splash');
+  if (el) el.className = '';
+}
+
 function renderBarChart(elId, data, colors, labels, sortDesc = false, normaliseToMax = false) {
   const el = document.getElementById(elId);
   if (!el) return;
