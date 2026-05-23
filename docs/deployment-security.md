@@ -186,6 +186,9 @@ removed — it leaked token hashes and could fill the disk).
 - [ ] OAuth client secrets and `ANTHROPIC_API_KEY` kept only in `.env`.
 - [ ] File permissions: `logs/` writable by PHP, everything else read-only to
       the web user.
+- [ ] **Delete `public/install.php`** after setup (the web installer). It writes
+      `.env` and runs SQL, so it must not stay reachable. It self-locks via the
+      `.installed` file, but deleting it is the safe default.
 
 ---
 

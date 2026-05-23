@@ -91,6 +91,8 @@ cp .env.example .env
 # Edit .env: DB credentials, ANTHROPIC_API_KEY, META_APP_ID/SECRET, OAuth providers
 
 # 4. Run the installer (creates DB, runs migrations, validates config)
+#    CLI:  php install.php
+#    or WEB: point the document root to public/ and open /install.php in a browser
 php install.php
 
 # 5. Point the web server document root to public/
