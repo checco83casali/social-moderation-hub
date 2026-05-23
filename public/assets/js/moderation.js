@@ -70,11 +70,14 @@ async function loadQueue() {
     const d = await api('/queue?limit=50');
     if (!d.items || d.items.length === 0) {
       list.innerHTML = '<div class="empty">Nessun commento in attesa ✓</div>';
+      if (currentComment) {
+        toast('Il commento che stavi revisionando è già stato gestito da un altro operatore.', 'warn');
+      }
       return;
     }
     d.items.forEach(item => { queueMap[item.id] = item; });
     list.innerHTML = d.items.map(item => `
-      <div class="q-item" data-id="${item.id}" onclick="selectComment(${item.id})">
+      <div class="q-item${currentComment && currentComment.id === item.id ? ' selected' : ''}" data-id="${item.id}" onclick="selectComment(${item.id})">
         <div class="q-avatar">${(item.display_name||'?')[0].toUpperCase()}</div>
         <div class="q-body">
           <div class="q-header">
@@ -87,6 +90,12 @@ async function loadQueue() {
           <div class="q-text">${esc(item.content)}</div>
         </div>
       </div>`).join('');
+
+    // Se stai revisionando un commento che nel frattempo è uscito dalla coda
+    // (gestito da un altro operatore), avvisa invece di lasciarti decidere a vuoto.
+    if (currentComment && !d.items.some(item => item.id === currentComment.id)) {
+      toast('Il commento che stavi revisionando è già stato gestito da un altro operatore.', 'warn');
+    }
   } catch (e) {
     list.innerHTML = '<div class="empty">Errore nel caricamento</div>';
   }
