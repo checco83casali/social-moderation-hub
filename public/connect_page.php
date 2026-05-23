@@ -64,7 +64,11 @@ if (isset($_GET['code'])) {
     $userToken = $tokenData['access_token'] ?? null;
 
     if (!$userToken) {
-        die('Errore token Facebook: ' . print_r($tokenData, true));
+        // Non esporre il payload grezzo di Facebook (può contenere dettagli interni):
+        // logga lato server e mostra un messaggio generico.
+        error_log('connect_page: scambio code→token fallito: ' . json_encode($tokenData));
+        http_response_code(502);
+        die('Errore durante l\'autenticazione con Facebook. Riprova dal dashboard.');
     }
 
     // Recupera FB user ID (per proteggerlo da ban futuri)

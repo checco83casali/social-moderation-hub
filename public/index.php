@@ -10,6 +10,7 @@ use ModerationHub\Controllers\PagesController;
 use ModerationHub\Controllers\PolicyController;
 use ModerationHub\Controllers\WebhookController;
 use ModerationHub\Middleware\AuthMiddleware;
+use ModerationHub\Middleware\AccessGuardMiddleware;
 use ModerationHub\Services\OAuthService;
 use Slim\Factory\AppFactory;
 use Slim\Psr7\Response;
@@ -41,24 +42,33 @@ $app = AppFactory::create();
 $app->addBodyParsingMiddleware();
 
 // ── CORS middleware ────────────────────────────────────────────────
-// Must be added BEFORE routing so OPTIONS requests never reach the router
-$app->add(function ($request, $handler) {
+// Must be added BEFORE routing so OPTIONS requests never reach the router.
+// Origin is locked to APP_URL (the dashboard origin) — never a wildcard, so
+// other sites cannot drive authenticated calls from a victim's browser.
+$corsOrigin = $_ENV['APP_URL'] ?? '';
+$app->add(function ($request, $handler) use ($corsOrigin) {
     // Handle OPTIONS preflight immediately — never pass to router
     if ($request->getMethod() === 'OPTIONS') {
         $response = new Response();
         return $response
-            ->withHeader('Access-Control-Allow-Origin', '*')
+            ->withHeader('Access-Control-Allow-Origin', $corsOrigin ?: 'null')
             ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
             ->withHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type')
+            ->withHeader('Vary', 'Origin')
             ->withStatus(200);
     }
 
     $response = $handler->handle($request);
     return $response
-        ->withHeader('Access-Control-Allow-Origin', $_ENV['APP_URL'] ?? '*')
+        ->withHeader('Access-Control-Allow-Origin', $corsOrigin ?: 'null')
         ->withHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type')
-        ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+        ->withHeader('Vary', 'Origin');
 });
+
+// ── Network access guard (opt-in: internal IP allowlist + public-domain split)
+// No-op unless INTERNAL_IP_ALLOWLIST or PUBLIC_DOMAIN are set in .env.
+$app->add(new AccessGuardMiddleware());
 
 $app->addRoutingMiddleware();
 
@@ -106,37 +116,8 @@ $app->get('/privacy', function ($request, $response) {
     $response->getBody()->write($html);
     return $response->withHeader('Content-Type', 'text/html; charset=utf-8');
 });
-// Public: Meta webhook (signature-verified internally)
-// GET: inline handler with trim + diagnostic log (see logs/webhook_verify.log)
-$app->get('/webhook/meta', function ($request, $response) {
-    $params   = $request->getQueryParams();
-    $expected = trim($_ENV['META_WEBHOOK_VERIFY_TOKEN'] ?? $_ENV['APP_SECRET'] ?? '');
-    $received = trim((string)($params['hub_verify_token'] ?? ''));
-    $mode     = (string)($params['hub_mode'] ?? '');
-
-    // Diagnostic log — remove once verification passes
-    @file_put_contents(
-        __DIR__ . '/../logs/webhook_verify.log',
-        sprintf(
-            "[%s] mode=%s exp_len=%d recv_len=%d exp_hash=%s recv_hash=%s match=%s\n",
-            date('c'),
-            $mode,
-            strlen($expected),
-            strlen($received),
-            substr(sha1($expected), 0, 8),
-            substr(sha1($received), 0, 8),
-            hash_equals($expected, $received) ? 'YES' : 'NO'
-        ),
-        FILE_APPEND
-    );
-
-    if ($mode === 'subscribe' && $expected !== '' && hash_equals($expected, $received)) {
-        $response->getBody()->write((string)($params['hub_challenge'] ?? ''));
-        return $response->withStatus(200);
-    }
-    $response->getBody()->write('Forbidden');
-    return $response->withStatus(403);
-});
+// Public: Meta webhook (token-verified on GET, HMAC-signature-verified on POST)
+$app->get('/webhook/meta',  [WebhookController::class, 'verify']);
 $app->post('/webhook/meta', [WebhookController::class, 'receive']);
 
 // Protected: API (requires valid JWT)

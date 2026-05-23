@@ -128,9 +128,14 @@ class MetaGraphService
 
     public function verifyWebhook(array $queryParams, string $verifyToken): ?string
     {
+        $verifyToken = trim($verifyToken);
+        $received    = trim((string) ($queryParams['hub_verify_token'] ?? ''));
+
+        // Fail closed if no token is configured, and compare in constant time.
         if (
-            ($queryParams['hub_mode']         ?? '') === 'subscribe' &&
-            ($queryParams['hub_verify_token'] ?? '') === $verifyToken
+            $verifyToken !== '' &&
+            ($queryParams['hub_mode'] ?? '') === 'subscribe' &&
+            hash_equals($verifyToken, $received)
         ) {
             return $queryParams['hub_challenge'] ?? null;
         }
@@ -376,6 +381,10 @@ class MetaGraphService
 
     public function validateSignature(string $rawBody, string $signature): bool
     {
+        // Fail closed: an empty app secret would make the HMAC forgeable by anyone.
+        if ($this->appSecret === '' || $signature === '') {
+            return false;
+        }
         $expected = 'sha256=' . hash_hmac('sha256', $rawBody, $this->appSecret);
         return hash_equals($expected, $signature);
     }

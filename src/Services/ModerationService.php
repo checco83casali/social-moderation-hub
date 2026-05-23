@@ -490,9 +490,22 @@ class ModerationService
      */
     private function pseudonymizeUserId(string $platformUserId): string
     {
-        $secret = $_ENV['APP_SECRET'] ?? 'fallback-secret';
-        $hash   = hash_hmac('sha256', $platformUserId, $secret);
+        $hash = hash_hmac('sha256', $platformUserId, $this->requireAppSecret());
         return 'User-' . substr($hash, 0, 6);
+    }
+
+    /**
+     * Returns APP_SECRET or throws. Never falls back to a constant: a known
+     * fallback secret would make appeal tokens and pseudonyms forgeable by
+     * anyone who has read the (open-source) code.
+     */
+    private function requireAppSecret(): string
+    {
+        $secret = (string) ($_ENV['APP_SECRET'] ?? '');
+        if ($secret === '') {
+            throw new \RuntimeException('APP_SECRET is not configured');
+        }
+        return $secret;
     }
 
     // ──────────────────────────────────────────────────────────────────
@@ -959,7 +972,7 @@ class ModerationService
     private function generateAppealToken(int $commentId, int $socialUserId): string
     {
         $expires = time() + (86400 * 30); // 30 days
-        $secret  = $_ENV['APP_SECRET'] ?? 'fallback-secret';
+        $secret  = $this->requireAppSecret();
         $payload = "{$commentId}:{$socialUserId}:{$expires}";
         $sig     = hash_hmac('sha256', $payload, $secret);
         return rtrim(base64_encode("{$payload}:{$sig}"), '=');
@@ -975,7 +988,7 @@ class ModerationService
             $decoded = base64_decode(str_pad($token, strlen($token) + (4 - strlen($token) % 4) % 4, '='));
             [$commentId, $socialUserId, $expires, $sig] = explode(':', $decoded, 4);
 
-            $secret   = $_ENV['APP_SECRET'] ?? 'fallback-secret';
+            $secret   = $this->requireAppSecret();
             $payload  = "{$commentId}:{$socialUserId}:{$expires}";
             $expected = hash_hmac('sha256', $payload, $secret);
 

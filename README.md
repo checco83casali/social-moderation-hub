@@ -88,7 +88,17 @@ cp .env.example .env
 php install.php
 
 # 5. Point the web server document root to public/
+
+# 6. Harden the deployment — REQUIRED for production
+#    Restrict everything except the Meta webhook to internal IPs.
+#    Full guide: docs/deployment-security.md
 ```
+
+> ⚠️ **Before going to production, read [docs/deployment-security.md](docs/deployment-security.md).**
+> Only the Meta webhook (`/webhook/meta`) needs to be reachable from the public
+> internet — the dashboard, API, login and page-connect must be restricted to
+> internal/trusted IPs via the server firewall (and optionally the built-in
+> `INTERNAL_IP_ALLOWLIST` / `PUBLIC_DOMAIN` safety net).
 
 ### Docker (local dev)
 

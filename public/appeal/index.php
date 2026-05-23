@@ -42,7 +42,9 @@ function verifyToken(string $token): ?array
         if (count($parts) !== 4) return null;
         [$commentId, $socialUserId, $expires, $sig] = $parts;
 
-        $secret   = $_ENV['APP_SECRET'] ?? 'fallback-secret';
+        // No weak fallback: without a real secret, fail closed (tokens must be unforgeable).
+        $secret = (string) ($_ENV['APP_SECRET'] ?? '');
+        if ($secret === '') return null;
         $payload  = "{$commentId}:{$socialUserId}:{$expires}";
         $expected = hash_hmac('sha256', $payload, $secret);
 

@@ -98,6 +98,15 @@ You can also send a test event from the Meta dashboard:
 ## Webhook security
 
 Every incoming webhook POST is validated using HMAC-SHA256 signature verification
-(`X-Hub-Signature-256` header). Requests with invalid signatures are rejected with HTTP 403.
+(`X-Hub-Signature-256` header), compared in constant time. Requests with a missing
+or invalid signature — or if `META_APP_SECRET` is unset — are rejected with HTTP 403
+before any processing. The `GET` verification handshake compares `hub.verify_token`
+in constant time and fails closed if no `META_WEBHOOK_VERIFY_TOKEN` is configured.
 
 Never expose your `META_APP_SECRET` or `APP_SECRET` publicly.
+
+> **`/webhook/meta` is the only endpoint that must be reachable from the public
+> internet.** Lock down everything else (dashboard, `/api`, login, page-connect)
+> to internal IPs, and optionally serve the webhook from a dedicated public
+> subdomain. See **[deployment-security.md](deployment-security.md)** for the
+> firewall, reverse-proxy and split-domain configuration.
