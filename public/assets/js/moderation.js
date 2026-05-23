@@ -517,7 +517,7 @@ async function loadBans() {
         <td>${b.decided_by === 'ai' ? '<span class="badge-ai">AI</span>' : '<span class="badge-human">Umano</span>'}</td>
         <td><div class="ban-reason" title="${esc(b.reason)}">${esc(b.reason || '—')}</div></td>
         <td style="font-size:12px;color:var(--muted);white-space:nowrap">${relTime(b.banned_at)}</td>
-        <td style="font-size:12px;color:var(--muted);white-space:nowrap">${b.expires_at ? relTime(b.expires_at) : '∞'}</td>
+        <td style="font-size:12px;color:var(--muted);white-space:nowrap">${b.expires_at ? untilTime(b.expires_at) : '∞'}</td>
         <td><button class="btn-sm" onclick="doLiftBan(${b.social_user_id},'${esc(b.display_name||'questo utente')}')">Revoca</button></td>
       </tr>`).join('');
   } catch (e) {
@@ -730,7 +730,7 @@ async function openDrawer(userId) {
         ${bs.banned ? `
           <div style="background:var(--danger-bg);border:1px solid rgba(247,82,82,.2);border-radius:var(--radius);padding:10px 14px;font-size:13px;margin-bottom:14px">
             🚫 Ban ${bs.type==='perm_ban'?'permanente':'temporaneo'}
-            ${bs.expires_at ? '· scade '+relTime(bs.expires_at) : ''}
+            ${bs.expires_at ? '· scade '+untilTime(bs.expires_at) : ''}
             <br><span style="font-size:11px;color:var(--muted)">${esc(bs.reason||'')}</span>
           </div>
           <button class="btn btn-approve" style="width:100%;margin-bottom:14px" onclick="doLiftBan(${u.id},'${esc(u.display_name||'utente')}');closeDrawer()">

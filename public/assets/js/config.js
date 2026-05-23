@@ -59,6 +59,19 @@ function relTime(ts) {
   return Math.floor(diff / 86400) + 'g fa';
 }
 
+// Like relTime but for FUTURE timestamps (e.g. ban expiry): "tra 5g", "tra 3h".
+function untilTime(ts) {
+  if (!ts) return '';
+  const d = new Date(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(ts) ? ts.replace(' ', 'T') : ts);
+  if (isNaN(d)) return '';
+  const diff = Math.floor((d.getTime() - Date.now()) / 1000);
+  if (diff <= 0)    return 'scaduto';
+  if (diff < 60)    return 'tra <1m';
+  if (diff < 3600)  return 'tra ' + Math.floor(diff / 60) + 'm';
+  if (diff < 86400) return 'tra ' + Math.floor(diff / 3600) + 'h';
+  return 'tra ' + Math.floor(diff / 86400) + 'g';
+}
+
 let toastTimer;
 function toast(msg, type = 'ok') {
   const el = document.getElementById('toast');
