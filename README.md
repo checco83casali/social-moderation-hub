@@ -1,7 +1,13 @@
-# Social Moderation Hub
+<p align="center">
+  <img src="public/favicon.svg" width="84" height="84" alt="Social Moderation Hub logo">
+</p>
 
-**Two-stage AI + human content moderation for Facebook pages.**
-Self-hosted · PHP 8.1+ · MySQL 8 · Claude AI · Meta Graph API · MIT License
+<h1 align="center">Social Moderation Hub</h1>
+
+<p align="center">
+  <strong>Two-stage AI + human content moderation for Facebook pages.</strong><br>
+  Self-hosted · PHP 8.1+ · MySQL 8 · Claude AI · Meta Graph API · MIT License
+</p>
 
 ---
 
