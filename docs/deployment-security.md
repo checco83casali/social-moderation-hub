@@ -220,3 +220,53 @@ These are enforced in code and require no configuration:
 - Monitor `logs/` and the `webhook_events` table for repeated signature failures
   (possible probing).
 - Take regular encrypted DB backups; the moderation log is also your audit trail.
+
+---
+
+## 9. Environment variables — production reference
+
+Full template with inline comments: **`.env.example`**. Summary below.
+
+### Required
+
+| Variable | Notes |
+|---|---|
+| `APP_URL` | Dashboard/API origin. Also used for the CORS allowed origin. |
+| `APP_SECRET` | Random 64-char. Signs JWT sessions, appeal tokens, pseudonyms. **Must be unique** — never equal to `META_WEBHOOK_VERIFY_TOKEN` or `META_APP_SECRET`. App fails closed if empty. |
+| `APP_ENV` | `production` (hides verbose errors). |
+| `DB_HOST` / `DB_PORT` / `DB_DATABASE` / `DB_USERNAME` / `DB_PASSWORD` | Database connection. Use a least-privilege DB user. |
+| `ANTHROPIC_API_KEY` | Claude API key (moderation engine). |
+| `META_APP_ID` / `META_APP_SECRET` | Facebook app id + secret. `META_APP_SECRET` is the HMAC key for webhook POST signatures. |
+| `META_WEBHOOK_VERIFY_TOKEN` | Random value you choose; must match the Meta webhook "Verify Token". Keep **distinct** from `APP_SECRET`. |
+| At least one OAuth provider | `OAUTH_GOOGLE_*`, `OAUTH_META_*`, or `OAUTH_MICROSOFT_*` for moderator login. |
+
+### Strongly recommended
+
+| Variable | Notes |
+|---|---|
+| `OAUTH_ALLOWED_EMAIL_DOMAINS` | CSV of allowed login domains (e.g. `rtv.sm`). Without it, **any** OAuth email can sign in. |
+| `INTERNAL_IP_ALLOWLIST` | Restrict non-public paths to internal IPs (defense in depth — see §4). |
+| `APP_TIMEZONE` | e.g. `Europe/Rome`. |
+| `SITE_NAME` | Public-facing name (appeal page). |
+
+### Optional
+
+| Variable | Default | Notes |
+|---|---|---|
+| `PUBLIC_DOMAIN` | — | Split-domain: serve only public paths on this host (§4). |
+| `TRUSTED_PROXIES` | — | Proxy IPs allowed to set `X-Forwarded-For`. |
+| `PUBLIC_PATHS` | built-in | Override the public path prefixes. |
+| `META_FB_LOGIN_CONFIG_ID` | — | FB Login for Business config id. |
+| `META_GRAPH_VERSION` | `v19.0` | Pin Graph API version. |
+| `OAUTH_MICROSOFT_TENANT_ID` | `common` | Only if using Microsoft login. |
+| `SESSION_LIFETIME` | `86400` | JWT lifetime (seconds). |
+| `LICENSE_SERVER_URL` / `LICENSE_OFFLINE_MODE` / `LICENSE_OFFLINE_FEATURES` | — | Licensing (offline mode for self-hosted Pro). |
+| `HAIKU_CONFIDENCE_THRESHOLD` | `0.80` | Below → escalate to Sonnet. |
+| `SONNET_CONFIDENCE_THRESHOLD` | `0.70` | Below → escalate to human. |
+| `RECIDIVISM_COMMENT_BAN_LIMIT` | `3` | Violations before user ban. |
+
+> **Generate the two app-chosen secrets:**
+> ```bash
+> php -r "echo 'APP_SECRET='.bin2hex(random_bytes(32)).PHP_EOL;"
+> php -r "echo 'META_WEBHOOK_VERIFY_TOKEN='.bin2hex(random_bytes(24)).PHP_EOL;"
+> ```
