@@ -494,6 +494,7 @@ class ModerationController
                 $join->on('ar.comment_id', '=', 'c.id')
                      ->whereRaw('ar.id = (SELECT MAX(id) FROM appeal_records WHERE comment_id = c.id)');
             })
+            ->leftJoin('admin_users as au', 'au.id', '=', 'ml.human_user_id')
             ->whereIn('c.status', ['hidden', 'hidden_reportable']);
 
         $total = (clone $query)->count();
@@ -505,7 +506,7 @@ class ModerationController
                 'su.id as social_user_id', 'su.display_name', 'su.violation_count',
                 'cp.page_name', 'cp.page_id as facebook_page_id',
                 'ml.ai_reason', 'ml.ai_public_reason', 'ml.ai_categories', 'ml.ai_severity',
-                'ml.removal_reply_text',
+                'ml.removal_reply_text', 'ml.human_decision', 'au.name as decided_by_name',
                 'ar.id as appeal_id', 'ar.status as appeal_status', 'ar.submitted_at as appeal_submitted_at',
             ])
             ->orderByDesc('c.processed_at')
@@ -517,6 +518,10 @@ class ModerationController
                 $arr['ai_categories']  = json_decode($arr['ai_categories'] ?? '[]', true);
                 $arr['is_reportable']  = $arr['status'] === 'hidden_reportable';
                 $arr['has_appeal']     = !is_null($arr['appeal_id']);
+                // Chi ha nascosto: il nome c'è solo se human_user_id era valorizzato,
+                // cioè quando un moderatore ha agito (hide o conferma reportable).
+                // L'auto-hide dell'AI lascia human_user_id NULL → nessun nome.
+                $arr['hidden_by_human'] = !is_null($arr['decided_by_name']);
                 return $arr;
             })
             ->toArray();
@@ -994,19 +999,22 @@ class ModerationController
                 $join->on('ml.comment_id', '=', 'c.id')
                      ->whereRaw('ml.id = (SELECT MAX(id) FROM moderation_log WHERE comment_id = c.id)');
             })
+            ->leftJoin('admin_users as au', 'au.id', '=', 'ml.human_user_id')
             ->where('c.social_user_id', $userId)
             ->whereIn('c.status', ['removed', 'escalated_human'])
             ->select([
                 'c.id', 'c.content', 'c.status', 'c.received_at', 'cp.page_name',
                 'ml.stage as ai_stage', 'ml.ai_decision', 'ml.ai_confidence',
                 'ml.ai_reason', 'ml.ai_categories', 'ml.ai_severity',
-                'ml.human_decision', 'ml.human_note',
+                'ml.human_decision', 'ml.human_note', 'au.name as decided_by_name',
             ])
             ->orderByDesc('c.received_at')
             ->get()
             ->map(function ($row) {
                 $arr = (array) $row;
                 $arr['ai_categories'] = json_decode($arr['ai_categories'] ?? '[]', true);
+                // Nome solo se ha deciso un umano (human_user_id valorizzato)
+                $arr['decided_by_human'] = !is_null($arr['decided_by_name']);
                 return $arr;
             })
             ->toArray();

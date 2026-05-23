@@ -688,11 +688,14 @@ async function openDrawer(userId) {
 
     const commentHtml = (comments.comments || []).map(c => {
       const cats = (c.ai_categories||[]).map(cat => `<span class="chip chip-warn">${CAT_LABELS[cat]||cat}</span>`).join(' ');
+      const decider = c.decided_by_human
+        ? ` · <span class="badge-human" title="Decisione di un moderatore">${esc(c.decided_by_name)}</span>`
+        : '';
       return `
         <div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)">
           <div style="font-size:12px;color:var(--muted);margin-bottom:6px">
             ${esc(c.page_name)} · ${relTime(c.received_at)}
-            · <span class="${c.status==='removed'?'badge-perm':'badge-temp'}">${c.status==='removed'?'Rimosso':'In coda'}</span>
+            · <span class="${c.status==='removed'?'badge-perm':'badge-temp'}">${c.status==='removed'?'Rimosso':'In coda'}</span>${decider}
           </div>
           <div class="bc-content">${esc(c.content)}</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
@@ -851,6 +854,9 @@ async function loadHiddenComments() {
         ? `<span class="chip" style="background:rgba(99,102,241,.12);color:#4f46e5">ricorso ${c.appeal_status === 'pending' ? 'in attesa' : c.appeal_status}</span>`
         : '';
       const reportBadge = c.is_reportable ? '<span class="chip chip-danger">⚠️ segnalabile</span>' : '';
+      const deciderBadge = c.hidden_by_human
+        ? `<span class="badge-human" title="Nascosto da un moderatore">Nascosto da: ${esc(c.decided_by_name)}</span>`
+        : '';
       const fbLink = c.platform_comment_id && c.platform_post_id
         ? `https://www.facebook.com/permalink.php?story_fbid=${(c.platform_post_id.split('_')[1]||c.platform_post_id)}&id=${c.facebook_page_id}&comment_id=${c.platform_comment_id}`
         : '';
@@ -867,7 +873,7 @@ async function loadHiddenComments() {
             <span class="bc-user">${esc(c.display_name||'Anonimo')}</span>
             <span class="bc-page">${esc(c.page_name)}</span>
             <span class="bc-time">${relTime(c.processed_at||c.received_at)}</span>
-            ${reportBadge} ${appealBadge}
+            ${reportBadge} ${appealBadge} ${deciderBadge}
             ${fbLink ? `<a href="${fbLink}" target="_blank" rel="noopener" class="btn-sm" style="margin-left:auto;text-decoration:none" title="Vedi su Facebook">🔗</a>` : ''}
           </div>
           <div class="bc-content">${esc(c.content)}</div>
