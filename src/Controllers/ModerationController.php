@@ -151,7 +151,7 @@ class ModerationController
                 'su.display_name', 'su.violation_count',
                 'cp.page_name',
                 'ml.ai_categories', 'ml.ai_severity', 'ml.human_note', 'ml.human_decided_at',
-                'au.name as reported_by',
+                DB::raw("COALESCE(NULLIF(TRIM(au.name), ''), au.email) AS reported_by"),
             ])
             ->orderByDesc('c.processed_at')
             ->offset(($page - 1) * $limit)
@@ -253,7 +253,7 @@ class ModerationController
             ->where('ml.comment_id', $commentId)
             ->where('ml.final_action', 'reported_legal')
             ->orderByDesc('ml.id')
-            ->select(['ml.human_decided_at', 'ml.human_note', 'au.name as reported_by'])
+            ->select(['ml.human_decided_at', 'ml.human_note', DB::raw("COALESCE(NULLIF(TRIM(au.name), ''), au.email) AS reported_by")])
             ->first();
 
         $html = $this->buildLegalDossierHtml((array) $row, $report ? (array) $report : []);
@@ -506,7 +506,8 @@ class ModerationController
                 'su.id as social_user_id', 'su.display_name', 'su.violation_count',
                 'cp.page_name', 'cp.page_id as facebook_page_id',
                 'ml.ai_reason', 'ml.ai_public_reason', 'ml.ai_categories', 'ml.ai_severity',
-                'ml.removal_reply_text', 'ml.human_decision', 'au.name as decided_by_name',
+                'ml.removal_reply_text', 'ml.human_decision',
+                DB::raw("COALESCE(NULLIF(TRIM(au.name), ''), au.email) AS decided_by_name"),
                 'ar.id as appeal_id', 'ar.status as appeal_status', 'ar.submitted_at as appeal_submitted_at',
             ])
             ->orderByDesc('c.processed_at')
@@ -906,7 +907,7 @@ class ModerationController
                 'ml.stage as ai_stage', 'ml.ai_decision', 'ml.ai_confidence',
                 'ml.ai_reason', 'ml.ai_categories', 'ml.ai_severity',
                 'ml.human_decision', 'ml.human_note', 'ml.human_decided_at',
-                'au.name as decided_by_name',
+                DB::raw("COALESCE(NULLIF(TRIM(au.name), ''), au.email) AS decided_by_name"),
             ])
             ->orderByDesc('c.processed_at')
             ->offset(($page - 1) * $limit)
@@ -1006,7 +1007,8 @@ class ModerationController
                 'c.id', 'c.content', 'c.status', 'c.received_at', 'cp.page_name',
                 'ml.stage as ai_stage', 'ml.ai_decision', 'ml.ai_confidence',
                 'ml.ai_reason', 'ml.ai_categories', 'ml.ai_severity',
-                'ml.human_decision', 'ml.human_note', 'au.name as decided_by_name',
+                'ml.human_decision', 'ml.human_note',
+                DB::raw("COALESCE(NULLIF(TRIM(au.name), ''), au.email) AS decided_by_name"),
             ])
             ->orderByDesc('c.received_at')
             ->get()
@@ -1246,7 +1248,7 @@ class ModerationController
                 'ml.human_decision', 'ml.human_note', 'ml.human_decided_at',
                 'ml.final_action',
                 'ml.ai_fact_check_suggested', 'ml.ai_fact_check_confidence',
-                'au.name as decided_by_name',
+                DB::raw("COALESCE(NULLIF(TRIM(au.name), ''), au.email) AS decided_by_name"),
             ])
             ->orderByDesc('c.processed_at')
             ->offset(($page - 1) * $limit)
@@ -1327,7 +1329,7 @@ class ModerationController
                 'cp.page_id as facebook_page_id',
                 'p.name as policy_name',
                 'p.version as policy_version',
-                'au.name as reviewed_by',
+                DB::raw("COALESCE(NULLIF(TRIM(au.name), ''), au.email) AS reviewed_by"),
             ]);
 
         if ($from)     $query->where('ml.created_at', '>=', $from . ' 00:00:00');
