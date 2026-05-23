@@ -84,6 +84,7 @@ $countryEn = trim($countries[1] ?? $orgCountry);
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Informativa sulla Privacy / Privacy Policy – Social Moderation Hub</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <!--
     ═══════════════════════════════════════════════════════════════
     Social Moderation Hub — Privacy Policy Template

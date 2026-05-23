@@ -84,7 +84,7 @@ foreach ($env as $k => $v) {
 }
 
 // Validate critical keys
-$criticalKeys = ['DB_HOST', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD', 'ANTHROPIC_API_KEY', 'APP_SECRET', 'APP_URL'];
+$criticalKeys = ['DB_HOST', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD', 'ANTHROPIC_API_KEY', 'APP_SECRET', 'APP_URL', 'META_APP_ID', 'META_APP_SECRET'];
 foreach ($criticalKeys as $key) {
     if (empty($_ENV[$key]) || str_contains($_ENV[$key] ?? '', 'your_')) {
         fail("'{$key}' is not configured in .env");
@@ -135,17 +135,36 @@ if (!empty($tables)) {
     ok('Database schema created');
 }
 
-// ── Step 7: Generate APP_SECRET if default ─────────────────────────
-step('Checking APP_SECRET');
+// ── Step 7: Secrets — generate if default, then validate ───────────
+step('Checking secrets');
+
+// Auto-generate APP_SECRET if still the placeholder.
 if ($_ENV['APP_SECRET'] === 'change_this_to_a_random_secret_64chars') {
-    $secret  = bin2hex(random_bytes(32));
-    $content = file_get_contents(__DIR__ . '/.env');
-    $content = preg_replace('/^APP_SECRET=.*/m', "APP_SECRET={$secret}", $content);
-    file_put_contents(__DIR__ . '/.env', $content);
-    ok("Generated new APP_SECRET (saved to .env)");
-} else {
-    ok('APP_SECRET is set');
+    setEnvValue('APP_SECRET', bin2hex(random_bytes(32)));
+    ok('Generated new APP_SECRET (saved to .env)');
 }
+
+// Auto-generate the webhook verify token if missing or still the placeholder.
+$vt = $_ENV['META_WEBHOOK_VERIFY_TOKEN'] ?? '';
+if ($vt === '' || $vt === 'change_this_to_a_random_verify_token') {
+    setEnvValue('META_WEBHOOK_VERIFY_TOKEN', bin2hex(random_bytes(24)));
+    ok('Generated new META_WEBHOOK_VERIFY_TOKEN (saved to .env)');
+}
+
+// Validate strength and uniqueness — these MUST be distinct, strong values.
+if (strlen($_ENV['APP_SECRET']) < 32) {
+    fail('APP_SECRET is too short — use at least 32 characters (64 hex recommended).');
+}
+$appSecret   = $_ENV['APP_SECRET'];
+$verifyToken = $_ENV['META_WEBHOOK_VERIFY_TOKEN'] ?? '';
+$metaSecret  = $_ENV['META_APP_SECRET'] ?? '';
+if ($appSecret === $verifyToken) {
+    fail('APP_SECRET must NOT equal META_WEBHOOK_VERIFY_TOKEN (the verify token is exposed in URLs/logs — reusing it lets anyone forge admin sessions).');
+}
+if ($appSecret === $metaSecret) {
+    fail('APP_SECRET must NOT equal META_APP_SECRET — keep secrets distinct.');
+}
+ok('Secrets validated (present, strong, distinct)');
 
 // ── Step 8: Logs directory ────────────────────────────────────────
 step('Checking logs directory');
@@ -165,15 +184,41 @@ echo "  ✅  Installation complete!\n\n";
 echo "  Next steps:\n";
 echo "  1. Point your web server document root → public/\n";
 echo "  2. Set up Meta webhook at: {$_ENV['APP_URL']}/webhook/meta\n";
+echo "     Verify Token (use this exact value in the Meta dashboard):\n";
+echo "       {$_ENV['META_WEBHOOK_VERIFY_TOKEN']}\n";
 echo "  3. Open {$_ENV['APP_URL']}/auth/google to log in for the first time\n";
 echo "     (first login becomes admin automatically)\n";
 echo "  4. Connect a Facebook Page from the dashboard\n\n";
+
+echo "  ⚠  PRODUCTION HARDENING (do NOT skip):\n";
+echo "     - Restrict everything except /webhook/meta to internal IPs.\n";
+echo "     - Set OAUTH_ALLOWED_EMAIL_DOMAINS so only your org can log in.\n";
+echo "     - Enforce HTTPS; schedule bin/retention-purge.php if using retention.\n";
+echo "     Full guide: docs/deployment-security.md\n\n";
 
 // ── Helpers ───────────────────────────────────────────────────────
 
 function step(string $label): void
 {
     echo "  › {$label}… ";
+}
+
+/** Write (or replace) a key in .env and update the live environment. */
+function setEnvValue(string $key, string $value): void
+{
+    $path    = __DIR__ . '/.env';
+    $content = file_get_contents($path);
+    $line    = "{$key}={$value}";
+    $pattern = '/^' . preg_quote($key, '/') . '=.*/m';
+    if (preg_match($pattern, $content)) {
+        // addcslashes protects $ and \ in the replacement string.
+        $content = preg_replace($pattern, addcslashes($line, '\\$'), $content, 1);
+    } else {
+        $content = rtrim($content, "\n") . "\n{$line}\n";
+    }
+    file_put_contents($path, $content);
+    $_ENV[$key] = $value;
+    putenv("{$key}={$value}");
 }
 
 function ok(string $msg): void
