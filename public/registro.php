@@ -396,7 +396,7 @@
     <div class="sic-item"><strong>Audit log</strong>Ogni decisione di moderazione è registrata con timestamp, utente e modello AI utilizzato.</div>
     <div class="sic-item"><strong>Conservazione limitata</strong>Eliminazione automatica programmata per ogni categoria di dati secondo i periodi definiti.</div>
     <div class="sic-item"><strong>Dev mode</strong>Modalità sviluppo che impedisce azioni reali su Facebook durante i test.</div>
-    <div class="sic-item"><strong>Hashing dedup</strong>SHA-256 sul contenuto dei commenti per deduplicazione senza conservare duplicati.</div>
+    <div class="sic-item"><strong>Hashing contenuti</strong>SHA-256 sul contenuto dei commenti per riconoscere le ripubblicazioni identiche e riapplicare la decisione di moderazione già adottata.</div>
     <div class="sic-item"><strong>Token firmati</strong>Token di appello HMAC con scadenza 30 giorni — non falsificabili senza la chiave APP_SECRET.</div>
   </div>
 

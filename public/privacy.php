@@ -424,7 +424,7 @@ amministrate per conto di terzi. La presente informativa è rivolta a:</p>
 <ul>
   <li>Crittografia in transito (TLS 1.2+) per tutte le comunicazioni API.</li>
   <li>Pseudonimizzazione degli identificatori utente prima della trasmissione al servizio AI (HMAC-SHA256).</li>
-  <li>Hashing dei contenuti per deduplicazione (SHA-256).</li>
+  <li>Hashing dei contenuti (SHA-256) per riconoscere le ripubblicazioni identiche.</li>
   <li>Autenticazione multi-fattore per gli amministratori (SSO Azure AD).</li>
   <li>Accesso ai dati limitato al personale autorizzato secondo il principio del minimo privilegio.</li>
   <li>Log di audit per tutte le operazioni di moderazione.</li>
@@ -702,7 +702,7 @@ DPO contact: <a href="mailto:<?= $orgEmail ?>"><?= $orgEmail ?></a></p>
 <ul>
   <li>Encryption in transit (TLS 1.2+) for all API communications.</li>
   <li>Pseudonymisation of user identifiers before transmission to the AI service (HMAC-SHA256).</li>
-  <li>Content hashing for deduplication (SHA-256).</li>
+  <li>Content hashing (SHA-256) to detect identical re-posts.</li>
   <li>Multi-factor authentication for administrators (Azure AD SSO).</li>
   <li>Least-privilege access controls for all data operations.</li>
   <li>Audit logs for all moderation operations.</li>
