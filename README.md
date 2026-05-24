@@ -57,7 +57,7 @@ deletion; sensitive fields are anonymised on a configurable schedule.
 - **Multi-page Facebook integration** — connect several pages in one click via Facebook Login
 - **Full audit trail** — every AI and human decision logged with model, confidence, latency
 - **OAuth2 login** — Google, Meta, Microsoft (first user auto-becomes admin)
-- **Pluggable Pro features** — optional license server, or offline-mode managed via `.env`
+- **Pluggable Pro features** — optional license server
 - **Self-hosted & private** — your data never leaves your server
 - **MIT License** — use, fork, deploy freely
 
@@ -186,7 +186,7 @@ social-moderation-hub/
 │       ├── ModerationService.php # Orchestration + context enrichment
 │       ├── BanService.php        # Recidivism & ban lifecycle
 │       ├── OAuthService.php      # Multi-provider OAuth2 + JWT
-│       ├── LicenseService.php    # Pro feature gating (remote or offline)
+│       ├── LicenseService.php    # Pro feature gating
 │       ├── RetentionService.php  # GDPR anonymisation
 │       └── PolicyController.php  # Policy versioning
 ├── database/
@@ -252,8 +252,6 @@ Key `.env` variables:
 | `OAUTH_ALLOWED_EMAIL_DOMAINS`  | *(empty)*      | Restrict logins by domain (e.g. `mycompany.com`)             |
 | `META_FB_LOGIN_CONFIG_ID`      | *(empty)*      | Facebook Login for Business saved config id (optional)       |
 | `LICENSE_SERVER_URL`           | *(empty)*      | Remote license server (empty = no remote checks)             |
-| `LICENSE_OFFLINE_MODE`         | `false`        | Skip remote checks, use local feature list                   |
-| `LICENSE_OFFLINE_FEATURES`     | *(empty)*      | Comma-separated Pro feature keys to enable offline           |
 | `APP_ENV`                      | `production`   | Set to `development` for verbose errors                      |
 
 ---

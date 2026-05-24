@@ -263,7 +263,7 @@ Full template with inline comments: **`.env.example`**. Summary below.
 | `META_GRAPH_VERSION` | `v19.0` | Pin Graph API version. |
 | `OAUTH_MICROSOFT_TENANT_ID` | `common` | Only if using Microsoft login. |
 | `SESSION_LIFETIME` | `86400` | JWT lifetime (seconds). |
-| `LICENSE_SERVER_URL` / `LICENSE_OFFLINE_MODE` / `LICENSE_OFFLINE_FEATURES` | — | Licensing (offline mode for self-hosted Pro). |
+| `LICENSE_SERVER_URL` | — | Optional remote license server (empty = no remote checks). |
 | `HAIKU_CONFIDENCE_THRESHOLD` | `0.80` | Below → escalate to Sonnet. |
 | `SONNET_CONFIDENCE_THRESHOLD` | `0.70` | Below → escalate to human. |
 | `RECIDIVISM_COMMENT_BAN_LIMIT` | `3` | Violations before user ban. |
