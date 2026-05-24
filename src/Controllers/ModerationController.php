@@ -937,10 +937,12 @@ class ModerationController
             ->selectRaw('ban_type, COUNT(*) as count')->groupBy('ban_type')
             ->pluck('count', 'ban_type');
 
-        // Flatten JSON categories from moderation_log into a frequency map
+        // Flatten JSON categories from moderation_log into a frequency map.
+        // Negative outcomes in this app are 'hidden' (comments are hidden, not
+        // deleted) — include both so the breakdown isn't always empty.
         $categoryRows = DB::table('moderation_log')
             ->where('created_at', '>=', $since)
-            ->where('final_action', 'removed')
+            ->whereIn('final_action', ['removed', 'hidden'])
             ->whereNotNull('ai_categories')
             ->pluck('ai_categories');
 
@@ -953,7 +955,7 @@ class ModerationController
         arsort($byCat);
 
         $byDecider = DB::table('moderation_log')
-            ->where('created_at', '>=', $since)->where('final_action', 'removed')
+            ->where('created_at', '>=', $since)->whereIn('final_action', ['removed', 'hidden'])
             ->selectRaw("SUM(CASE WHEN stage IN ('haiku','sonnet') THEN 1 ELSE 0 END) as ai,
                          SUM(CASE WHEN stage = 'human' THEN 1 ELSE 0 END) as human")
             ->first();
