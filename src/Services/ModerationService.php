@@ -176,18 +176,27 @@ class ModerationService
             return ['action' => 'auto_hidden_banned_user', 'user_id' => $socialUser['id'], 'dev_mode' => $this->isDevMode()];
         }
 
-        // 4. Deduplicate
+        // 4. Look up an identical prior comment from the SAME user.
+        //    We must NOT silently skip duplicates: a re-post of a comment that was
+        //    previously hidden would otherwise stay publicly visible (moderation
+        //    bypass). Instead we re-apply the known verdict WITHOUT calling the AI
+        //    again. Only when the prior copy has no final decision yet do we moderate
+        //    the new copy normally.
         $commentHash = hash('sha256', $webhookComment['message'] ?? '');
-        $existingId  = DB::table('comments')
+        $prior = DB::table('comments')
             ->where('content_hash', $commentHash)
             ->where('social_user_id', $socialUser['id'])
-            ->value('id');
+            ->orderByDesc('id')
+            ->first();
 
-        if ($existingId) {
-            return ['action' => 'duplicate_skipped', 'comment_id' => $existingId];
+        $hiddenStatuses = ['hidden', 'hidden_reportable', 'removed', 'reported_legal'];
+        $cachedVerdict  = null; // 'hide' | 'approve' | null (→ moderate normally)
+        if ($prior) {
+            if (in_array($prior->status, $hiddenStatuses, true)) $cachedVerdict = 'hide';
+            elseif ($prior->status === 'approved')               $cachedVerdict = 'approve';
         }
 
-        // 5. Persist comment
+        // 5. Persist the new comment (it IS a distinct comment on Facebook)
         $commentId = DB::table('comments')->insertGetId([
             'platform'            => 'facebook',
             'platform_comment_id' => $webhookComment['id'],
@@ -199,6 +208,49 @@ class ModerationService
             'status'              => 'pending',
             'received_at'         => date('Y-m-d H:i:s'),
         ]);
+
+        // 5b. Re-apply a known verdict for identical re-posts, without the AI.
+        if ($cachedVerdict === 'approve') {
+            DB::table('comments')->where('id', $commentId)->update([
+                'status'       => 'approved',
+                'processed_at' => date('Y-m-d H:i:s'),
+            ]);
+            return ['action' => 'duplicate_approved', 'comment_id' => $commentId];
+        }
+        if ($cachedVerdict === 'hide') {
+            $activePolicyId = DB::table('policies')->where('is_active', 1)->value('id') ?? 1;
+            $priorLog       = DB::table('moderation_log')->where('comment_id', $prior->id)->orderByDesc('id')->first();
+            $reportable     = in_array($prior->status, ['hidden_reportable', 'reported_legal'], true);
+
+            $result = new ModerationResult(
+                stage:        'system',
+                decision:     $reportable ? 'reportable' : 'hide',
+                confidence:   1.0,
+                reason:       $priorLog->ai_reason        ?? 'Ripetizione di un commento già moderato',
+                publicReason: $priorLog->ai_public_reason ?? null,
+                categories:   json_decode($priorLog->ai_categories ?? '[]', true) ?: [],
+                severity:     $priorLog->ai_severity      ?? null,
+                model:        'cache:duplicate',
+            );
+            $logId = DB::table('moderation_log')->insertGetId([
+                'comment_id'       => $commentId,
+                'stage'            => 'system',
+                'policy_id'        => $priorLog->policy_id ?? $activePolicyId,
+                'ai_decision'      => $result->decision,
+                'ai_confidence'    => 1.0,
+                'ai_reason'        => $result->reason,
+                'ai_public_reason' => $result->publicReason,
+                'ai_categories'    => json_encode($result->categories),
+                'ai_severity'      => $result->severity,
+                'ai_model'         => 'cache:duplicate',
+                'final_action'     => 'hidden',
+                'created_at'       => date('Y-m-d H:i:s'),
+            ]);
+            return $this->executeHide(
+                $commentId, $socialUser, $page, $result, $logId,
+                decidedBy: 'ai', reportable: $reportable,
+            );
+        }
 
         // 6. Load active policy
         $policy = DB::table('policies')->where('is_active', 1)->first();
