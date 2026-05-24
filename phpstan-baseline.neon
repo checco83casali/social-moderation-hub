@@ -1,0 +1,31 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Offset ''expires_at'' on array\{status\: string, plan\: string, features\: list\<string\>, expires_at\: string, domain\: string, raw\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Services/LicenseService.php
+
+		-
+			message: '#^Offset ''plan'' on array\{status\: string, plan\: string, features\: list\<string\>, expires_at\: string, domain\: string, raw\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Services/LicenseService.php
+
+		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 1
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>moderation_prompt" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Services/ModerationService.php

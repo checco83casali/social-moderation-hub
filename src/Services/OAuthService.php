@@ -94,6 +94,7 @@ class OAuthService
                 'email'      => $ownerRaw->getEmail(),
                 'avatar_url' => null,
             ],
+            default => throw new \InvalidArgumentException("Unsupported OAuth provider: {$providerName}"),
         };
 
         // Check domain / allow-list (optional, enforced via env)

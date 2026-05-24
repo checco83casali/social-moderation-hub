@@ -1,0 +1,17 @@
+includes:
+    # Errori preesistenti "congelati": per lo più falsi positivi degli stub di
+    # illuminate (nullabilità delle query) + 2 ridondanze innocue. PHPStan d'ora
+    # in poi segnala solo le NUOVE regressioni. Da ripulire in una pass dedicata.
+    - phpstan-baseline.neon
+
+parameters:
+    level: 4
+    paths:
+        - src
+    # bin/ e public/ contengono script procedurali: verranno aggiunti più avanti,
+    # una volta sistemato il core in src/.
+    ignoreErrors:
+        # Falsi positivi: illuminate/database (standalone, senza Laravel) espone
+        # table()/raw()/transaction()/schema() via __callStatic sul Capsule Manager.
+        # Non sono metodi statici "reali", quindi PHPStan non li riconosce.
+        - '#Call to an undefined static method Illuminate\\Database\\Capsule\\Manager::[a-zA-Z]+\(\)#'
