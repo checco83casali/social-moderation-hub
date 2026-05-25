@@ -83,6 +83,11 @@ $auth = fn() => new AuthMiddleware($container->get(OAuthService::class));
 
 // ── Routes ────────────────────────────────────────────────────────
 
+// Root: redirect alla dashboard (SPA) — evita 404 di Slim su "/".
+$app->get('/', function ($request, $response) {
+    return $response->withHeader('Location', '/dashboard.html')->withStatus(302);
+});
+
 // Public: OAuth login (GET redirect + GET/POST callback for Microsoft)
 $app->get('/auth/{provider}',          [AuthController::class, 'redirect']);
 $app->get('/auth/{provider}/callback', [AuthController::class, 'callback']);
