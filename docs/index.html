@@ -330,47 +330,171 @@ h2 {
 
 /* ─── LICENSE (PRO) ─── */
 #license {
-  background: linear-gradient(180deg, var(--ink2) 0%, #0e1420 100%);
+  background: linear-gradient(180deg, var(--ink2) 0%, #080c18 100%);
   padding: clamp(80px, 10vh, 120px) 0;
 }
 .license-wrapper {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start;
+  display: grid; grid-template-columns: 5fr 7fr; gap: 28px; align-items: stretch;
   margin-top: 48px;
 }
-@media (max-width: 820px) { .license-wrapper { grid-template-columns: 1fr; } }
-.plan-card {
-  border-radius: 24px; padding: 36px 32px;
-  border: 1px solid rgba(255,255,255,.1);
-}
+@media (max-width: 900px) { .license-wrapper { grid-template-columns: 1fr; } }
+
+/* FREE card */
 .plan-free {
-  background: rgba(255,255,255,.04);
+  border-radius: 24px; padding: 36px 32px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.09);
+  display: flex; flex-direction: column;
 }
+
+/* PRO card — full redesign */
 .plan-pro {
-  background: linear-gradient(150deg, rgba(79,142,247,.18), rgba(62,207,142,.08));
-  border-color: rgba(79,142,247,.4);
-  box-shadow: 0 0 60px rgba(79,142,247,.18);
+  border-radius: 28px;
   position: relative; overflow: hidden;
+  background: #0b1535;
+  border: 1px solid rgba(79,142,247,.35);
+  box-shadow: 0 0 0 1px rgba(79,142,247,.1), 0 32px 80px rgba(10,20,60,.6), 0 0 120px rgba(79,142,247,.12);
+  display: flex; flex-direction: column;
 }
-.plan-badge {
-  position: absolute; top: 18px; right: 18px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
+/* animated gradient border glow */
+.plan-pro::before {
+  content: '';
+  position: absolute; inset: -1px;
+  border-radius: 29px;
+  background: linear-gradient(135deg, rgba(79,142,247,.6) 0%, rgba(62,207,142,.4) 40%, rgba(79,142,247,.1) 100%);
+  z-index: 0;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  padding: 1px;
+  pointer-events: none;
+}
+/* mesh background inside */
+.plan-pro::after {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 90% -10%, rgba(79,142,247,.22) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 10% 100%, rgba(62,207,142,.14) 0%, transparent 55%);
+  pointer-events: none; z-index: 0;
+}
+.plan-pro-inner {
+  position: relative; z-index: 1;
+  padding: 36px 36px 32px;
+  display: flex; flex-direction: column; height: 100%;
+}
+.pro-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 28px;
+}
+.pro-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: linear-gradient(135deg, var(--accent), var(--ok));
   color: #fff; font-size: 11px; font-weight: 800;
-  letter-spacing: .1em; text-transform: uppercase;
-  padding: 4px 13px; border-radius: 100px;
+  letter-spacing: .12em; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 100px;
+  box-shadow: 0 4px 16px rgba(79,142,247,.45);
 }
-.plan-name { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; opacity: .65; margin-bottom: 8px; }
-.plan-price { font-family: 'Syne', sans-serif; font-size: clamp(40px, 5vw, 58px); font-weight: 800; letter-spacing: -1.5px; margin-bottom: 6px; }
-.plan-price span { font-size: 20px; opacity: .65; }
-.plan-desc { font-size: 15px; opacity: .65; margin-bottom: 28px; }
-.plan-features { list-style: none; margin-bottom: 32px; }
-.plan-features li {
+.pro-badge::before { content: '★'; font-size: 10px; }
+.pro-price-block { text-align: right; }
+.pro-price {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(42px, 5.5vw, 64px);
+  font-weight: 800; letter-spacing: -2px; line-height: 1;
+  background: linear-gradient(120deg, #fff 30%, #a8c8ff 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.pro-period {
+  font-size: 14px; opacity: .55; margin-top: 4px; text-align: right;
+}
+.pro-divider {
+  height: 1px;
+  background: linear-gradient(90deg, rgba(79,142,247,.4), rgba(62,207,142,.3), transparent);
+  margin-bottom: 24px;
+}
+.pro-features-title {
+  font-size: 11px; font-weight: 800; letter-spacing: .18em;
+  text-transform: uppercase; opacity: .45; margin-bottom: 16px;
+}
+.pro-features { list-style: none; margin-bottom: 28px; flex: 1; }
+.pro-features li {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  font-size: clamp(13px, 1.4vw, 16px); line-height: 1.4;
+}
+.pro-features li:last-child { border-bottom: none; }
+.pro-chk {
+  width: 20px; height: 20px; border-radius: 6px; flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(62,207,142,.3), rgba(62,207,142,.15));
+  border: 1px solid rgba(62,207,142,.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: var(--ok); font-weight: 900; margin-top: 1px;
+}
+.pro-features .pro-plus {
+  font-size: 11px; font-weight: 800;
+  color: var(--ok); opacity: .75;
+  margin-left: auto; flex-shrink: 0; padding-left: 8px; align-self: center;
+}
+
+/* billing toggle */
+.billing-toggle-wrap {
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  margin: 0 auto 44px; font-size: 14px; font-weight: 600;
+}
+.billing-knob-track {
+  width: 52px; height: 28px; border-radius: 100px; border: none; cursor: pointer;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  position: relative; transition: .3s; flex-shrink: 0;
+}
+.billing-knob {
+  position: absolute; top: 4px; left: 4px;
+  width: 20px; height: 20px; border-radius: 50%; background: #fff;
+  transition: transform .3s; display: block;
+  box-shadow: 0 2px 6px rgba(0,0,0,.3);
+}
+.billing-save {
+  background: rgba(62,207,142,.18); color: var(--ok);
+  font-size: 11px; font-weight: 800; padding: 2px 9px;
+  border-radius: 100px; margin-left: 6px;
+}
+
+/* paypal btn */
+.paypal-btn-wrap { margin-top: 4px; }
+.paypal-placeholder {
+  width: 100%; padding: 16px; border-radius: 14px;
+  background: #FFC439; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  font-size: 16px; font-weight: 700; color: #003087;
+  transition: filter .2s, transform .18s;
+  box-shadow: 0 6px 24px rgba(255,196,57,.35);
+}
+.paypal-placeholder:hover { filter: brightness(1.07); transform: translateY(-1px); }
+.paypal-logo {
+  font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px;
+  color: #003087; letter-spacing: -0.5px;
+}
+.paypal-logo span { color: #009CDE; }
+.plan-name-free {
+  font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800;
+  letter-spacing: .15em; text-transform: uppercase; opacity: .5; margin-bottom: 8px;
+}
+.plan-price-free {
+  font-family: 'Syne', sans-serif; font-size: clamp(36px,4.5vw,52px);
+  font-weight: 800; letter-spacing: -1.5px; margin-bottom: 6px;
+}
+.plan-price-free span { font-size: 18px; opacity: .55; }
+.plan-desc-free { font-size: 14px; opacity: .55; margin-bottom: 24px; }
+.free-features { list-style: none; margin-bottom: 28px; flex: 1; }
+.free-features li {
   display: flex; gap: 10px; align-items: flex-start;
-  padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.07);
-  font-size: clamp(14px, 1.5vw, 17px); line-height: 1.4;
+  padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,.06);
+  font-size: clamp(13px, 1.4vw, 16px); line-height: 1.4;
 }
-.plan-features li:last-child { border-bottom: none; }
-.plan-features .chk { color: var(--ok); flex-shrink: 0; font-weight: 800; }
-.plan-features .chk.na { color: var(--muted); }
+.free-features li:last-child { border-bottom: none; }
+.free-features .chk { color: var(--ok); font-weight: 800; flex-shrink: 0; }
+.free-features .chk.na { color: rgba(255,255,255,.2); }
+.free-features .na-text { opacity: .3; }
 
 /* ─── CTA ─── */
 #cta {
@@ -836,31 +960,25 @@ php install.php
     <p class="section-sub reveal">The core is MIT-licensed and always free. Pro unlocks advanced features via a license key.</p>
 
     <!-- Toggle mensile/annuale -->
-    <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin:0 auto 44px;font-size:15px;font-weight:600;" class="reveal">
-      <span id="lbl-month" style="opacity:1;">Mensile</span>
-      <button id="billing-toggle" onclick="toggleBilling()" style="
-        width:52px;height:28px;border-radius:100px;border:none;cursor:pointer;
-        background:linear-gradient(135deg,var(--accent),var(--accent2));
-        position:relative;transition:.3s;
-      ">
-        <span id="toggle-knob" style="
-          position:absolute;top:4px;left:4px;
-          width:20px;height:20px;border-radius:50%;background:#fff;
-          transition:transform .3s;display:block;
-        "></span>
+    <div class="billing-toggle-wrap reveal">
+      <span id="lbl-month" style="opacity:1;transition:opacity .2s;">Mensile</span>
+      <button id="billing-toggle" class="billing-knob-track" onclick="toggleBilling()" aria-label="Cambia piano">
+        <span id="toggle-knob" class="billing-knob"></span>
       </button>
-      <span id="lbl-year" style="opacity:.5;">
+      <span id="lbl-year" style="opacity:.45;transition:opacity .2s;">
         Annuale
-        <span style="background:rgba(62,207,142,.2);color:#3ecf8e;font-size:12px;font-weight:800;padding:2px 9px;border-radius:100px;margin-left:6px;">–16%</span>
+        <span class="billing-save">–16%</span>
       </span>
     </div>
 
     <div class="license-wrapper stagger">
-      <div class="plan-card plan-free">
-        <div class="plan-name">Community</div>
-        <div class="plan-price">Gratis <span>/ forever</span></div>
-        <div class="plan-desc">Licenza MIT. Self-host su qualsiasi server.</div>
-        <ul class="plan-features">
+
+      <!-- FREE -->
+      <div class="plan-free">
+        <div class="plan-name-free">Community</div>
+        <div class="plan-price-free">Gratis <span>/ sempre</span></div>
+        <div class="plan-desc-free">Licenza MIT. Self-host su qualsiasi server.</div>
+        <ul class="free-features">
           <li><span class="chk">✓</span> Pipeline AI a due stadi (Haiku → Sonnet)</li>
           <li><span class="chk">✓</span> Coda di revisione umana</li>
           <li><span class="chk">✓</span> Sistema ban progressivo</li>
@@ -869,47 +987,85 @@ php install.php
           <li><span class="chk">✓</span> OAuth2 login (Google, Meta, Microsoft)</li>
           <li><span class="chk">✓</span> 1 pagina Facebook</li>
           <li><span class="chk">✓</span> Docker support</li>
-          <li><span class="chk na">–</span> <span style="opacity:.45;">Segnalazioni pericolose</span></li>
-          <li><span class="chk na">–</span> <span style="opacity:.45;">Ricorsi (appeal)</span></li>
-          <li><span class="chk na">–</span> <span style="opacity:.45;">Statistiche avanzate</span></li>
-          <li><span class="chk na">–</span> <span style="opacity:.45;">Pagine Facebook aggiuntive</span></li>
-          <li><span class="chk na">–</span> <span style="opacity:.45;">Soglie AI per pagina</span></li>
-          <li><span class="chk na">–</span> <span style="opacity:.45;">Template reply personalizzabili</span></li>
-          <li><span class="chk na">–</span> <span style="opacity:.45;">Fact-check AI</span></li>
-          <li><span class="chk na">–</span> <span style="opacity:.45;">Export log</span></li>
-          <li><span class="chk na">–</span> <span style="opacity:.45;">Retention dati configurabile</span></li>
+          <li><span class="chk na">–</span> <span class="na-text">Segnalazioni pericolose</span></li>
+          <li><span class="chk na">–</span> <span class="na-text">Ricorsi & appeal</span></li>
+          <li><span class="chk na">–</span> <span class="na-text">Statistiche avanzate</span></li>
+          <li><span class="chk na">–</span> <span class="na-text">Pagine aggiuntive</span></li>
+          <li><span class="chk na">–</span> <span class="na-text">Soglie AI per pagina</span></li>
         </ul>
-        <a href="https://github.com/checco83casali/social-moderation-hub#quick-start" target="_blank" class="btn btn-outline btn-lg" style="width:100%;justify-content:center;">
+        <a href="https://github.com/checco83casali/social-moderation-hub#quick-start" target="_blank" class="btn btn-outline btn-lg" style="width:100%;justify-content:center;margin-top:auto;">
           Deploy gratis →
         </a>
       </div>
 
-      <div class="plan-card plan-pro">
-        <span class="plan-badge">PRO</span>
-        <div class="plan-name">Pro</div>
-        <div class="plan-price">
-          <span id="price-display">€9,90</span>
-          <span id="price-period">/ mese</span>
+      <!-- PRO -->
+      <div class="plan-pro">
+        <div class="plan-pro-inner">
+          <div class="pro-header">
+            <div>
+              <div class="pro-badge">PRO</div>
+            </div>
+            <div class="pro-price-block">
+              <div class="pro-price" id="price-display">€9,90</div>
+              <div class="pro-period" id="price-period">al mese · rinnovo automatico</div>
+            </div>
+          </div>
+
+          <div class="pro-divider"></div>
+
+          <div class="pro-features-title">Tutto il Community, più:</div>
+          <ul class="pro-features">
+            <li>
+              <span class="pro-chk">✓</span>
+              <span><strong>Segnalazioni pericolose</strong> — coda dedicata per iter legale</span>
+            </li>
+            <li>
+              <span class="pro-chk">✓</span>
+              <span><strong>Ricorsi (appeal)</strong> — link HMAC firmato, moderatore accetta/rifiuta</span>
+            </li>
+            <li>
+              <span class="pro-chk">✓</span>
+              <span><strong>Statistiche avanzate</strong> — dashboard 30gg, categorie, trend AI</span>
+            </li>
+            <li>
+              <span class="pro-chk">✓</span>
+              <span><strong>Pagine Facebook aggiuntive</strong> — multi-page illimitate</span>
+            </li>
+            <li>
+              <span class="pro-chk">✓</span>
+              <span><strong>Soglie AI per pagina</strong> — Haiku/Sonnet confidence personalizzabili</span>
+            </li>
+            <li>
+              <span class="pro-chk">✓</span>
+              <span><strong>Template reply personalizzabili</strong> — risposte automatiche su misura</span>
+            </li>
+            <li>
+              <span class="pro-chk">✓</span>
+              <span><strong>Fact-check AI</strong> — bozza risposta + fonti, decisione umana</span>
+            </li>
+            <li>
+              <span class="pro-chk">✓</span>
+              <span><strong>Export log</strong> — CSV/PDF on-demand e schedulato</span>
+            </li>
+            <li>
+              <span class="pro-chk">✓</span>
+              <span><strong>Retention dati configurabile</strong> — finestra GDPR personalizzabile</span>
+            </li>
+          </ul>
+
+          <!-- PayPal Subscription Button placeholder -->
+          <div class="paypal-btn-wrap">
+            <button class="paypal-placeholder" id="paypal-btn" onclick="alert('PayPal Plan ID da configurare')">
+              <span class="paypal-logo">Pay<span>Pal</span></span>
+              <span id="paypal-btn-label">Abbonati a €9,90/mese</span>
+            </button>
+            <p style="text-align:center;font-size:12px;opacity:.38;margin-top:10px;">
+              Puoi disdire in qualsiasi momento · Pagamento sicuro PayPal
+            </p>
+          </div>
         </div>
-        <div id="price-note" class="plan-desc">Attivazione tramite license key. Fatturazione mensile.</div>
-        <ul class="plan-features">
-          <li><span class="chk">✓</span> Tutto il piano Community</li>
-          <li><span class="chk">✓</span> <strong>Segnalazioni pericolose</strong> — coda dedicata iter legale</li>
-          <li><span class="chk">✓</span> <strong>Ricorsi (appeal)</strong> — link firmato HMAC, accetta/rifiuta</li>
-          <li><span class="chk">✓</span> <strong>Statistiche avanzate</strong> — dashboard 30gg, categorie, trend</li>
-          <li><span class="chk">✓</span> <strong>Pagine Facebook aggiuntive</strong> — multi-page illimitate</li>
-          <li><span class="chk">✓</span> <strong>Soglie AI per pagina</strong> — Haiku/Sonnet confidence personalizzabili</li>
-          <li><span class="chk">✓</span> <strong>Template reply personalizzabili</strong> — risposte automatiche su misura</li>
-          <li><span class="chk">✓</span> <strong>Fact-check AI</strong> — bozza risposta + fonti, decisione umana</li>
-          <li><span class="chk">✓</span> <strong>Export log</strong> — CSV/PDF on-demand e schedulato</li>
-          <li><span class="chk">✓</span> <strong>Retention dati configurabile</strong> — finestra GDPR personalizzabile</li>
-          <li><span class="chk">✓</span> License key — attivazione singola istanza</li>
-        </ul>
-        <a href="mailto:hello@example.com" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;" id="cta-pro">
-          Acquista Pro — €9,90/mese →
-        </a>
-        <p style="text-align:center;font-size:12px;opacity:.5;margin-top:12px;">Puoi disdire in qualsiasi momento</p>
       </div>
+
     </div>
   </div>
 </section>
@@ -1008,23 +1164,22 @@ function toggleBilling() {
   const lblY = document.getElementById('lbl-year');
   const price = document.getElementById('price-display');
   const period = document.getElementById('price-period');
-  const note = document.getElementById('price-note');
-  const cta = document.getElementById('cta-pro');
+  const paypalLabel = document.getElementById('paypal-btn-label');
 
   knob.style.transform = isAnnual ? 'translateX(24px)' : 'translateX(0)';
-  lblM.style.opacity = isAnnual ? '.5' : '1';
-  lblY.style.opacity = isAnnual ? '1' : '.5';
+  lblM.style.opacity = isAnnual ? '.45' : '1';
+  lblY.style.opacity = isAnnual ? '1' : '.45';
 
   if (isAnnual) {
     price.textContent = '€99,00';
-    period.textContent = '/ anno';
-    note.textContent = 'Attivazione tramite license key. Fatturazione annuale. Risparmi €19,80.';
-    cta.textContent = 'Acquista Pro — €99,00/anno →';
+    period.textContent = 'all\'anno · rinnovo automatico · risparmi €19,80';
+    paypalLabel.textContent = 'Abbonati a €99,00/anno';
+    // TODO: swap to annual PayPal Plan ID
   } else {
     price.textContent = '€9,90';
-    period.textContent = '/ mese';
-    note.textContent = 'Attivazione tramite license key. Fatturazione mensile.';
-    cta.textContent = 'Acquista Pro — €9,90/mese →';
+    period.textContent = 'al mese · rinnovo automatico';
+    paypalLabel.textContent = 'Abbonati a €9,90/mese';
+    // TODO: swap to monthly PayPal Plan ID
   }
 }
 
