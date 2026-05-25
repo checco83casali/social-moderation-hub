@@ -882,23 +882,23 @@ footer {
       </div>
       <div>
         <div class="code-block reveal">
-<span class="cm"># 1. Clone the repo</span>
+<div class="cs"><span class="cn">1</span><div><span class="cm"># Clone the repo</span>
 git clone https://github.com/checco83casali/<span class="cv">social-moderation-hub</span>.git
-cd social-moderation-hub
+cd social-moderation-hub</div></div>
 
-<span class="cm"># 2. Install PHP dependencies</span>
-composer install <span class="ck">--no-dev --optimize-autoloader</span>
+<div class="cs"><span class="cn">2</span><div><span class="cm"># Install PHP dependencies</span>
+composer install <span class="ck">--no-dev --optimize-autoloader</span></div></div>
 
-<span class="cm"># 3. Configure environment</span>
+<div class="cs"><span class="cn">3</span><div><span class="cm"># Configure environment</span>
 cp .env.example .env
-<span class="cm"># Set DB_*, ANTHROPIC_API_KEY, META_APP_ID/SECRET</span>
+<span class="cm"># → imposta DB_*, ANTHROPIC_API_KEY, META_APP_ID/SECRET</span></div></div>
 
-<span class="cm"># 4. Run the interactive installer</span>
-php install.php
+<div class="cs"><span class="cn">4</span><div><span class="cm"># Run the interactive installer</span>
+php install.php</div></div>
 
-<span class="cm"># 5. Point document root to public/</span>
-<span class="cm"># → open https://yourdomain.com/auth/google</span>
-<span class="cm"># → first login auto-becomes admin ✓</span>
+<div class="cs" style="border-bottom:none;padding-bottom:0;margin-bottom:0;"><span class="cn">5</span><div><span class="cm"># Punta il document root su public/ e apri</span>
+<span class="cv">https://yourdomain.com/auth/google</span>
+<span class="ck"># → il primo login diventa admin automaticamente ✓</span></div></div>
         </div>
       </div>
     </div>
