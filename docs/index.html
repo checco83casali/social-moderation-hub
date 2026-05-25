@@ -999,6 +999,35 @@ const io = new IntersectionObserver((entries) => {
 revealEls.forEach(el => io.observe(el));
 staggerEls.forEach(el => io.observe(el));
 
+// Billing toggle
+let isAnnual = false;
+function toggleBilling() {
+  isAnnual = !isAnnual;
+  const knob = document.getElementById('toggle-knob');
+  const lblM = document.getElementById('lbl-month');
+  const lblY = document.getElementById('lbl-year');
+  const price = document.getElementById('price-display');
+  const period = document.getElementById('price-period');
+  const note = document.getElementById('price-note');
+  const cta = document.getElementById('cta-pro');
+
+  knob.style.transform = isAnnual ? 'translateX(24px)' : 'translateX(0)';
+  lblM.style.opacity = isAnnual ? '.5' : '1';
+  lblY.style.opacity = isAnnual ? '1' : '.5';
+
+  if (isAnnual) {
+    price.textContent = '€99,00';
+    period.textContent = '/ anno';
+    note.textContent = 'Attivazione tramite license key. Fatturazione annuale. Risparmi €19,80.';
+    cta.textContent = 'Acquista Pro — €99,00/anno →';
+  } else {
+    price.textContent = '€9,90';
+    period.textContent = '/ mese';
+    note.textContent = 'Attivazione tramite license key. Fatturazione mensile.';
+    cta.textContent = 'Acquista Pro — €9,90/mese →';
+  }
+}
+
 // Nav background on scroll
 const nav = document.querySelector('nav');
 window.addEventListener('scroll', () => {
