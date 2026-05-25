@@ -127,7 +127,9 @@ $app->get('/webhook/meta',  [WebhookController::class, 'verify']);
 $app->post('/webhook/meta', [WebhookController::class, 'receive']);
 
 // Public: GitHub auto-deploy webhook (signature-verified internally).
-$app->post('/webhook/github', [DeployController::class, 'pull']);
+// Accetta sia con sia senza slash finale: GitHub a volte appende uno '/'.
+$app->post('/webhook/github',  [DeployController::class, 'pull']);
+$app->post('/webhook/github/', [DeployController::class, 'pull']);
 
 // Protected: API (requires valid JWT)
 $app->group('/api', function ($group) {
