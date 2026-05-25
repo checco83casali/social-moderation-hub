@@ -280,6 +280,22 @@ The workflow lives in [`.github/workflows/ci.yml`](.github/workflows/ci.yml). PH
 config is in `phpstan.neon`; pre-existing findings are tracked in `phpstan-baseline.neon`
 so new code is held to level 6 while the legacy debt is reduced over time.
 
+## Auto-deploy via GitHub webhook (optional)
+
+The endpoint `POST /webhook/github` performs a fast-forward `git pull` in the
+project root when GitHub notifies a push on the configured branch. The handler
+verifies the payload signature (HMAC-SHA256) and is **fail-closed** without a
+configured secret. Configure with:
+
+```ini
+GITHUB_WEBHOOK_SECRET=<shared random secret>
+GITHUB_WEBHOOK_BRANCH=main
+```
+
+Then add a webhook in **Settings → Webhooks** pointing at
+`https://your-host/webhook/github`, content type `application/json`, with the
+same secret. Each successful pull is appended to `logs/deploy.log`.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
