@@ -305,20 +305,13 @@ h2 {
 .code-block .cm { color: var(--muted); }
 .code-block .ck { color: var(--ok); }
 .code-block .cv { color: var(--accent); }
-.code-block .cs {
-  display: flex; gap: 16px; align-items: flex-start;
-  padding: 14px 0;
-  border-bottom: 1px solid rgba(255,255,255,.06);
-  margin-bottom: 0;
-}
-.code-block .cn {
-  flex-shrink: 0;
-  width: 22px; height: 22px; border-radius: 6px;
-  background: rgba(79,142,247,.25);
-  border: 1px solid rgba(79,142,247,.35);
-  color: var(--accent); font-size: 11px; font-weight: 800;
-  display: flex; align-items: center; justify-content: center;
-  margin-top: 1px;
+.code-block pre { margin: 0; white-space: pre; font-family: inherit; line-height: 1.9; }
+.code-block .cn-inline {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 5px;
+  background: rgba(79,142,247,.25); border: 1px solid rgba(79,142,247,.35);
+  color: var(--accent); font-size: 10px; font-weight: 800;
+  vertical-align: middle; margin-right: 4px; position: relative; top: -1px;
 }
 
 /* ─── ROADMAP ─── */
@@ -896,25 +889,25 @@ footer {
         </ul>
       </div>
       <div>
-        <div class="code-block reveal">
-<div class="cs"><span class="cn">1</span><div><span class="cm"># Clone the repo</span>
-git clone https://github.com/checco83casali/<span class="cv">social-moderation-hub</span>.git
-cd social-moderation-hub</div></div>
+        <div class="code-block reveal"><pre>
+<span class="cn-inline">1</span> <span class="cm"># Clone the repo</span>
+  git clone https://github.com/checco83casali/<span class="cv">social-moderation-hub</span>.git
+  cd social-moderation-hub
 
-<div class="cs"><span class="cn">2</span><div><span class="cm"># Install PHP dependencies</span>
-composer install <span class="ck">--no-dev --optimize-autoloader</span></div></div>
+<span class="cn-inline">2</span> <span class="cm"># Install PHP dependencies</span>
+  composer install <span class="ck">--no-dev --optimize-autoloader</span>
 
-<div class="cs"><span class="cn">3</span><div><span class="cm"># Configure environment</span>
-cp .env.example .env
-<span class="cm"># → imposta DB_*, ANTHROPIC_API_KEY, META_APP_ID/SECRET</span></div></div>
+<span class="cn-inline">3</span> <span class="cm"># Configure environment</span>
+  cp .env.example .env
+  <span class="cm"># Set DB_*, ANTHROPIC_API_KEY, META_APP_ID/SECRET</span>
 
-<div class="cs"><span class="cn">4</span><div><span class="cm"># Run the interactive installer</span>
-php install.php</div></div>
+<span class="cn-inline">4</span> <span class="cm"># Run the interactive installer</span>
+  php install.php
 
-<div class="cs" style="border-bottom:none;padding-bottom:0;margin-bottom:0;"><span class="cn">5</span><div><span class="cm"># Punta il document root su public/ e apri</span>
-<span class="cv">https://yourdomain.com/auth/google</span>
-<span class="ck"># → il primo login diventa admin automaticamente ✓</span></div></div>
-        </div>
+<span class="cn-inline">5</span> <span class="cm"># Point document root to public/ and open</span>
+  <span class="cv">https://yourdomain.com/auth/google</span>
+  <span class="ck"># → first login automatically becomes admin ✓</span>
+</pre></div>
       </div>
     </div>
   </div>
@@ -990,12 +983,12 @@ php install.php</div></div>
 
     <!-- Toggle mensile/annuale -->
     <div class="billing-toggle-wrap reveal">
-      <span id="lbl-month" style="opacity:1;transition:opacity .2s;">Mensile</span>
+      <span id="lbl-month" style="opacity:1;transition:opacity .2s;">Monthly</span>
       <button id="billing-toggle" class="billing-knob-track" onclick="toggleBilling()" aria-label="Cambia piano">
         <span id="toggle-knob" class="billing-knob"></span>
       </button>
       <span id="lbl-year" style="opacity:.45;transition:opacity .2s;">
-        Annuale
+        Annual
         <span class="billing-save">–16%</span>
       </span>
     </div>
@@ -1005,25 +998,25 @@ php install.php</div></div>
       <!-- FREE -->
       <div class="plan-free">
         <div class="plan-name-free">Community</div>
-        <div class="plan-price-free">Gratis <span>/ sempre</span></div>
-        <div class="plan-desc-free">Licenza MIT. Self-host su qualsiasi server.</div>
+        <div class="plan-price-free">Free <span>/ forever</span></div>
+        <div class="plan-desc-free">MIT license. Self-host on any server.</div>
         <ul class="free-features">
-          <li><span class="chk">✓</span> Pipeline AI a due stadi (Haiku → Sonnet)</li>
-          <li><span class="chk">✓</span> Coda di revisione umana</li>
-          <li><span class="chk">✓</span> Sistema ban progressivo</li>
-          <li><span class="chk">✓</span> Gestione policy versionata</li>
-          <li><span class="chk">✓</span> Audit trail completo</li>
+          <li><span class="chk">✓</span> Two-stage AI pipeline (Haiku → Sonnet)</li>
+          <li><span class="chk">✓</span> Human review queue</li>
+          <li><span class="chk">✓</span> Progressive ban system</li>
+          <li><span class="chk">✓</span> Versioned policy management</li>
+          <li><span class="chk">✓</span> Full audit trail</li>
           <li><span class="chk">✓</span> OAuth2 login (Google, Meta, Microsoft)</li>
-          <li><span class="chk">✓</span> 1 pagina Facebook</li>
+          <li><span class="chk">✓</span> 1 Facebook page</li>
           <li><span class="chk">✓</span> Docker support</li>
-          <li><span class="chk na">–</span> <span class="na-text">Segnalazioni pericolose</span></li>
-          <li><span class="chk na">–</span> <span class="na-text">Ricorsi & appeal</span></li>
-          <li><span class="chk na">–</span> <span class="na-text">Statistiche avanzate</span></li>
-          <li><span class="chk na">–</span> <span class="na-text">Pagine aggiuntive</span></li>
-          <li><span class="chk na">–</span> <span class="na-text">Soglie AI per pagina</span></li>
+          <li><span class="chk na">–</span> <span class="na-text">Dangerous reports queue</span></li>
+          <li><span class="chk na">–</span> <span class="na-text">Appeals workflow</span></li>
+          <li><span class="chk na">–</span> <span class="na-text">Advanced statistics</span></li>
+          <li><span class="chk na">–</span> <span class="na-text">Additional Facebook pages</span></li>
+          <li><span class="chk na">–</span> <span class="na-text">Per-page AI thresholds</span></li>
         </ul>
         <a href="https://github.com/checco83casali/social-moderation-hub#quick-start" target="_blank" class="btn btn-outline btn-lg" style="width:100%;justify-content:center;margin-top:auto;">
-          Deploy gratis →
+          Deploy free →
         </a>
       </div>
 
@@ -1036,77 +1029,77 @@ php install.php</div></div>
             </div>
             <div class="pro-price-block">
               <div class="pro-price" id="price-display">€9,90</div>
-              <div class="pro-period" id="price-period">al mese · rinnovo automatico</div>
+              <div class="pro-period" id="price-period">per month · automatic renewal</div>
             </div>
           </div>
 
           <div class="pro-divider"></div>
 
-          <div class="pro-features-title">Tutto il Community, più:</div>
+          <div class="pro-features-title">Everything in Community, plus:</div>
           <ul class="pro-features">
             <li>
               <span class="pro-chk">✓</span>
-              <span><strong>Segnalazioni pericolose</strong> — coda dedicata per iter legale</span>
+              <span><strong>Dangerous reports queue</strong> — dedicated lane for legal review</span>
             </li>
             <li>
               <span class="pro-chk">✓</span>
-              <span><strong>Ricorsi (appeal)</strong> — link HMAC firmato, moderatore accetta/rifiuta</span>
+              <span><strong>Appeals workflow</strong> — HMAC-signed URL, moderator accepts/rejects</span>
             </li>
             <li>
               <span class="pro-chk">✓</span>
-              <span><strong>Statistiche avanzate</strong> — dashboard 30gg, categorie, trend AI</span>
+              <span><strong>Advanced statistics</strong> — 30-day dashboard, categories, AI trends</span>
             </li>
             <li>
               <span class="pro-chk">✓</span>
-              <span><strong>Pagine Facebook aggiuntive</strong> — multi-page illimitate</span>
+              <span><strong>Additional Facebook pages</strong> — unlimited multi-page support</span>
             </li>
             <li>
               <span class="pro-chk">✓</span>
-              <span><strong>Soglie AI per pagina</strong> — Haiku/Sonnet confidence personalizzabili</span>
+              <span><strong>Per-page AI thresholds</strong> — custom Haiku/Sonnet confidence per page</span>
             </li>
             <li>
               <span class="pro-chk">✓</span>
-              <span><strong>Template reply personalizzabili</strong> — risposte automatiche su misura</span>
+              <span><strong>Custom reply templates</strong> — tailored automatic responses</span>
             </li>
             <li>
               <span class="pro-chk">✓</span>
-              <span><strong>Fact-check AI</strong> — bozza risposta + fonti, decisione umana</span>
+              <span><strong>AI fact-check</strong> — draft reply + sources, human decides</span>
             </li>
             <li>
               <span class="pro-chk">✓</span>
-              <span><strong>Export log</strong> — CSV/PDF on-demand e schedulato</span>
+              <span><strong>Log export</strong> — CSV/PDF on-demand and scheduled</span>
             </li>
             <li>
               <span class="pro-chk">✓</span>
-              <span><strong>Retention dati configurabile</strong> — finestra GDPR personalizzabile</span>
+              <span><strong>Configurable data retention</strong> — custom GDPR anonymization window</span>
             </li>
           </ul>
 
-          <div class="pro-features-title" style="margin-top:4px;">In arrivo per i Pro:</div>
+          <div class="pro-features-title" style="margin-top:4px;">Coming soon for Pro:</div>
           <ul class="pro-features" style="margin-bottom:20px;">
             <li>
               <span class="pro-chk soon">⏳</span>
-              <span style="opacity:.7;"><strong>Flame detection & post lock</strong> — blocco automatico commenti su post in flame</span>
+              <span style="opacity:.7;"><strong>Flame detection & post lock</strong> — auto-lock comments on posts under flame</span>
               <span class="pro-soon-badge">Soon</span>
             </li>
             <li>
               <span class="pro-chk soon">⏳</span>
-              <span style="opacity:.7;"><strong>Slack / email alerts</strong> — notifiche su soglia coda umana</span>
+              <span style="opacity:.7;"><strong>Slack / email alerts</strong> — notify when human queue exceeds threshold</span>
               <span class="pro-soon-badge">Soon</span>
             </li>
             <li>
               <span class="pro-chk soon">⏳</span>
-              <span style="opacity:.7;"><strong>Instagram support</strong> — stessa pipeline su Instagram</span>
+              <span style="opacity:.7;"><strong>Instagram support</strong> — same pipeline on Instagram</span>
               <span class="pro-soon-badge">Soon</span>
             </li>
             <li>
               <span class="pro-chk soon">⏳</span>
-              <span style="opacity:.7;"><strong>Bot & campaign detection</strong> — analisi comportamentale cross-utente</span>
+              <span style="opacity:.7;"><strong>Bot & campaign detection</strong> — cross-user behavioural analysis</span>
               <span class="pro-soon-badge">Soon</span>
             </li>
             <li>
               <span class="pro-chk soon">⏳</span>
-              <span style="opacity:.7;"><strong>Policy test mode</strong> — valuta un commento prima di attivare la policy</span>
+              <span style="opacity:.7;"><strong>Policy test mode</strong> — test a comment before activating a new policy</span>
               <span class="pro-soon-badge">Soon</span>
             </li>
           </ul>
@@ -1115,10 +1108,10 @@ php install.php</div></div>
           <div class="paypal-btn-wrap">
             <button class="paypal-placeholder" id="paypal-btn" onclick="alert('PayPal Plan ID da configurare')">
               <span class="paypal-logo">Pay<span>Pal</span></span>
-              <span id="paypal-btn-label">Abbonati a €9,90/mese</span>
+              <span id="paypal-btn-label">Subscribe at €9.90/month</span>
             </button>
             <p style="text-align:center;font-size:12px;opacity:.38;margin-top:10px;">
-              Puoi disdire in qualsiasi momento · Pagamento sicuro PayPal
+              Cancel anytime · Secure payment via PayPal
             </p>
           </div>
         </div>
@@ -1230,13 +1223,13 @@ function toggleBilling() {
 
   if (isAnnual) {
     price.textContent = '€99,00';
-    period.textContent = 'all\'anno · rinnovo automatico · risparmi €19,80';
-    paypalLabel.textContent = 'Abbonati a €99,00/anno';
+    period.textContent = 'per year · automatic renewal · save €19.80';
+    paypalLabel.textContent = 'Subscribe at €99.00/year';
     // TODO: swap to annual PayPal Plan ID
   } else {
     price.textContent = '€9,90';
-    period.textContent = 'al mese · rinnovo automatico';
-    paypalLabel.textContent = 'Abbonati a €9,90/mese';
+    period.textContent = 'per month · automatic renewal';
+    paypalLabel.textContent = 'Subscribe at €9.90/month';
     // TODO: swap to monthly PayPal Plan ID
   }
 }
