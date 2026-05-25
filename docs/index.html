@@ -835,48 +835,80 @@ php install.php
     <h2 class="reveal">Free forever.<br>Pro when you need it.</h2>
     <p class="section-sub reveal">The core is MIT-licensed and always free. Pro unlocks advanced features via a license key.</p>
 
+    <!-- Toggle mensile/annuale -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin:0 auto 44px;font-size:15px;font-weight:600;" class="reveal">
+      <span id="lbl-month" style="opacity:1;">Mensile</span>
+      <button id="billing-toggle" onclick="toggleBilling()" style="
+        width:52px;height:28px;border-radius:100px;border:none;cursor:pointer;
+        background:linear-gradient(135deg,var(--accent),var(--accent2));
+        position:relative;transition:.3s;
+      ">
+        <span id="toggle-knob" style="
+          position:absolute;top:4px;left:4px;
+          width:20px;height:20px;border-radius:50%;background:#fff;
+          transition:transform .3s;display:block;
+        "></span>
+      </button>
+      <span id="lbl-year" style="opacity:.5;">
+        Annuale
+        <span style="background:rgba(62,207,142,.2);color:#3ecf8e;font-size:12px;font-weight:800;padding:2px 9px;border-radius:100px;margin-left:6px;">–16%</span>
+      </span>
+    </div>
+
     <div class="license-wrapper stagger">
       <div class="plan-card plan-free">
         <div class="plan-name">Community</div>
-        <div class="plan-price">Free <span>/ forever</span></div>
-        <div class="plan-desc">MIT license. Self-host on any server.</div>
+        <div class="plan-price">Gratis <span>/ forever</span></div>
+        <div class="plan-desc">Licenza MIT. Self-host su qualsiasi server.</div>
         <ul class="plan-features">
-          <li><span class="chk">✓</span> Two-stage AI pipeline (Haiku → Sonnet)</li>
-          <li><span class="chk">✓</span> Human review queue</li>
-          <li><span class="chk">✓</span> Progressive ban system</li>
-          <li><span class="chk">✓</span> Appeals workflow (HMAC signed URLs)</li>
-          <li><span class="chk">✓</span> Versioned policy management</li>
-          <li><span class="chk">✓</span> Full audit trail</li>
-          <li><span class="chk">✓</span> GDPR data retention tools</li>
-          <li><span class="chk">✓</span> Multi-page Facebook integration</li>
+          <li><span class="chk">✓</span> Pipeline AI a due stadi (Haiku → Sonnet)</li>
+          <li><span class="chk">✓</span> Coda di revisione umana</li>
+          <li><span class="chk">✓</span> Sistema ban progressivo</li>
+          <li><span class="chk">✓</span> Gestione policy versionata</li>
+          <li><span class="chk">✓</span> Audit trail completo</li>
           <li><span class="chk">✓</span> OAuth2 login (Google, Meta, Microsoft)</li>
+          <li><span class="chk">✓</span> 1 pagina Facebook</li>
           <li><span class="chk">✓</span> Docker support</li>
+          <li><span class="chk na">–</span> <span style="opacity:.45;">Segnalazioni pericolose</span></li>
+          <li><span class="chk na">–</span> <span style="opacity:.45;">Ricorsi (appeal)</span></li>
+          <li><span class="chk na">–</span> <span style="opacity:.45;">Statistiche avanzate</span></li>
+          <li><span class="chk na">–</span> <span style="opacity:.45;">Pagine Facebook aggiuntive</span></li>
+          <li><span class="chk na">–</span> <span style="opacity:.45;">Soglie AI per pagina</span></li>
+          <li><span class="chk na">–</span> <span style="opacity:.45;">Template reply personalizzabili</span></li>
+          <li><span class="chk na">–</span> <span style="opacity:.45;">Fact-check AI</span></li>
+          <li><span class="chk na">–</span> <span style="opacity:.45;">Export log</span></li>
+          <li><span class="chk na">–</span> <span style="opacity:.45;">Retention dati configurabile</span></li>
         </ul>
         <a href="https://github.com/checco83casali/social-moderation-hub#quick-start" target="_blank" class="btn btn-outline btn-lg" style="width:100%;justify-content:center;">
-          Deploy free →
+          Deploy gratis →
         </a>
       </div>
 
       <div class="plan-card plan-pro">
         <span class="plan-badge">PRO</span>
         <div class="plan-name">Pro</div>
-        <div class="plan-price">Contact <span>/ custom</span></div>
-        <div class="plan-desc">License key activation. Priority support included.</div>
+        <div class="plan-price">
+          <span id="price-display">€9,90</span>
+          <span id="price-period">/ mese</span>
+        </div>
+        <div id="price-note" class="plan-desc">Attivazione tramite license key. Fatturazione mensile.</div>
         <ul class="plan-features">
-          <li><span class="chk">✓</span> Everything in Community</li>
-          <li><span class="chk">✓</span> Advanced threat detection models</li>
-          <li><span class="chk">✓</span> Automated report export (CSV / PDF)</li>
-          <li><span class="chk">✓</span> Slack & email alert integrations</li>
-          <li><span class="chk">✓</span> Instagram support (when released)</li>
-          <li><span class="chk">✓</span> Bot & campaign detection</li>
-          <li><span class="chk">✓</span> Policy test mode</li>
-          <li><span class="chk">✓</span> Priority support & SLA</li>
-          <li><span class="chk">✓</span> License key — single activation</li>
-          <li><span class="chk">✓</span> Custom deployment assistance</li>
+          <li><span class="chk">✓</span> Tutto il piano Community</li>
+          <li><span class="chk">✓</span> <strong>Segnalazioni pericolose</strong> — coda dedicata iter legale</li>
+          <li><span class="chk">✓</span> <strong>Ricorsi (appeal)</strong> — link firmato HMAC, accetta/rifiuta</li>
+          <li><span class="chk">✓</span> <strong>Statistiche avanzate</strong> — dashboard 30gg, categorie, trend</li>
+          <li><span class="chk">✓</span> <strong>Pagine Facebook aggiuntive</strong> — multi-page illimitate</li>
+          <li><span class="chk">✓</span> <strong>Soglie AI per pagina</strong> — Haiku/Sonnet confidence personalizzabili</li>
+          <li><span class="chk">✓</span> <strong>Template reply personalizzabili</strong> — risposte automatiche su misura</li>
+          <li><span class="chk">✓</span> <strong>Fact-check AI</strong> — bozza risposta + fonti, decisione umana</li>
+          <li><span class="chk">✓</span> <strong>Export log</strong> — CSV/PDF on-demand e schedulato</li>
+          <li><span class="chk">✓</span> <strong>Retention dati configurabile</strong> — finestra GDPR personalizzabile</li>
+          <li><span class="chk">✓</span> License key — attivazione singola istanza</li>
         </ul>
-        <a href="mailto:hello@example.com" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;">
-          Contact for pricing →
+        <a href="mailto:hello@example.com" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;" id="cta-pro">
+          Acquista Pro — €9,90/mese →
         </a>
+        <p style="text-align:center;font-size:12px;opacity:.5;margin-top:12px;">Puoi disdire in qualsiasi momento</p>
       </div>
     </div>
   </div>
