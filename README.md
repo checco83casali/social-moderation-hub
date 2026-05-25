@@ -269,6 +269,17 @@ Planned next:
 
 ---
 
+## Continuous Integration
+
+Every push to `main` and every pull request runs a GitHub Actions workflow that:
+
+- Lints all PHP files (`php -l`) under `src/`, `bin/`, `public/`.
+- Runs **PHPStan** static analysis at **level 6** (`composer analyse`).
+
+The workflow lives in [`.github/workflows/ci.yml`](.github/workflows/ci.yml). PHPStan's
+config is in `phpstan.neon`; pre-existing findings are tracked in `phpstan-baseline.neon`
+so new code is held to level 6 while the legacy debt is reduced over time.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
