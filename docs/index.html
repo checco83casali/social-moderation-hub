@@ -984,7 +984,7 @@ footer {
     <!-- Toggle mensile/annuale -->
     <div class="billing-toggle-wrap reveal">
       <span id="lbl-month" style="opacity:1;transition:opacity .2s;">Monthly</span>
-      <button id="billing-toggle" class="billing-knob-track" onclick="toggleBilling()" aria-label="Cambia piano">
+      <button id="billing-toggle" class="billing-knob-track" onclick="toggleBilling()" aria-label="Toggle billing cycle">
         <span id="toggle-knob" class="billing-knob"></span>
       </button>
       <span id="lbl-year" style="opacity:.45;transition:opacity .2s;">
@@ -1028,7 +1028,7 @@ footer {
               <div class="pro-badge">PRO</div>
             </div>
             <div class="pro-price-block">
-              <div class="pro-price" id="price-display">€9,90</div>
+              <div class="pro-price" id="price-display">€9.90</div>
               <div class="pro-period" id="price-period">per month · automatic renewal</div>
             </div>
           </div>
@@ -1118,10 +1118,23 @@ footer {
       </div>
 
     </div>
+
+    <!-- Anthropic API disclaimer -->
+    <div style="margin-top:28px;background:rgba(247,178,74,.05);border:1px solid rgba(247,178,74,.18);border-radius:16px;padding:20px 24px;display:flex;align-items:flex-start;gap:14px;" class="reveal">
+      <span style="font-size:20px;flex-shrink:0;margin-top:1px;">⚠️</span>
+      <div>
+        <div style="font-size:12px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:var(--warn);margin-bottom:6px;">Anthropic API not included</div>
+        <p style="font-size:14px;line-height:1.6;max-width:80ch;opacity:.8;">
+          The pricing above covers the Social Moderation Hub license only. AI processing is billed separately by Anthropic on a pay-per-use basis.
+          Typical cost is <strong style="color:#eef2fb;">€0.005 – €0.01 per comment</strong> depending on content length, model used (Haiku vs Sonnet), and how often the second stage is triggered.
+          Costs can be controlled by tuning the confidence thresholds in your <code style="background:rgba(255,255,255,.08);padding:2px 7px;border-radius:5px;font-size:12px;">.env</code> file.
+          See <a href="https://www.anthropic.com/pricing" target="_blank" style="color:var(--accent);text-decoration:underline;text-underline-offset:3px;">anthropic.com/pricing</a> for current API rates.
+        </p>
+      </div>
+    </div>
+
   </div>
 </section>
-
-<!-- CTA -->
 <section id="cta">
   <div class="blob b1"></div>
   <div class="blob b2"></div>
@@ -1222,12 +1235,12 @@ function toggleBilling() {
   lblY.style.opacity = isAnnual ? '1' : '.45';
 
   if (isAnnual) {
-    price.textContent = '€99,00';
+    price.textContent = '€99.00';
     period.textContent = 'per year · automatic renewal · save €19.80';
     paypalLabel.textContent = 'Subscribe at €99.00/year';
     // TODO: swap to annual PayPal Plan ID
   } else {
-    price.textContent = '€9,90';
+    price.textContent = '€9.90';
     period.textContent = 'per month · automatic renewal';
     paypalLabel.textContent = 'Subscribe at €9.90/month';
     // TODO: swap to monthly PayPal Plan ID
