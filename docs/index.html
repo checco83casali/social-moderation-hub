@@ -431,10 +431,17 @@ h2 {
   display: flex; align-items: center; justify-content: center;
   font-size: 11px; color: var(--ok); font-weight: 900; margin-top: 1px;
 }
-.pro-features .pro-plus {
-  font-size: 11px; font-weight: 800;
-  color: var(--ok); opacity: .75;
+.pro-soon-badge {
   margin-left: auto; flex-shrink: 0; padding-left: 8px; align-self: center;
+  font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+  background: rgba(247,178,74,.15); color: var(--warn);
+  border: 1px solid rgba(247,178,74,.25);
+  padding: 2px 9px; border-radius: 100px;
+}
+.pro-chk.soon {
+  background: rgba(247,178,74,.12);
+  border-color: rgba(247,178,74,.25);
+  color: var(--warn); font-size: 10px;
 }
 
 /* billing toggle */
@@ -948,6 +955,13 @@ php install.php
           <p>Additional social networks beyond Meta's ecosystem.</p>
         </div>
       </div>
+      <div class="rm-item">
+        <div class="rm-icon">🔥</div>
+        <div>
+          <h4>Flame detection & post lock</h4>
+          <p>Blocco automatico dei commenti su un post quando si rileva flame, un picco anomalo di commenti negativi o un'alta concentrazione di contenuti borderline in un intervallo di tempo configurabile.</p>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -1050,6 +1064,35 @@ php install.php
             <li>
               <span class="pro-chk">✓</span>
               <span><strong>Retention dati configurabile</strong> — finestra GDPR personalizzabile</span>
+            </li>
+          </ul>
+
+          <div class="pro-features-title" style="margin-top:4px;">In arrivo per i Pro:</div>
+          <ul class="pro-features" style="margin-bottom:20px;">
+            <li>
+              <span class="pro-chk soon">⏳</span>
+              <span style="opacity:.7;"><strong>Flame detection & post lock</strong> — blocco automatico commenti su post in flame</span>
+              <span class="pro-soon-badge">Soon</span>
+            </li>
+            <li>
+              <span class="pro-chk soon">⏳</span>
+              <span style="opacity:.7;"><strong>Slack / email alerts</strong> — notifiche su soglia coda umana</span>
+              <span class="pro-soon-badge">Soon</span>
+            </li>
+            <li>
+              <span class="pro-chk soon">⏳</span>
+              <span style="opacity:.7;"><strong>Instagram support</strong> — stessa pipeline su Instagram</span>
+              <span class="pro-soon-badge">Soon</span>
+            </li>
+            <li>
+              <span class="pro-chk soon">⏳</span>
+              <span style="opacity:.7;"><strong>Bot & campaign detection</strong> — analisi comportamentale cross-utente</span>
+              <span class="pro-soon-badge">Soon</span>
+            </li>
+            <li>
+              <span class="pro-chk soon">⏳</span>
+              <span style="opacity:.7;"><strong>Policy test mode</strong> — valuta un commento prima di attivare la policy</span>
+              <span class="pro-soon-badge">Soon</span>
             </li>
           </ul>
 
