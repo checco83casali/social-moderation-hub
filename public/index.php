@@ -9,6 +9,7 @@ use ModerationHub\Controllers\ModerationController;
 use ModerationHub\Controllers\PagesController;
 use ModerationHub\Controllers\PolicyController;
 use ModerationHub\Controllers\WebhookController;
+use ModerationHub\Controllers\DeployController;
 use ModerationHub\Middleware\AuthMiddleware;
 use ModerationHub\Middleware\AccessGuardMiddleware;
 use ModerationHub\Services\OAuthService;
@@ -124,6 +125,9 @@ $app->get('/privacy', function ($request, $response) {
 // Public: Meta webhook (token-verified on GET, HMAC-signature-verified on POST)
 $app->get('/webhook/meta',  [WebhookController::class, 'verify']);
 $app->post('/webhook/meta', [WebhookController::class, 'receive']);
+
+// Public: GitHub auto-deploy webhook (signature-verified internally).
+$app->post('/webhook/github', [DeployController::class, 'pull']);
 
 // Protected: API (requires valid JWT)
 $app->group('/api', function ($group) {

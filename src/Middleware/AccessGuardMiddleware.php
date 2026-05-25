@@ -35,9 +35,9 @@ use Slim\Psr7\Response;
  */
 class AccessGuardMiddleware implements MiddlewareInterface
 {
-    /** Built-in public path prefixes (everything Meta or an end-user must reach). */
+    /** Built-in public path prefixes (everything Meta, GitHub or an end-user must reach). */
     private const DEFAULT_PUBLIC_PREFIXES = [
-        '/webhook/meta',
+        '/webhook/',     // Meta + GitHub deploy webhook (both HMAC-signed)
         '/appeal',
         '/public/',
         '/privacy',
