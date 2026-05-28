@@ -86,6 +86,10 @@ async function loadSettings() {
       const fcEl = document.getElementById('set-fact-check-threshold');
       if (fcEl) fcEl.value = parseFloat(d.fact_check_auto_publish_threshold ?? 0.90).toFixed(2);
 
+      // PRO: whataboutism auto-publish threshold
+      const wbEl = document.getElementById('set-whataboutism-threshold');
+      if (wbEl) wbEl.value = parseFloat(d.whataboutism_auto_publish_threshold ?? 0.95).toFixed(2);
+
       // PRO: hide reply templates
       setVal('set-hide-reply-template',            d.hide_reply_template            ?? '');
       setVal('set-hide-reportable-reply-template', d.hide_reportable_reply_template ?? '');
@@ -131,6 +135,7 @@ function applyLicensePanel(lic) {
       templates:           'Template reply personalizzabili',
       per_page_thresholds: 'Soglie AI per pagina',
       fact_check:          'Fact check AI',
+      whataboutism:        'Whataboutism AI',
       multi_page:          'Pagine multiple',
     };
     const feats = (lic.features ?? []).map(f => featureNames[f] ?? f);
@@ -294,6 +299,11 @@ async function saveSettings() {
     if (fcThEl && !fcThEl.disabled) {
       const fcVal = parseFloat(fcThEl.value);
       if (!isNaN(fcVal) && fcVal >= 0.5 && fcVal <= 1.0) payload.fact_check_auto_publish_threshold = fcVal;
+    }
+    const wbThEl = document.getElementById('set-whataboutism-threshold');
+    if (wbThEl && !wbThEl.disabled) {
+      const wbVal = parseFloat(wbThEl.value);
+      if (!isNaN(wbVal) && wbVal >= 0.5 && wbVal <= 1.0) payload.whataboutism_auto_publish_threshold = wbVal;
     }
 
     await api('/settings', 'PUT', payload);

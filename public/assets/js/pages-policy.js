@@ -83,9 +83,14 @@ async function openPageSettings(id) {
       <input class="form-input" type="number" id="ps-sonnet" min="0.01" max="1.00" step="0.01" value="${d.sonnet_confidence_threshold ? d.sonnet_confidence_threshold : ''}" placeholder="${d.global_sonnet}">
       <div style="font-size:11px;color:var(--muted);margin:5px 0 16px">Se confidence ≥ soglia → Sonnet decide da solo. Sotto → revisione umana. Deve essere inferiore alla soglia Haiku.</div>
       ${d.fact_check_available ? `
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-bottom:8px">
         <input type="checkbox" id="ps-factcheck" ${d.fact_check_enabled ? 'checked' : ''} style="width:16px;height:16px">
         Fact-check AI attivo su questa pagina
+      </label>` : ''}
+      ${d.whataboutism_available ? `
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="ps-whataboutism" ${d.whataboutism_enabled ? 'checked' : ''} style="width:16px;height:16px">
+        Whataboutism AI attivo su questa pagina
       </label>` : ''}`;
   } catch (e) {
     if ((e.message || '').toLowerCase().includes('pro license')) {
@@ -109,6 +114,7 @@ async function savePageSettings() {
   const haikuEl  = document.getElementById('ps-haiku');
   const sonnetEl = document.getElementById('ps-sonnet');
   const fcEl     = document.getElementById('ps-factcheck');
+  const wbEl     = document.getElementById('ps-whataboutism');
   if (!haikuEl || !sonnetEl) return;
 
   const haiku  = haikuEl.value.trim();
@@ -126,9 +132,10 @@ async function savePageSettings() {
     haiku_confidence_threshold:  haiku  === '' ? null : parseFloat(haiku),
     sonnet_confidence_threshold: sonnet === '' ? null : parseFloat(sonnet),
   };
-  // Invia il toggle fact-check solo se la feature è attiva (checkbox presente),
+  // Invia i toggle solo se la feature è attiva (checkbox presente),
   // altrimenti non tocchiamo il valore salvato.
-  if (fcEl) payload.fact_check_enabled = fcEl.checked;
+  if (fcEl) payload.fact_check_enabled   = fcEl.checked;
+  if (wbEl) payload.whataboutism_enabled = wbEl.checked;
 
   const btn = document.getElementById('page-settings-save-btn');
   btn.disabled = true;

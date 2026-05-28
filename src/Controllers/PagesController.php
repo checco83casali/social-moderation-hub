@@ -417,8 +417,11 @@ class PagesController
             'haiku_confidence_threshold'  => $ps ? (float) $ps->haiku_confidence_threshold  : null,
             'sonnet_confidence_threshold' => $ps ? (float) $ps->sonnet_confidence_threshold : null,
             'fact_check_enabled'          => $ps ? (bool)  $ps->fact_check_enabled          : true,
-            // Whether the fact-check Pro feature is active (controls UI visibility)
+            'whataboutism_enabled'        => ($ps && isset($ps->whataboutism_enabled))
+                                                ? (bool) $ps->whataboutism_enabled : true,
+            // Whether each Pro feature is active (controls UI visibility)
             'fact_check_available'        => $this->license->hasFeature('fact_check'),
+            'whataboutism_available'      => $this->license->hasFeature('whataboutism'),
             // Effective values (null = using global)
             'effective_haiku'             => $ps?->haiku_confidence_threshold  !== null ? (float) $ps->haiku_confidence_threshold  : $globalHaiku,
             'effective_sonnet'            => $ps?->sonnet_confidence_threshold !== null ? (float) $ps->sonnet_confidence_threshold : $globalSonnet,
@@ -431,7 +434,8 @@ class PagesController
     /**
      * Update per-page AI threshold settings (PRO feature).
      * Send null for a threshold to revert to global setting.
-     * Body: { haiku_confidence_threshold, sonnet_confidence_threshold, fact_check_enabled }
+     * Body: { haiku_confidence_threshold, sonnet_confidence_threshold,
+     *         fact_check_enabled, whataboutism_enabled }
      */
     public function updatePageSettings(ServerRequestInterface $request, Response $response, array $args): ResponseInterface
     {
@@ -469,6 +473,10 @@ class PagesController
             ? (bool) $body['fact_check_enabled']
             : null;
 
+        $whataboutism = array_key_exists('whataboutism_enabled', $body)
+            ? (bool) $body['whataboutism_enabled']
+            : null;
+
         // Validate that haiku > sonnet when both are set
         $haikuVal  = $haiku  !== false ? $haiku  : null;
         $sonnetVal = $sonnet !== false ? $sonnet : null;
@@ -480,9 +488,10 @@ class PagesController
         $now      = date('Y-m-d H:i:s');
 
         $data = ['updated_by' => $auth->sub, 'updated_at' => $now];
-        if ($haiku  !== false) $data['haiku_confidence_threshold']  = $haikuVal;
-        if ($sonnet !== false) $data['sonnet_confidence_threshold'] = $sonnetVal;
-        if ($factCheck !== null)  $data['fact_check_enabled']       = $factCheck ? 1 : 0;
+        if ($haiku  !== false)       $data['haiku_confidence_threshold']  = $haikuVal;
+        if ($sonnet !== false)       $data['sonnet_confidence_threshold'] = $sonnetVal;
+        if ($factCheck !== null)     $data['fact_check_enabled']          = $factCheck    ? 1 : 0;
+        if ($whataboutism !== null)  $data['whataboutism_enabled']        = $whataboutism ? 1 : 0;
 
         if ($existing) {
             DB::table('page_settings')->where('page_id', $page->id)->update($data);

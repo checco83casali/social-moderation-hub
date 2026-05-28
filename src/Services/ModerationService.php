@@ -283,16 +283,17 @@ class ModerationService
         // Operator-editable moderation rules (the technical block is appended in ClaudeService).
         $moderationPrompt = $policy->moderation_prompt;
 
-        // Per-page AI threshold / fact-check overrides (Pro). null = use global.
-        [$pgHaiku, $pgSonnet, $pgFactCheck] = $this->pageThresholdOverrides((int) ($page['id'] ?? 0));
+        // Per-page AI threshold / fact-check / whataboutism overrides (Pro). null = use global.
+        [$pgHaiku, $pgSonnet, $pgFactCheck, $pgWhatabout] = $this->pageThresholdOverrides((int) ($page['id'] ?? 0));
 
         $result = $this->claude->moderate(
-            commentText:      $commentContext,
-            moderationPrompt: $moderationPrompt,
-            reasonMaxWords:   $reasonMaxWords,
-            haikuThreshold:   $pgHaiku,
-            sonnetThreshold:  $pgSonnet,
-            factCheckEnabled: $pgFactCheck,
+            commentText:         $commentContext,
+            moderationPrompt:    $moderationPrompt,
+            reasonMaxWords:      $reasonMaxWords,
+            haikuThreshold:      $pgHaiku,
+            sonnetThreshold:     $pgSonnet,
+            factCheckEnabled:    $pgFactCheck,
+            whataboutismEnabled: $pgWhatabout,
         );
 
         // 10. Persist moderation log
@@ -308,12 +309,16 @@ class ModerationService
             'ai_severity'             => $result->severity,
             'ai_model'                => $result->model,
             'ai_latency_ms'           => $result->latencyMs,
-            'ai_fact_check_draft'     => $result->factCheckDraft,
-            'ai_fact_check_sources'   => json_encode($result->factCheckSources),
-            'ai_fact_check_confidence'=> $result->factCheckConfidence > 0.0 ? $result->factCheckConfidence : null,
-            'ai_fact_check_latency_ms'=> $result->factCheckLatencyMs > 0    ? $result->factCheckLatencyMs  : null,
-            'ai_editorial_category'   => $result->editorialCategory,
-            'ai_fact_check_suggested' => $result->factCheckSuggested ? 1 : 0,
+            'ai_fact_check_draft'       => $result->factCheckDraft,
+            'ai_fact_check_sources'     => json_encode($result->factCheckSources),
+            'ai_fact_check_confidence'  => $result->factCheckConfidence > 0.0 ? $result->factCheckConfidence : null,
+            'ai_fact_check_latency_ms'  => $result->factCheckLatencyMs > 0    ? $result->factCheckLatencyMs  : null,
+            'ai_editorial_category'     => $result->editorialCategory,
+            'ai_fact_check_suggested'   => $result->factCheckSuggested ? 1 : 0,
+            'ai_whataboutism_suggested' => $result->whataboutismSuggested ? 1 : 0,
+            'ai_whataboutism_draft'     => $result->whataboutismDraft,
+            'ai_whataboutism_confidence'=> $result->whataboutismConfidence > 0.0 ? $result->whataboutismConfidence : null,
+            'ai_whataboutism_latency_ms'=> $result->whataboutismLatencyMs > 0    ? $result->whataboutismLatencyMs  : null,
             'final_action'           => match(true) {
                 $result->stage === 'human'                                         => 'pending_human',
                 in_array($result->decision, ['hide','reportable'], true)           => 'hidden',
@@ -598,22 +603,23 @@ class ModerationService
 
     /**
      * Per-page AI threshold overrides (Pro feature `per_page_thresholds`).
-     * Returns [haiku, sonnet, factCheckEnabled]; each value is null when not set
-     * for the page, so ClaudeService falls back to the global settings.
+     * Returns [haiku, sonnet, factCheckEnabled, whataboutismEnabled]; each value is
+     * null when not set for the page, so ClaudeService falls back to the global settings.
      */
     private function pageThresholdOverrides(int $pageId): array
     {
         try {
             $ps = DB::table('page_settings')->where('page_id', $pageId)->first();
         } catch (\Throwable) {
-            return [null, null, null]; // table not migrated yet
+            return [null, null, null, null]; // table not migrated yet
         }
-        if (!$ps) return [null, null, null];
+        if (!$ps) return [null, null, null, null];
 
         return [
             $ps->haiku_confidence_threshold  !== null ? (float) $ps->haiku_confidence_threshold  : null,
             $ps->sonnet_confidence_threshold !== null ? (float) $ps->sonnet_confidence_threshold : null,
-            isset($ps->fact_check_enabled)   ? (bool) $ps->fact_check_enabled : null,
+            isset($ps->fact_check_enabled)   ? (bool) $ps->fact_check_enabled   : null,
+            isset($ps->whataboutism_enabled) ? (bool) $ps->whataboutism_enabled : null,
         ];
     }
 
@@ -780,7 +786,93 @@ class ModerationService
             ];
         }
 
-        // ── Approvazione normale (nessun fact-check) ─────────────────────
+        // ── Whataboutism: bozza di risposta educativa che riporta in-topic ──
+        // Stessa filosofia del fact-check, ma SENZA fonti esterne. Il "secondo
+        // gate" prima dell'auto-publish è una call Sonnet fredda di verifica
+        // (verifyWhataboutism) — niente web search perché qui non ci sono URL
+        // da cercare. Sopra soglia + verifica conferma → auto-pubblica; altrimenti
+        // coda umana con bozza pronta.
+        if ($result->whataboutismSuggested && $result->whataboutismDraft !== null) {
+            $threshold = 0.95;
+            try {
+                $t = DB::table('app_settings')->where('key', 'whataboutism_auto_publish_threshold')->value('value');
+                if ($t !== null) $threshold = (float) $t;
+            } catch (\Throwable) {}
+
+            $highConfidence = $result->whataboutismConfidence >= $threshold;
+
+            // GATING COSTI: la verifica fredda (1 call Sonnet aggiuntiva) parte
+            // SOLO se siamo già sopra soglia. Sotto soglia → coda umana diretta.
+            $verified = false;
+            if ($highConfidence) {
+                $claim    = (string) (DB::table('comments')->where('id', $commentId)->value('content') ?? '');
+                $verified = $this->claude->verifyWhataboutism($claim);
+            }
+
+            if ($highConfidence && $verified) {
+                // Pubblica automaticamente la bozza come reply al commento.
+                $autoPublished = false;
+                if (!$this->isDevMode() && !empty($page['page_access_token'])) {
+                    $comment = DB::table('comments')->find($commentId);
+                    if ($comment) {
+                        $autoPublished = (bool) $this->meta->replyToComment(
+                            $comment->platform_comment_id,
+                            $result->whataboutismDraft,
+                            $page['page_access_token'],
+                        );
+                    }
+                }
+
+                if ($logId) {
+                    DB::table('moderation_log')->where('id', $logId)->update([
+                        'final_action'       => 'auto_whataboutism_replied',
+                        'removal_reply_sent' => $autoPublished ? 1 : 0,
+                        'removal_reply_text' => $result->whataboutismDraft,
+                    ]);
+                }
+
+                DB::table('comments')->where('id', $commentId)->update([
+                    'status'       => 'approved',
+                    'processed_at' => date('Y-m-d H:i:s'),
+                ]);
+
+                $this->logger?->info(
+                    "Comment #{$commentId} approved + whataboutism auto-replied " .
+                    "(confidence: {$result->whataboutismConfidence}, verified: yes, dev: " .
+                    ($this->isDevMode() ? 'yes' : 'no') . ")"
+                );
+
+                return [
+                    'action'                  => 'auto_whataboutism_replied',
+                    'comment_id'              => $commentId,
+                    'whataboutism_published'  => $autoPublished,
+                    'whataboutism_confidence' => $result->whataboutismConfidence,
+                ];
+            }
+
+            // Non auto-pubblicato → coda umana con la bozza pronta.
+            DB::table('comments')->where('id', $commentId)->update([
+                'status'       => 'escalated_human',
+                'processed_at' => date('Y-m-d H:i:s'),
+            ]);
+            if ($logId) {
+                DB::table('moderation_log')->where('id', $logId)->update(['final_action' => 'pending_human']);
+            }
+
+            $reason = !$highConfidence
+                ? "confidenza {$result->whataboutismConfidence} < soglia {$threshold}"
+                : 'verifica fredda Sonnet non conferma whataboutism';
+            $this->logger?->info("Comment #{$commentId} → coda umana con bozza whataboutism ({$reason})");
+
+            return [
+                'action'                  => 'whataboutism_queued_human',
+                'comment_id'              => $commentId,
+                'whataboutism_confidence' => $result->whataboutismConfidence,
+                'reason'                  => $reason,
+            ];
+        }
+
+        // ── Approvazione normale (nessun fact-check / whataboutism) ──────
         DB::table('comments')->where('id', $commentId)->update([
             'status'       => 'approved',
             'processed_at' => date('Y-m-d H:i:s'),
@@ -1131,15 +1223,16 @@ class ModerationService
 
         $reModPrompt = $policy?->moderation_prompt ?? '';
 
-        [$pgHaiku, $pgSonnet, $pgFactCheck] = $this->pageThresholdOverrides((int) ($page['id'] ?? 0));
+        [$pgHaiku, $pgSonnet, $pgFactCheck, $pgWhatabout] = $this->pageThresholdOverrides((int) ($page['id'] ?? 0));
 
         $result = $this->claude->moderate(
-            commentText:      $commentContext,
-            moderationPrompt: $reModPrompt,
-            reasonMaxWords:   $reasonMaxWords,
-            haikuThreshold:   $pgHaiku,
-            sonnetThreshold:  $pgSonnet,
-            factCheckEnabled: $pgFactCheck,
+            commentText:         $commentContext,
+            moderationPrompt:    $reModPrompt,
+            reasonMaxWords:      $reasonMaxWords,
+            haikuThreshold:      $pgHaiku,
+            sonnetThreshold:     $pgSonnet,
+            factCheckEnabled:    $pgFactCheck,
+            whataboutismEnabled: $pgWhatabout,
         );
 
         $reAnalysisLogId = DB::table('moderation_log')->insertGetId([

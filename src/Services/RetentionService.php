@@ -148,6 +148,7 @@ class RetentionService
                   ->orWhereNotNull('ai_public_reason')
                   ->orWhereNotNull('ai_fact_check_draft')
                   ->orWhereNotNull('ai_fact_check_sources')
+                  ->orWhereNotNull('ai_whataboutism_draft')
                   ->orWhereNotNull('human_note')
                   ->orWhereNotNull('removal_reply_text')
                   ->orWhereNotNull('appeal_text');
@@ -157,6 +158,7 @@ class RetentionService
                 'ai_public_reason'      => null,
                 'ai_fact_check_draft'   => null,
                 'ai_fact_check_sources' => null,
+                'ai_whataboutism_draft' => null,
                 'human_note'            => null,
                 'removal_reply_text'    => null,
                 'appeal_text'           => null,

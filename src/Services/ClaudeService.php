@@ -68,7 +68,8 @@ Respond ONLY with valid JSON. No preamble, no markdown fences, no explanation ou
   "editorial_category": null | "journalist_criticism" | "outlet_criticism",
   "fact_check_suggested": false | true,
   "fact_check_sources": [] | [{"title":"...","url":"https://...","summary":"one sentence in Italian"}],
-  "fact_check_draft": null | "ready-to-publish reply text in Italian"
+  "fact_check_draft": null | "ready-to-publish reply text in Italian",
+  "whataboutism_suggested": false | true
 }
 
 DECISION SEMANTICS:
@@ -112,6 +113,30 @@ When fact_check_suggested = true, you MUST also populate:
 When fact_check_suggested = false:
   - fact_check_sources must be [] (empty array)
   - fact_check_draft must be null
+
+════════════════════════════════════════
+WHATABOUTISM RULES — READ CAREFULLY
+════════════════════════════════════════
+Whataboutism is the rhetorical fallacy of deflecting a topic by counter-accusation
+("e allora le foibe?", "ma X ha fatto peggio?", "perché non parlate di Y?"). It is
+NOT a factual claim and NOT an insult — it is a topical deflection.
+
+Set whataboutism_suggested = true ONLY when ALL of the following are true:
+  1. The comment does not engage with the article's actual topic
+  2. It pivots to an unrelated grievance, group, or event ("but what about X?")
+  3. The deflection is clear, not an in-good-faith parallel or contextual comparison
+
+Set whataboutism_suggested = false for:
+  - On-topic disagreement, even heated
+  - Pure insults / harassment (handled by other rules)
+  - Comments raising relevant contextual comparisons in good faith
+  - Comments with a verifiable factual claim — those should set fact_check_suggested instead
+
+PRIORITY: if a comment qualifies for BOTH fact_check AND whataboutism, you may set
+both flags, but fact_check takes editorial priority downstream.
+
+No draft, no sources, no confidence here — those are produced by a separate
+specialised call only when whataboutism_suggested = true.
 
 ════════════════════════════════════════
 LANGUAGE & LENGTH RULES — RUNTIME (DO NOT OVERRIDE)
@@ -183,10 +208,11 @@ INST;
     public function moderate(
         string $commentText,
         string $moderationPrompt,
-        int    $reasonMaxWords   = 40,
-        ?float $haikuThreshold   = null,
-        ?float $sonnetThreshold  = null,
-        ?bool  $factCheckEnabled = null,
+        int    $reasonMaxWords      = 40,
+        ?float $haikuThreshold      = null,
+        ?float $sonnetThreshold     = null,
+        ?bool  $factCheckEnabled    = null,
+        ?bool  $whataboutismEnabled = null,
     ): ModerationResult {
         $systemPrompt = $this->composeSystemPrompt($moderationPrompt, $reasonMaxWords);
 
@@ -198,11 +224,18 @@ INST;
         $factCheckLicensed = ($this->license?->hasFeature('fact_check') ?? true)
             && ($factCheckEnabled ?? true);
 
+        // Whataboutism: stesso gating — feature Pro + toggle per-pagina.
+        $whataboutismLicensed = ($this->license?->hasFeature('whataboutism') ?? true)
+            && ($whataboutismEnabled ?? true);
+
         // Stage 1: Haiku — fact_check_suggested abilitato (solo flag booleano),
-        // draft e fonti disabilitati (qualità insufficiente su Haiku)
+        // draft e fonti disabilitati (qualità insufficiente su Haiku).
+        // whataboutism_suggested è solo classificazione testuale, abilitato anche su Haiku.
         $haiku = $this->callClaude(
             self::MODEL_HAIKU, $systemPrompt, $commentText,
-            null, factCheckFlag: true, factCheckFull: false,
+            null,
+            factCheckFlag: true, factCheckFull: false,
+            whataboutismFlag: $whataboutismLicensed,
         );
 
         if ($haiku->decision === 'reportable') {
@@ -220,13 +253,22 @@ INST;
                 $haiku = $this->callClaudeFactCheck($commentText, $haiku);
             }
 
+            // Call Sonnet dedicata al whataboutism: produce bozza educativa + confidenza.
+            // Salta se anche il fact_check è acceso (collision policy: fact_check vince,
+            // un umano riceverà entrambe le segnalazioni e scriverà UNA risposta).
+            if ($whataboutismLicensed && $haiku->whataboutismSuggested && !$haiku->factCheckSuggested) {
+                $haiku = $this->callClaudeWhataboutism($commentText, $haiku);
+            }
+
             return $haiku;
         }
 
         // Stage 2: Sonnet — moderazione + fact-check completo
         $sonnet = $this->callClaude(
             self::MODEL_SONNET, $systemPrompt, $commentText,
-            $haiku, factCheckFlag: $factCheckLicensed, factCheckFull: $factCheckLicensed,
+            $haiku,
+            factCheckFlag: $factCheckLicensed, factCheckFull: $factCheckLicensed,
+            whataboutismFlag: $whataboutismLicensed,
         );
 
         if ($sonnet->decision === 'reportable') {
@@ -236,12 +278,28 @@ INST;
 
         if ($sonnet->decision !== 'uncertain' && $sonnet->confidence >= $sonnetTh) {
             $sonnet->stage = 'sonnet';
+
+            // Sonnet può flaggare whataboutism nel JSON di moderazione, ma la BOZZA
+            // educativa viene generata da una call dedicata per coerenza con il
+            // fact_check (e per non sporcare il giudizio di moderazione).
+            if ($whataboutismLicensed && $sonnet->whataboutismSuggested && !$sonnet->factCheckSuggested) {
+                $sonnet = $this->callClaudeWhataboutism($commentText, $sonnet);
+            }
+
             return $sonnet;
         }
 
         // Stage 3: Human escalation
         $sonnet->stage    = 'human';
         $sonnet->decision = 'uncertain';
+
+        // Anche sul ramo human conviene generare la bozza whataboutism: il moderatore
+        // umano la troverà pronta da rivedere. Skip se c'è anche fact_check
+        // (priorità editoriale: il fact-check ha già la sua bozza).
+        if ($whataboutismLicensed && $sonnet->whataboutismSuggested && !$sonnet->factCheckSuggested) {
+            $sonnet = $this->callClaudeWhataboutism($commentText, $sonnet);
+        }
+
         return $sonnet;
     }
 
@@ -253,9 +311,10 @@ INST;
         string            $model,
         string            $systemPrompt,
         string            $commentText,
-        ?ModerationResult $previousResult = null,
-        bool              $factCheckFlag  = true,  // abilita fact_check_suggested (solo flag)
-        bool              $factCheckFull  = true,  // abilita draft + fonti (solo Sonnet)
+        ?ModerationResult $previousResult  = null,
+        bool              $factCheckFlag   = true,  // abilita fact_check_suggested (solo flag)
+        bool              $factCheckFull   = true,  // abilita draft + fonti (solo Sonnet)
+        bool              $whataboutismFlag = true, // abilita whataboutism_suggested (solo flag)
     ): ModerationResult {
         $userContent = $previousResult
             ? $this->buildEscalationPrompt($commentText, $previousResult)
@@ -274,6 +333,10 @@ INST;
 
         if (!$factCheckFlag) {
             $effectiveSystem .= "\n\nFACT-CHECK OVERRIDE: Set fact_check_suggested = false, fact_check_sources = [], fact_check_draft = null.";
+        }
+
+        if (!$whataboutismFlag) {
+            $effectiveSystem .= "\n\nWHATABOUTISM OVERRIDE: Set whataboutism_suggested = false regardless of content.";
         }
 
         $start = hrtime(true);
@@ -299,7 +362,7 @@ INST;
             $body      = json_decode((string) $response->getBody(), true);
             $raw       = $body['content'][0]['text'] ?? '{}';
 
-            return $this->parseResponse($raw, $model, $latencyMs, $factCheckFlag, $factCheckFull);
+            return $this->parseResponse($raw, $model, $latencyMs, $factCheckFlag, $factCheckFull, $whataboutismFlag);
 
         } catch (GuzzleException $e) {
             $this->logger?->error("Claude API error [{$model}]: " . $e->getMessage());
@@ -377,6 +440,125 @@ FCASSESS;
         }
 
         return $haikuResult;
+    }
+
+    /**
+     * FASE A del whataboutism (economica, NESSUNA ricerca web): Sonnet valuta la
+     * deflessione retorica e redige una breve risposta educativa + una confidenza.
+     * Chiamato quando un commento è stato approvato con whataboutismSuggested=true.
+     *
+     * A differenza del fact-check non esistono fonti esterne da verificare:
+     * il secondo "gate" (parità con groundFactCheck) è una call di verifica fredda
+     * — vedi verifyWhataboutism().
+     */
+    private function callClaudeWhataboutism(string $commentText, ModerationResult $prev): ModerationResult
+    {
+        $start  = hrtime(true);
+        $system = <<<'WBASSESS'
+You are an editorial assistant for a news outlet's social media team.
+A comment has already been approved by moderation. It has been flagged as potentially containing whataboutism — a rhetorical deflection that pivots the discussion to an unrelated grievance ("e allora le foibe?", "ma X ha fatto peggio").
+Respond ONLY with valid JSON, no markdown fences:
+{
+  "whataboutism_confidence": 0.0-1.0,
+  "whataboutism_draft": "ready-to-publish reply in Italian (max 2 sentences, neutral, educational, no URLs, no labels like 'fallacia logica')"
+}
+RULES:
+- whataboutism_confidence: your confidence that this is a clear topical deflection (not on-topic disagreement, not a good-faith parallel). Be conservative — only above 0.90 when the pivot is unambiguous.
+- whataboutism_draft: written as the page editor. Gently bring the conversation back to the article's topic. Never call the user out, never use the word "whataboutism" or "fallacia". Always Italian. Max 2 sentences.
+WBASSESS;
+
+        try {
+            $response = $this->http->post(self::API_URL, [
+                'headers' => [
+                    'x-api-key'         => $this->apiKey,
+                    'anthropic-version' => self::API_VERSION,
+                    'content-type'      => 'application/json',
+                ],
+                'json' => [
+                    'model'      => self::MODEL_SONNET,
+                    'max_tokens' => 800,
+                    'system'     => $system,
+                    'messages'   => [[
+                        'role'    => 'user',
+                        'content' => "Assess this comment for whataboutism and draft a brief redirect reply:\n\n\"{$commentText}\"",
+                    ]],
+                ],
+            ]);
+
+            $latencyMs = (int) ((hrtime(true) - $start) / 1_000_000);
+            $body      = json_decode((string) $response->getBody(), true);
+            $raw       = $body['content'][0]['text'] ?? '{}';
+            $clean     = preg_replace('/^```json\s*|\s*```$/s', '', trim($raw));
+            $data      = json_decode($clean, true);
+
+            if (!is_array($data)) {
+                $this->logger?->warning("Whataboutism assess returned unparseable response: {$raw}");
+                return $prev;
+            }
+
+            $prev->whataboutismDraft      = $data['whataboutism_draft'] ?? null;
+            $prev->whataboutismConfidence = min(1.0, max(0.0, (float) ($data['whataboutism_confidence'] ?? 0.0)));
+            $prev->whataboutismSuggested  = true;
+            $prev->whataboutismLatencyMs  = $latencyMs;
+
+        } catch (GuzzleException $e) {
+            $this->logger?->warning("Whataboutism assess call failed: " . $e->getMessage());
+            // Non fatale — restituisce il result senza bozza
+        }
+
+        return $prev;
+    }
+
+    /**
+     * FASE B del whataboutism — verifica fredda (parità architetturale con
+     * groundFactCheck, ma senza web search: per il whataboutism non esistono
+     * "fonti" da cercare). Una seconda istanza Sonnet a contesto pulito rilegge
+     * SOLO il commento e conferma sì/no se si tratta di whataboutism. È il
+     * gate aggiuntivo per l'auto-publish: serve a evitare che la prima call
+     * confermi sé stessa.
+     *
+     * @return bool true se confermato, false altrimenti
+     */
+    public function verifyWhataboutism(string $commentText): bool
+    {
+        $system = <<<'WBVERIFY'
+You are a strict editorial reviewer. Given ONLY a user comment, decide if it is clearly an instance of whataboutism: a rhetorical deflection that pivots from the discussion topic to an unrelated grievance ("e allora le foibe?", "ma X ha fatto peggio?", "perché non parlate di Y?").
+
+Be conservative: only confirm when the pivot is unambiguous. On-topic disagreement, good-faith parallels, and pure insults are NOT whataboutism.
+
+Respond ONLY with valid JSON, no markdown fences:
+{"is_whataboutism": true | false}
+WBVERIFY;
+
+        try {
+            $response = $this->http->post(self::API_URL, [
+                'headers' => [
+                    'x-api-key'         => $this->apiKey,
+                    'anthropic-version' => self::API_VERSION,
+                    'content-type'      => 'application/json',
+                ],
+                'json' => [
+                    'model'      => self::MODEL_SONNET,
+                    'max_tokens' => 80,
+                    'system'     => $system,
+                    'messages'   => [[
+                        'role'    => 'user',
+                        'content' => "Comment to review:\n\n\"{$commentText}\"",
+                    ]],
+                ],
+            ]);
+
+            $body  = json_decode((string) $response->getBody(), true);
+            $raw   = $body['content'][0]['text'] ?? '{}';
+            $clean = preg_replace('/^```json\s*|\s*```$/s', '', trim($raw));
+            $data  = json_decode($clean, true);
+
+            return is_array($data) && (bool) ($data['is_whataboutism'] ?? false);
+
+        } catch (\Throwable $e) {
+            $this->logger?->warning("Whataboutism verify call failed: " . $e->getMessage());
+            return false; // failsafe: se la verifica non parte, NO auto-publish
+        }
     }
 
     /**
@@ -590,7 +772,7 @@ V;
         TXT;
     }
 
-    private function parseResponse(string $raw, string $model, int $latencyMs, bool $factCheckFlag = true, bool $factCheckFull = true): ModerationResult
+    private function parseResponse(string $raw, string $model, int $latencyMs, bool $factCheckFlag = true, bool $factCheckFull = true, bool $whataboutismFlag = true): ModerationResult
     {
         $clean = preg_replace('/^```json\s*|\s*```$/s', '', trim($raw));
         $data  = json_decode($clean, true);
@@ -619,11 +801,13 @@ V;
             publicReason:        $decision === 'allow' ? null : ($data['public_reason'] ?? null),
             categories:          $data['categories'] ?? [],
             severity:            $data['severity'] ?? null,
-            factCheckSuggested:  $factCheckFlag && (bool) ($data['fact_check_suggested'] ?? false),
-            factCheckDraft:      $factCheckFull ? ($data['fact_check_draft']   ?? null) : null,
-            factCheckSources:    $factCheckFull ? $this->sanitizeSources($data['fact_check_sources'] ?? []) : [],
-            factCheckConfidence: 0.0, // popolato da callClaudeFactCheck se chiamato
-            editorialCategory:   $data['editorial_category'] ?? null,
+            factCheckSuggested:    $factCheckFlag && (bool) ($data['fact_check_suggested'] ?? false),
+            factCheckDraft:        $factCheckFull ? ($data['fact_check_draft']   ?? null) : null,
+            factCheckSources:      $factCheckFull ? $this->sanitizeSources($data['fact_check_sources'] ?? []) : [],
+            factCheckConfidence:   0.0, // popolato da callClaudeFactCheck se chiamato
+            whataboutismSuggested: $whataboutismFlag && (bool) ($data['whataboutism_suggested'] ?? false),
+            // whataboutismDraft / whataboutismConfidence / whataboutismLatencyMs popolati da callClaudeWhataboutism()
+            editorialCategory:     $data['editorial_category'] ?? null,
             model:               $model,
             latencyMs:           $latencyMs,
         );
@@ -641,37 +825,45 @@ class ModerationResult
         public string  $decision,
         public float   $confidence,
         public string  $reason,
-        public ?string $publicReason        = null,
-        public array   $categories          = [],
-        public ?string $severity            = null,
-        public bool    $factCheckSuggested  = false,
-        public ?string $factCheckDraft      = null,
-        public array   $factCheckSources    = [],
-        public float   $factCheckConfidence = 0.0,  // confidence del fact-check Sonnet
-        public int     $factCheckLatencyMs  = 0,    // latency del secondo call Sonnet
-        public ?string $editorialCategory   = null,
-        public string  $model               = '',
-        public int     $latencyMs           = 0,
+        public ?string $publicReason          = null,
+        public array   $categories            = [],
+        public ?string $severity              = null,
+        public bool    $factCheckSuggested    = false,
+        public ?string $factCheckDraft        = null,
+        public array   $factCheckSources      = [],
+        public float   $factCheckConfidence   = 0.0,  // confidence del fact-check Sonnet
+        public int     $factCheckLatencyMs    = 0,    // latency del secondo call Sonnet
+        public bool    $whataboutismSuggested = false,
+        public ?string $whataboutismDraft     = null,
+        public float   $whataboutismConfidence = 0.0, // confidence della call Sonnet whataboutism
+        public int     $whataboutismLatencyMs = 0,    // latency della call Sonnet whataboutism
+        public ?string $editorialCategory     = null,
+        public string  $model                 = '',
+        public int     $latencyMs             = 0,
     ) {}
 
     public function toArray(): array
     {
         return [
-            'stage'                  => $this->stage,
-            'decision'               => $this->decision,
-            'confidence'             => $this->confidence,
-            'reason'                 => $this->reason,
-            'public_reason'          => $this->publicReason,
-            'categories'             => $this->categories,
-            'severity'               => $this->severity,
-            'fact_check_suggested'   => $this->factCheckSuggested,
-            'fact_check_draft'       => $this->factCheckDraft,
-            'fact_check_sources'     => $this->factCheckSources,
-            'fact_check_confidence'  => $this->factCheckConfidence,
-            'fact_check_latency_ms'  => $this->factCheckLatencyMs,
-            'editorial_category'     => $this->editorialCategory,
-            'model'                  => $this->model,
-            'latency_ms'             => $this->latencyMs,
+            'stage'                    => $this->stage,
+            'decision'                 => $this->decision,
+            'confidence'               => $this->confidence,
+            'reason'                   => $this->reason,
+            'public_reason'            => $this->publicReason,
+            'categories'               => $this->categories,
+            'severity'                 => $this->severity,
+            'fact_check_suggested'     => $this->factCheckSuggested,
+            'fact_check_draft'         => $this->factCheckDraft,
+            'fact_check_sources'       => $this->factCheckSources,
+            'fact_check_confidence'    => $this->factCheckConfidence,
+            'fact_check_latency_ms'    => $this->factCheckLatencyMs,
+            'whataboutism_suggested'   => $this->whataboutismSuggested,
+            'whataboutism_draft'       => $this->whataboutismDraft,
+            'whataboutism_confidence'  => $this->whataboutismConfidence,
+            'whataboutism_latency_ms'  => $this->whataboutismLatencyMs,
+            'editorial_category'       => $this->editorialCategory,
+            'model'                    => $this->model,
+            'latency_ms'               => $this->latencyMs,
         ];
     }
 }

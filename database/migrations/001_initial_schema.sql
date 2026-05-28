@@ -168,6 +168,29 @@ Do NOT suggest fact-check for:
 - Pure opinions with no verifiable factual claim
 
 ════════════════════════════════════════
+WHATABOUTISM SUGGESTIONS
+════════════════════════════════════════
+Whataboutism (logical fallacy: deflection by counter-accusation) is when a commenter
+responds to the article topic by deflecting attention to an unrelated grievance,
+typically with "e allora le foibe?", "ma X ha fatto peggio", "perché non parlate di Y?",
+"sì ma quando Z..." patterns. It is a rhetorical move that derails the discussion
+without engaging with the actual content.
+
+Set whataboutism_suggested = true ONLY when ALL of the following are true:
+  1. The comment does not engage with the article's actual topic
+  2. It pivots to an unrelated grievance, group, or event ("but what about X?")
+  3. A short educational reply from the page would be useful to the audience
+
+Do NOT flag whataboutism for:
+- Comments that raise a relevant parallel or contextual comparison in good faith
+- On-topic disagreement, even if heated
+- Pure insults (those are handled by harassment rules)
+- Factual claims (those go to fact_check_suggested instead)
+
+If a comment qualifies for BOTH fact_check AND whataboutism, prefer fact_check —
+factual correction takes editorial priority over rhetorical labelling.
+
+════════════════════════════════════════
 CONTEXT TO CONSIDER
 ════════════════════════════════════════
 - Irony and sarcasm exist: evaluate intent, not just surface words
@@ -185,6 +208,7 @@ Spam / commercial advertising           | Haiku (autonomous)
 Personal insult to journalist           | Sonnet
 Scam, grooming, serious violations      | Haiku or Sonnet
 Dubious factual claim (fact-checkable)  | Human (fact_check_suggested=true)
+Whataboutism / deflection               | Human (whataboutism_suggested=true) — auto-reply above threshold
 Criticism of journalist / article       | Human (journalist_criticism)
 Criticism of outlet / editorial line    | Human (outlet_criticism)
 Truly ambiguous                         | Human (uncertain)
@@ -263,6 +287,10 @@ CREATE TABLE IF NOT EXISTS `moderation_log` (
     `ai_fact_check_latency_ms`   SMALLINT UNSIGNED NULL COMMENT 'Latency ms del secondo call Sonnet',
     `ai_editorial_category`      VARCHAR(64) NULL,
     `ai_fact_check_suggested`    TINYINT(1) NOT NULL DEFAULT 0,
+    `ai_whataboutism_suggested`  TINYINT(1) NOT NULL DEFAULT 0,
+    `ai_whataboutism_draft`      TEXT NULL COMMENT 'Bozza di risposta educativa generata da Sonnet (niente URL)',
+    `ai_whataboutism_confidence` DECIMAL(4,3) NULL COMMENT 'Confidence del secondo passaggio Sonnet whataboutism',
+    `ai_whataboutism_latency_ms` SMALLINT UNSIGNED NULL COMMENT 'Latency ms della call Sonnet whataboutism',
     -- Human fields
     `human_user_id`  INT UNSIGNED NULL,
     `human_decision` ENUM('allow','remove','hide','unhide') NULL,
@@ -275,7 +303,7 @@ CREATE TABLE IF NOT EXISTS `moderation_log` (
     `appeal_submitted_at` TIMESTAMP NULL,
     `appeal_text`         TEXT NULL,
     -- Outcome
-    `final_action`   ENUM('approved','removed','hidden','pending_human','comment_edited','auto_fact_checked') NOT NULL DEFAULT 'pending_human',
+    `final_action`   ENUM('approved','removed','hidden','pending_human','comment_edited','auto_fact_checked','auto_whataboutism_replied') NOT NULL DEFAULT 'pending_human',
     `created_at`     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`comment_id`) REFERENCES `comments`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`policy_id`) REFERENCES `policies`(`id`) ON DELETE RESTRICT,
@@ -359,6 +387,9 @@ INSERT IGNORE INTO `app_settings` (`key`, `value`) VALUES
 ('data_retention_days',          '0'),
 -- Fact-check auto-publish threshold (PRO feature — 0.90 = richiede alta confidenza)
 ('fact_check_auto_publish_threshold', '0.90'),
+-- Whataboutism auto-publish threshold (PRO feature — soglia più alta del fact-check
+-- perché qui non esistono fonti esterne come secondo gate: 0.95 = molto conservativo)
+('whataboutism_auto_publish_threshold', '0.95'),
 -- License
 ('license_key',                  ''),
 ('license_status',               'free'),
@@ -397,6 +428,7 @@ CREATE TABLE IF NOT EXISTS `page_settings` (
     `haiku_confidence_threshold`  DECIMAL(4,3) NULL COMMENT 'NULL = use global setting',
     `sonnet_confidence_threshold` DECIMAL(4,3) NULL COMMENT 'NULL = use global setting',
     `fact_check_enabled`        TINYINT(1)   NOT NULL DEFAULT 1,
+    `whataboutism_enabled`      TINYINT(1)   NOT NULL DEFAULT 1,
     `updated_by`                INT UNSIGNED NULL,
     `updated_at`                TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`page_id`)    REFERENCES `connected_pages`(`id`) ON DELETE CASCADE,
@@ -436,5 +468,21 @@ CREATE TABLE IF NOT EXISTS `license_cache` (
 -- ('fact_check_auto_publish_threshold', '0.90'),
 -- ('ban_warning_template',      'Ciao {nome}, il tuo commento è stato rimosso perché non rispetta le nostre linee guida.\n\n⚠️ Ti informiamo che ulteriori violazioni comporteranno un ban temporaneo dalla pagina.'),
 -- ('ban_notification_template', 'Ciao {nome}, il tuo commento è stato rimosso e il tuo account è stato temporaneamente sospeso dalla pagina per {durata}.\n\nPotrai tornare a commentare il {scadenza}.');
+
+-- ============================================================
+-- UPGRADE: feature whataboutism (PRO) su installazioni esistenti
+-- ============================================================
+-- ALTER TABLE `moderation_log`
+--   ADD COLUMN `ai_whataboutism_suggested`  TINYINT(1) NOT NULL DEFAULT 0 AFTER `ai_fact_check_suggested`,
+--   ADD COLUMN `ai_whataboutism_draft`      TEXT NULL AFTER `ai_whataboutism_suggested`,
+--   ADD COLUMN `ai_whataboutism_confidence` DECIMAL(4,3) NULL AFTER `ai_whataboutism_draft`,
+--   ADD COLUMN `ai_whataboutism_latency_ms` SMALLINT UNSIGNED NULL AFTER `ai_whataboutism_confidence`,
+--   MODIFY `final_action` ENUM('approved','removed','hidden','pending_human','comment_edited','auto_fact_checked','auto_whataboutism_replied') NOT NULL DEFAULT 'pending_human';
+--
+-- ALTER TABLE `page_settings`
+--   ADD COLUMN `whataboutism_enabled` TINYINT(1) NOT NULL DEFAULT 1 AFTER `fact_check_enabled`;
+--
+-- INSERT IGNORE INTO `app_settings` (`key`, `value`) VALUES
+-- ('whataboutism_auto_publish_threshold', '0.95');
 
 SET FOREIGN_KEY_CHECKS = 1;

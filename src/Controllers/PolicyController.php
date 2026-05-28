@@ -220,9 +220,10 @@ class PolicyController
                     'categories'           => 'array of matched violation categories',
                     'severity'             => 'low | medium | high',
                     'editorial_category'   => 'null | journalist_criticism | outlet_criticism',
-                    'fact_check_suggested' => 'boolean',
-                    'fact_check_sources'   => 'array of {title, url, summary}',
-                    'fact_check_draft'     => 'ready-to-publish reply text or null',
+                    'fact_check_suggested'   => 'boolean',
+                    'fact_check_sources'     => 'array of {title, url, summary}',
+                    'fact_check_draft'       => 'ready-to-publish reply text or null',
+                    'whataboutism_suggested' => 'boolean — comment is a topical deflection',
                 ],
             ],
             'pipeline' => [

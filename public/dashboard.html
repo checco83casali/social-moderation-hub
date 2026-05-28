@@ -647,6 +647,49 @@
         </div>
       </div>
 
+      <!-- ── PRO: Whataboutism auto-publish threshold ─────────────────── -->
+      <div data-pro-feature="whataboutism" style="max-width:900px;margin-top:20px;position:relative">
+        <div class="panel" style="border-color:rgba(168,85,247,.2)">
+          <div class="panel-head">
+            <div class="panel-title">↩️ Whataboutism — Pubblicazione automatica <span style="font-size:11px;font-weight:400;color:#a855f7;background:rgba(168,85,247,.1);padding:2px 8px;border-radius:20px;margin-left:6px">PRO</span></div>
+          </div>
+          <!-- Lock overlay -->
+          <div class="pro-lock-overlay" style="position:absolute;inset:0;background:rgba(var(--bg-card-rgb),.85);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;gap:8px;backdrop-filter:blur(1px)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;color:var(--muted)"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <div style="font-size:12px;font-weight:500;color:var(--muted)">Funzionalità Pro</div>
+          </div>
+          <div class="policy-form">
+            <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.6">
+              Quando l'AI rileva una <strong>deflessione retorica</strong> ("e allora le foibe?", "ma X ha fatto peggio?"), Sonnet produce una breve risposta editoriale che riporta la discussione in-topic.<br>
+              Se la <strong>confidenza</strong> supera questa soglia e una seconda call Sonnet di verifica conferma, la risposta viene pubblicata automaticamente.
+              Sotto soglia o senza conferma → coda umana con draft pronto.
+            </p>
+            <div class="form-group">
+              <label class="form-label">Soglia confidenza autopubblicazione</label>
+              <div style="display:flex;align-items:center;gap:12px">
+                <input type="range" id="set-wb-range" min="0.50" max="1.00" step="0.01" value="0.95"
+                  style="flex:1;accent-color:#a855f7"
+                  oninput="document.getElementById('set-whataboutism-threshold').value=parseFloat(this.value).toFixed(2)">
+                <input class="form-input" type="number" id="set-whataboutism-threshold" min="0.50" max="1.00" step="0.01" value="0.95"
+                  style="width:80px;text-align:center"
+                  oninput="document.getElementById('set-wb-range').value=this.value">
+              </div>
+              <div style="font-size:11px;color:var(--muted);margin-top:5px">
+                Consigliato: <strong>0.95</strong> o superiore — qui non ci sono fonti esterne come secondo gate, quindi la soglia è più alta del fact-check.<br>
+                Intervallo: 0.50 – 1.00. Sotto soglia → coda umana con draft già pronto.
+              </div>
+            </div>
+            <div style="margin-top:14px;padding:12px 16px;background:rgba(168,85,247,.07);border:1px solid rgba(168,85,247,.2);border-radius:var(--radius);font-size:12px;line-height:1.6">
+              <strong style="color:#a855f7">Flusso</strong><br>
+              Haiku rileva whataboutism →
+              Sonnet produce draft + confidenza →
+              <span style="color:#a855f7">≥ soglia + verifica Sonnet conferma → pubblica automaticamente</span> /
+              <span style="color:var(--warn)">&#60; soglia o verifica nega → coda umana con draft</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
         <!-- Retention -->
         <div data-pro-feature="data_retention" style="position:relative">          <div class="panel" style="border-color:rgba(99,102,241,.2)">
             <div class="panel-head">
@@ -939,6 +982,27 @@
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
       <button class="btn-secondary" onclick="closeModal('modal-factcheck-reply')">Annulla</button>
       <button class="btn-primary" onclick="confirmFactcheckReply()">Pubblica risposta</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Risposta whataboutism (riporta in-topic) -->
+<div id="modal-whataboutism-reply" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center">
+  <div style="background:var(--bg-card);border-radius:var(--radius-lg);padding:28px 32px;width:560px;max-width:94vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.25)">
+    <div style="font-size:15px;font-weight:600;margin-bottom:6px">Risposta whataboutism — riporta in-topic</div>
+    <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.5">Il commento devia il tema della discussione. La bozza dell'AI invita gentilmente a tornare sul punto, senza accuse né etichette.</p>
+    <div style="font-size:11.5px;color:var(--warn);background:rgba(247,178,68,.08);border:1px solid rgba(247,178,68,.2);border-radius:var(--radius);padding:8px 12px;margin-bottom:14px;line-height:1.5">
+      ⚠️ <strong>Tono molto delicato</strong> — etichettare un commento come fallacia retorica è editorialmente sensibile. Rileggi con attenzione prima di pubblicare.
+    </div>
+    <div class="form-group">
+      <label class="form-label">Testo risposta (modificabile)</label>
+      <textarea class="form-textarea" id="whataboutism-reply-text" rows="5" placeholder="Risposta editoriale…" style="width:100%;box-sizing:border-box;resize:vertical"></textarea>
+      <div style="font-size:11px;color:var(--warn,#b45309);margin-top:6px">⚠️ Non inserire link: Facebook rifiuta i commenti delle Pagine che contengono URL.</div>
+    </div>
+    <div id="whataboutism-reply-err" style="display:none;font-size:12px;color:var(--danger);margin-top:10px;padding:7px 10px;background:var(--danger-bg);border-radius:var(--radius)"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+      <button class="btn-secondary" onclick="closeModal('modal-whataboutism-reply')">Annulla</button>
+      <button class="btn-primary" onclick="confirmWhataboutismReply()">Pubblica risposta</button>
     </div>
   </div>
 </div>

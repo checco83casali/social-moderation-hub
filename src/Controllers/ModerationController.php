@@ -57,6 +57,8 @@ class ModerationController
                 'ml.ai_reason', 'ml.ai_public_reason', 'ml.ai_categories', 'ml.ai_severity',
                 'ml.ai_fact_check_draft', 'ml.ai_fact_check_sources',
                 'ml.ai_fact_check_confidence', 'ml.ai_fact_check_suggested',
+                'ml.ai_whataboutism_suggested', 'ml.ai_whataboutism_draft',
+                'ml.ai_whataboutism_confidence',
                 'ml.ai_editorial_category',
                 'c.platform_post_id',
             ])
@@ -1173,6 +1175,8 @@ class ModerationController
             'data_retention_days'                => fn($v) => (string) max(0, (int) $v),
             // feature: fact_check
             'fact_check_auto_publish_threshold'  => fn($v) => (string) max(0.5, min(1.0, (float) $v)),
+            // feature: whataboutism
+            'whataboutism_auto_publish_threshold' => fn($v) => (string) max(0.5, min(1.0, (float) $v)),
         ];
 
         // Check if any Pro field was sent without a Pro license
@@ -1250,6 +1254,7 @@ class ModerationController
                 'ml.human_decision', 'ml.human_note', 'ml.human_decided_at',
                 'ml.final_action',
                 'ml.ai_fact_check_suggested', 'ml.ai_fact_check_confidence',
+                'ml.ai_whataboutism_suggested', 'ml.ai_whataboutism_confidence',
                 DB::raw("COALESCE(NULLIF(TRIM(au.name), ''), au.email) AS decided_by_name"),
             ])
             ->orderByDesc('c.processed_at')
@@ -1260,9 +1265,10 @@ class ModerationController
                 $arr = (array) $row;
                 $arr['ai_categories'] = json_decode($arr['ai_categories'] ?? '[]', true);
                 $arr['decided_by']    = match(true) {
-                    $arr['final_action'] === 'auto_fact_checked'  => 'ai_fact_check',
-                    $arr['human_decision'] === 'allow'            => 'human',
-                    default                                       => 'ai',
+                    $arr['final_action'] === 'auto_fact_checked'         => 'ai_fact_check',
+                    $arr['final_action'] === 'auto_whataboutism_replied' => 'ai_whataboutism',
+                    $arr['human_decision'] === 'allow'                   => 'human',
+                    default                                              => 'ai',
                 };
                 return $arr;
             })
@@ -1319,6 +1325,10 @@ class ModerationController
                 'ml.final_action',
                 'ml.ai_model',
                 'ml.ai_latency_ms',
+                'ml.ai_fact_check_suggested',
+                'ml.ai_fact_check_confidence',
+                'ml.ai_whataboutism_suggested',
+                'ml.ai_whataboutism_confidence',
                 'ml.created_at as moderated_at',
                 'c.id as comment_id',
                 'c.content as comment_text',

@@ -322,6 +322,20 @@ function renderDetail(c) {
         <div style="font-size:11px;color:var(--muted);padding-top:8px;border-top:1px solid rgba(79,142,247,.15)">Nessuna fonte allegata da Sonnet.</div>`}
         <button class="btn" style="width:100%;background:var(--accent);color:#fff;font-weight:600;padding:12px;font-size:14px" onclick="openFactcheckReply()">📣 Pubblica risposta fact-check su Facebook →</button>
       </div>` : ''}
+      ${c.ai_whataboutism_suggested && !c.ai_whataboutism_draft ? `
+      <div style="background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.25);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:12.5px;line-height:1.6">
+        <div style="font-weight:600;color:#a855f7;margin-bottom:4px;font-size:11px;text-transform:uppercase;letter-spacing:.06em">↩️ Whataboutism rilevato dall'AI</div>
+        <div style="color:var(--muted)">Il commento devia il tema. Valuta una breve risposta che riporti la discussione in-topic.</div>
+      </div>` : ''}
+      ${c.ai_whataboutism_draft ? `
+      <div style="background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.2);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;font-size:12.5px;line-height:1.6">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <div style="font-weight:600;color:#a855f7;font-size:11px;text-transform:uppercase;letter-spacing:.06em">↩️ Risposta whataboutism proposta dall'AI</div>
+          ${c.ai_whataboutism_confidence ? `<span style="font-size:11px;padding:2px 7px;border-radius:20px;background:rgba(168,85,247,.15);color:#a855f7">confidenza ${Math.round(c.ai_whataboutism_confidence * 100)}%</span>` : ''}
+        </div>
+        <div style="color:var(--text);margin-bottom:10px;white-space:pre-wrap">${esc(c.ai_whataboutism_draft)}</div>
+        <button class="btn" style="width:100%;background:#a855f7;color:#fff;font-weight:600;padding:12px;font-size:14px" onclick="openWhataboutismReply()">📣 Pubblica risposta su Facebook →</button>
+      </div>` : ''}
       <textarea class="note-input" id="mod-note" rows="2" placeholder="Nota interna opzionale…"></textarea>
       ${c.ai_fact_check_draft ? `
       <div style="font-size:11px;color:var(--muted);margin:4px 0 8px;text-transform:uppercase;letter-spacing:.05em">Azioni alternative</div>` : ''}
@@ -460,6 +474,65 @@ async function confirmFactcheckReply() {
     });
 
     closeModal('modal-factcheck-reply');
+    splash('Risposta pubblicata su Facebook', 'Commento approvato e rimosso dalla coda.', { type: 'ok' });
+
+    currentComment = null;
+    document.getElementById('detail-content').style.display = 'none';
+    document.getElementById('detail-empty').style.display   = 'flex';
+    loadQueue();
+    loadStats();
+
+  } catch(e) {
+    errEl.textContent = e.message || 'Errore durante l\'invio.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
+}
+
+// ── Whataboutism reply (parallelo al fact-check, senza fonti) ────────
+function openWhataboutismReply() {
+  if (!currentComment) return;
+  const draft = currentComment.ai_whataboutism_draft || '';
+  document.getElementById('whataboutism-reply-text').value = draft;
+  document.getElementById('whataboutism-reply-err').style.display = 'none';
+  openModal('modal-whataboutism-reply');
+}
+
+async function confirmWhataboutismReply() {
+  if (!currentComment) return;
+  const text  = document.getElementById('whataboutism-reply-text').value.trim();
+  const errEl = document.getElementById('whataboutism-reply-err');
+  const btn   = document.querySelector('#modal-whataboutism-reply .btn-primary');
+  errEl.style.display = 'none';
+
+  if (!text) {
+    errEl.textContent = 'Il testo non può essere vuoto.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px"></span>Pubblicazione…';
+
+  try {
+    const r = await api(`/comments/${currentComment.id}/reply`, 'POST', { text });
+
+    if (r && r.dev_mode) {
+      closeModal('modal-whataboutism-reply');
+      toast('Dev mode attivo: la risposta NON è stata inviata su Facebook', 'err');
+      btn.disabled = false;
+      btn.textContent = originalLabel;
+      return;
+    }
+
+    await api(`/comments/${currentComment.id}/decide`, 'POST', {
+      decision: 'allow',
+      note:     'Approvato dopo risposta whataboutism inviata dal moderatore',
+    });
+
+    closeModal('modal-whataboutism-reply');
     splash('Risposta pubblicata su Facebook', 'Commento approvato e rimosso dalla coda.', { type: 'ok' });
 
     currentComment = null;
@@ -632,7 +705,9 @@ async function loadApprovedComments() {
         ? `<span class="badge-human">Umano${c.decided_by_name ? ': '+esc(c.decided_by_name) : ''}</span>`
         : c.decided_by === 'ai_fact_check'
           ? `<span class="badge-ai" style="background:rgba(79,142,247,.15);color:var(--accent)">AI · Fact-check${c.ai_fact_check_confidence ? ' '+Math.round(c.ai_fact_check_confidence*100)+'%' : ''}</span>`
-          : `<span class="badge-ai">AI · ${stageLabel[c.ai_stage]||c.ai_stage}</span>`;
+          : c.decided_by === 'ai_whataboutism'
+            ? `<span class="badge-ai" style="background:rgba(168,85,247,.15);color:#a855f7">AI · Whataboutism${c.ai_whataboutism_confidence ? ' '+Math.round(c.ai_whataboutism_confidence*100)+'%' : ''}</span>`
+            : `<span class="badge-ai">AI · ${stageLabel[c.ai_stage]||c.ai_stage}</span>`;
 
       let fbLink = '';
       if (c.platform_comment_id) {

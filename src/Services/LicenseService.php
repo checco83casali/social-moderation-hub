@@ -34,6 +34,7 @@ use Monolog\Logger;
  *   templates           — editable hide_reply_template + hide_reportable_reply_template
  *   per_page_thresholds — per-page Haiku / Sonnet confidence thresholds
  *   fact_check          — AI fact-check draft + sources in moderation pipeline
+ *   whataboutism        — AI whataboutism detection + educational reply draft
  *   multi_page          — connect more than one Facebook page (free plan = 1 page)
  *
  * ADDING A NEW PRO FEATURE
@@ -76,6 +77,7 @@ class LicenseService
         'templates',
         'per_page_thresholds',
         'fact_check',
+        'whataboutism',
         'multi_page',
     ];
 
