@@ -1005,9 +1005,11 @@ async function loadHiddenComments() {
       const reportBadge = c.pending_legal_review
         ? '<span class="chip" style="background:rgba(247,178,68,.15);color:var(--warn);border:1px solid rgba(247,178,68,.3)">⏳ in attesa valutazione legale</span>'
         : (c.is_reportable ? '<span class="chip chip-danger">⚠️ segnalabile</span>' : '');
+      // Chi ha nascosto il commento: o un moderatore (nome valorizzato), o l'AI
+      // (auto-hide della pipeline — caso tipico dei reportable e degli "hide" diretti).
       const deciderBadge = c.hidden_by_human
         ? `<span class="badge-human" title="Nascosto da un moderatore">Nascosto da: ${esc(c.decided_by_name)}</span>`
-        : '';
+        : `<span class="badge-ai" title="Nascondimento automatico della pipeline AI">Nascosto dall'AI</span>`;
       const fbLink = c.platform_comment_id && c.platform_post_id
         ? `https://www.facebook.com/permalink.php?story_fbid=${(c.platform_post_id.split('_')[1]||c.platform_post_id)}&id=${c.facebook_page_id}&comment_id=${c.platform_comment_id}`
         : '';
