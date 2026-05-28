@@ -997,7 +997,14 @@ async function loadHiddenComments() {
       const appealBadge = c.has_appeal
         ? `<span class="chip" style="background:rgba(99,102,241,.12);color:#4f46e5">ricorso ${c.appeal_status === 'pending' ? 'in attesa' : c.appeal_status}</span>`
         : '';
-      const reportBadge = c.is_reportable ? '<span class="chip chip-danger">⚠️ segnalabile</span>' : '';
+      // Due livelli di badge "reportable":
+      //   pending_legal_review = auto-nascosto dall'AI, ancora da revisionare
+      //                          → badge giallo "⏳ in attesa valutazione legale"
+      //   is_reportable + !pending = nascosto + revisionato come reportable
+      //                              → badge rosso "⚠️ segnalabile"
+      const reportBadge = c.pending_legal_review
+        ? '<span class="chip" style="background:rgba(247,178,68,.15);color:var(--warn);border:1px solid rgba(247,178,68,.3)">⏳ in attesa valutazione legale</span>'
+        : (c.is_reportable ? '<span class="chip chip-danger">⚠️ segnalabile</span>' : '');
       const deciderBadge = c.hidden_by_human
         ? `<span class="badge-human" title="Nascosto da un moderatore">Nascosto da: ${esc(c.decided_by_name)}</span>`
         : '';

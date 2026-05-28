@@ -518,7 +518,12 @@ class ModerationController
                      ->whereRaw('ar.id = (SELECT MAX(id) FROM appeal_records WHERE comment_id = c.id)');
             })
             ->leftJoin('admin_users as au', 'au.id', '=', 'ml.human_user_id')
-            ->whereIn('c.status', ['hidden', 'hidden_reportable']);
+            // Un commento è "nascosto" dal punto di vista del pubblico in tutti
+            // questi stati. Mostriamoli insieme: l'operatore vede dove sono nel
+            // workflow tramite badge (sotto, in is_reportable + pending_legal_review).
+            // - 'hidden' / 'hidden_reportable': flusso completato
+            // - 'escalated_reportable':         in attesa di valutazione legale (auto-hide AI)
+            ->whereIn('c.status', ['hidden', 'hidden_reportable', 'escalated_reportable']);
 
         if ($signal === 'fact_check') {
             $query->where('ml.ai_fact_check_suggested', 1);
@@ -560,7 +565,14 @@ class ModerationController
             ->map(function ($row) {
                 $arr = (array) $row;
                 $arr['ai_categories']  = json_decode($arr['ai_categories'] ?? '[]', true);
-                $arr['is_reportable']  = $arr['status'] === 'hidden_reportable';
+                // is_reportable = comment è stato (o è ancora) categorizzato come reportable.
+                // Vero sia per 'hidden_reportable' (umano ha confermato) che per
+                // 'escalated_reportable' (auto-hide AI in attesa di revisione legale).
+                $arr['is_reportable']  = in_array($arr['status'], ['hidden_reportable', 'escalated_reportable'], true);
+                // Sotto-stato: solo quando ancora in attesa di valutazione umana.
+                // La UI usa questo flag per mostrare un badge "⏳ in attesa" diverso
+                // dal generico "⚠️ segnalabile".
+                $arr['pending_legal_review'] = $arr['status'] === 'escalated_reportable';
                 $arr['has_appeal']     = !is_null($arr['appeal_id']);
                 // Chi ha nascosto: il nome c'è solo se human_user_id era valorizzato,
                 // cioè quando un moderatore ha agito (hide o conferma reportable).
@@ -759,10 +771,14 @@ class ModerationController
         $since = date('Y-m-d H:i:s', strtotime('-30 days'));
 
         // Counters Free — sempre disponibili (necessari per il navbar).
+        // Nota: hidden_total include anche 'escalated_reportable' perché quei
+        // commenti sono effettivamente nascosti su Facebook e ora appaiono nella
+        // schermata "Commenti nascosti" insieme agli altri.
+        $hiddenStatuses = ['hidden', 'hidden_reportable', 'escalated_reportable'];
         $data = [
             'queue_pending'      => DB::table('comments')->where('status', 'escalated_human')->count(),
             'queue_reportable'   => DB::table('comments')->where('status', 'escalated_reportable')->count(),
-            'hidden_total'       => DB::table('comments')->whereIn('status', ['hidden', 'hidden_reportable'])->count(),
+            'hidden_total'       => DB::table('comments')->whereIn('status', $hiddenStatuses)->count(),
             'appeals_pending'    => DB::table('appeal_records')->where('status', 'pending')->count(),
             'active_bans'        => DB::table('ban_records')
                 ->where('ban_scope', 'user')
@@ -793,7 +809,7 @@ class ModerationController
             $data += [
                 'total_comments_30d' => DB::table('comments')->where('received_at', '>=', $since)->count(),
                 'removed_30d'        => DB::table('comments')->where('status', 'removed')->where('processed_at', '>=', $since)->count(),
-                'hidden_30d'         => DB::table('comments')->whereIn('status', ['hidden', 'hidden_reportable'])->where('processed_at', '>=', $since)->count(),
+                'hidden_30d'         => DB::table('comments')->whereIn('status', $hiddenStatuses)->where('processed_at', '>=', $since)->count(),
                 'approved_30d'       => DB::table('comments')->where('status', 'approved')->where('processed_at', '>=', $since)->count(),
                 'by_stage'           => array_map('intval', $byStage),
                 'by_ai_decision'     => array_map('intval', DB::table('moderation_log')
