@@ -141,7 +141,7 @@ async function loadReportableQueue() {
     }
     d.items.forEach(item => { queueMap[item.id] = item; });
     list.innerHTML = d.items.map(item => {
-      const cats = (item.ai_categories||[]).map(c => `<span class="chip chip-danger">${CAT_LABELS[c]||c}</span>`).join(' ');
+      const cats = (item.ai_categories||[]).map(c => categoryChip(c)).join(' ');
       const fbLink = item.platform_comment_id && item.platform_post_id
         ? `https://www.facebook.com/permalink.php?story_fbid=${(item.platform_post_id.split('_')[1]||item.platform_post_id)}&id=${item.facebook_page_id}&comment_id=${item.platform_comment_id}`
         : '';
@@ -242,7 +242,7 @@ async function loadReportableArchive() {
       return;
     }
     list.innerHTML = d.items.map(c => {
-      const cats = (c.ai_categories||[]).map(cat => `<span class="chip chip-warn">${CAT_LABELS[cat]||cat}</span>`).join(' ');
+      const cats = (c.ai_categories||[]).map(cat => categoryChip(cat)).join(' ');
       return `
         <div class="bc-item">
           <div class="bc-header">
@@ -279,7 +279,7 @@ function renderDetail(c) {
   const box = document.getElementById('detail-content');
   box.style.display = 'block';
 
-  const cats = (c.ai_categories || []).map(cat => `<span class="chip chip-warn">${CAT_LABELS[cat] || cat}</span>`).join(' ');
+  const cats = (c.ai_categories || []).map(cat => categoryChip(cat)).join(' ');
   const confPct = c.ai_confidence ? Math.round(c.ai_confidence * 100) + '%' : '—';
   const stageLabel = { haiku:'Claude Haiku', sonnet:'Claude Sonnet', human:'Escalation umana' };
 
@@ -653,7 +653,7 @@ async function loadBannedComments() {
     if (!d.items?.length) { list.innerHTML = '<div class="empty">Nessun commento rimosso</div>'; return; }
     const stageLabel = { haiku:'Haiku', sonnet:'Sonnet', human:'Umano' };
     list.innerHTML = d.items.map(c => {
-      const cats    = (c.ai_categories||[]).map(cat => `<span class="chip chip-warn">${CAT_LABELS[cat]||cat}</span>`).join(' ');
+      const cats    = (c.ai_categories||[]).map(cat => categoryChip(cat)).join(' ');
       const conf    = c.ai_confidence ? Math.round(c.ai_confidence*100)+'%' : '—';
       const decider = c.decided_by === 'human'
         ? `<span class="badge-human">Umano${c.decided_by_name ? ': '+esc(c.decided_by_name) : ''}</span>`
@@ -709,8 +709,9 @@ function setBcFilter(val, el) {
 }
 
 // ── Approved comments ─────────────────────────────────────────────
-let currentAcFilter       = 'all'; // decided_by: all|ai|human
-let currentAcSignalFilter = 'all'; // signal: all|any|fact_check|whataboutism|none
+let currentAcFilter         = 'all'; // decided_by: all|ai|human
+let currentAcSignalFilter   = 'all'; // signal: all|any|fact_check|whataboutism|none
+let currentAcCategoryFilter = '';    // categoria AI (vuoto = tutte)
 
 async function loadApprovedComments() {
   const list    = document.getElementById('ac-list');
@@ -718,15 +719,16 @@ async function loadApprovedComments() {
   list.innerHTML = '<div class="loading">Caricamento…</div>';
   try {
     const params = new URLSearchParams({ limit: 50 });
-    if (currentAcFilter       !== 'all') params.set('decided_by', currentAcFilter);
-    if (currentAcSignalFilter !== 'all') params.set('signal',     currentAcSignalFilter);
+    if (currentAcFilter         !== 'all') params.set('decided_by', currentAcFilter);
+    if (currentAcSignalFilter   !== 'all') params.set('signal',     currentAcSignalFilter);
+    if (currentAcCategoryFilter !== '')    params.set('category',   currentAcCategoryFilter);
     const url = `/comments/approved?${params.toString()}`;
     const d = await api(url);
     countEl.textContent = `${d.total} commenti`;
     if (!d.items?.length) { list.innerHTML = '<div class="empty">Nessun commento approvato</div>'; return; }
     const stageLabel = { haiku:'Haiku', sonnet:'Sonnet', human:'Umano' };
     list.innerHTML = d.items.map(c => {
-      const cats    = (c.ai_categories||[]).map(cat => `<span class="chip chip-ok">${CAT_LABELS[cat]||cat}</span>`).join(' ');
+      const cats    = (c.ai_categories||[]).map(cat => categoryChip(cat)).join(' ');
       const conf    = c.ai_confidence ? Math.round(c.ai_confidence*100)+'%' : '—';
       const decider = c.decided_by === 'human'
         ? `<span class="badge-human">Umano${c.decided_by_name ? ': '+esc(c.decided_by_name) : ''}</span>`
@@ -791,6 +793,11 @@ function setAcSignalFilter(val, el) {
   loadApprovedComments();
 }
 
+function setAcCategoryFilter(val) {
+  currentAcCategoryFilter = val;
+  loadApprovedComments();
+}
+
 // ── User drawer (drill-down) ──────────────────────────────────────
 async function openDrawer(userId) {
   document.getElementById('drawer-overlay').classList.add('open');
@@ -806,7 +813,7 @@ async function openDrawer(userId) {
     document.getElementById('drawer-title').textContent = u.display_name || 'Dettaglio utente';
 
     const commentHtml = (comments.comments || []).map(c => {
-      const cats = (c.ai_categories||[]).map(cat => `<span class="chip chip-warn">${CAT_LABELS[cat]||cat}</span>`).join(' ');
+      const cats = (c.ai_categories||[]).map(cat => categoryChip(cat)).join(' ');
       const decider = c.decided_by_human
         ? ` · <span class="badge-human" title="Decisione di un moderatore">${esc(c.decided_by_name)}</span>`
         : '';
@@ -875,7 +882,7 @@ async function loadAppeals() {
       return;
     }
     list.innerHTML = d.items.map(a => {
-      const cats = (a.ai_categories||[]).map(c => `<span class="chip chip-warn">${CAT_LABELS[c]||c}</span>`).join(' ');
+      const cats = (a.ai_categories||[]).map(c => categoryChip(c)).join(' ');
       return `
         <div class="bc-item" id="appeal-${a.appeal_id}">
           <div class="bc-header">
@@ -954,7 +961,8 @@ async function confirmAppealDecision() {
 }
 
 // ── Hidden comments ───────────────────────────────────────────────
-let currentHcSignalFilter = 'all'; // signal: all|any|fact_check|whataboutism|none
+let currentHcSignalFilter   = 'all'; // signal: all|any|fact_check|whataboutism|none
+let currentHcCategoryFilter = '';    // categoria AI (vuoto = tutte)
 
 async function loadHiddenComments() {
   const list    = document.getElementById('hidden-list');
@@ -963,7 +971,8 @@ async function loadHiddenComments() {
   list.innerHTML = '<div class="loading">Caricamento…</div>';
   try {
     const params = new URLSearchParams({ limit: 50 });
-    if (currentHcSignalFilter !== 'all') params.set('signal', currentHcSignalFilter);
+    if (currentHcSignalFilter   !== 'all') params.set('signal',   currentHcSignalFilter);
+    if (currentHcCategoryFilter !== '')    params.set('category', currentHcCategoryFilter);
     const d = await api(`/comments/hidden?${params.toString()}`);
     countEl && (countEl.textContent = `${d.total} commenti`);
     if (!d.items?.length) {
@@ -972,7 +981,7 @@ async function loadHiddenComments() {
     }
     const isAdminOrSupervisor = ['admin','supervisor'].includes(currentUserRole);
     list.innerHTML = d.items.map(c => {
-      const cats = (c.ai_categories||[]).map(cat => `<span class="chip chip-warn">${CAT_LABELS[cat]||cat}</span>`).join(' ');
+      const cats = (c.ai_categories||[]).map(cat => categoryChip(cat)).join(' ');
       const appealBadge = c.has_appeal
         ? `<span class="chip" style="background:rgba(99,102,241,.12);color:#4f46e5">ricorso ${c.appeal_status === 'pending' ? 'in attesa' : c.appeal_status}</span>`
         : '';
@@ -1017,5 +1026,23 @@ function setHcSignalFilter(val, el) {
   document.querySelectorAll('[data-filter-group="hc-signal"] .filter-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   loadHiddenComments();
+}
+
+function setHcCategoryFilter(val) {
+  currentHcCategoryFilter = val;
+  loadHiddenComments();
+}
+
+// Popola i due <select> categoria all'avvio (chiamato da app.js dopo login).
+// Usa CAT_LABELS (config.js) come unica fonte di verità per i nomi visualizzati.
+function populateCategorySelects() {
+  const opts = Object.entries(CAT_LABELS)
+    .sort(([, a], [, b]) => a.localeCompare(b))
+    .map(([key, lbl]) => `<option value="${key}">${lbl}</option>`)
+    .join('');
+  for (const id of ['ac-category-select', 'hc-category-select']) {
+    const el = document.getElementById(id);
+    if (el && el.options.length === 1) el.insertAdjacentHTML('beforeend', opts);
+  }
 }
 

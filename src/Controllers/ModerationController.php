@@ -484,7 +484,8 @@ class ModerationController
         $params = $request->getQueryParams();
         $limit  = min((int) ($params['limit'] ?? 25), 100);
         $page   = max(1, (int) ($params['page'] ?? 1));
-        $signal = $params['signal'] ?? 'all';
+        $signal   = $params['signal']   ?? 'all';
+        $category = $params['category'] ?? '';
 
         $query = DB::table('comments as c')
             ->join('social_users as su', 'su.id', '=', 'c.social_user_id')
@@ -512,6 +513,10 @@ class ModerationController
         } elseif ($signal === 'none') {
             $query->where('ml.ai_fact_check_suggested', 0)
                   ->where('ml.ai_whataboutism_suggested', 0);
+        }
+
+        if ($category !== '' && preg_match('/^[a-z0-9_]{1,64}$/', $category) === 1) {
+            $query->whereRaw('JSON_CONTAINS(ml.ai_categories, ?)', [json_encode($category)]);
         }
 
         $total = (clone $query)->count();
@@ -771,13 +776,23 @@ class ModerationController
         // Pad by_stage con tutti gli stage noti (anche a 0) così il chart
         // mostra sempre Haiku / Sonnet / Umano / Sistema invece di nascondere
         // le voci assenti.
-        $byStage = (array) $data['by_stage'];
+        //
+        // NOTA: pluck() ritorna un'Illuminate\Support\Collection. Usare ->all()
+        // (NON il cast (array)$collection) perché il cast PHP esporrebbe anche
+        // le proprietà interne dell'oggetto (*items, *escapeWhenCastingToString,
+        // ecc.) come chiavi, mascherando i dati reali nel JSON.
+        $byStage = $data['by_stage']->all();
         foreach (['haiku', 'sonnet', 'human', 'system'] as $st) {
             if (!array_key_exists($st, $byStage)) {
                 $byStage[$st] = 0;
             }
         }
-        $data['by_stage'] = $byStage;
+        // Cast a int per uniformità (pluck può ritornare stringhe da COUNT(*)).
+        $data['by_stage'] = array_map('intval', $byStage);
+
+        // Stesso problema su by_ai_decision: serializziamolo a array puro
+        // così il frontend riceve { allow: N, hide: N, ... } anziché un oggetto Collection.
+        $data['by_ai_decision'] = array_map('intval', $data['by_ai_decision']->all());
 
         return $this->json($response, $data);
     }
@@ -919,6 +934,7 @@ class ModerationController
         $decidedBy  = $params['decided_by'] ?? 'all';
         $pageFilter = (int) ($params['page_id'] ?? 0);
         $signal     = $params['signal']     ?? 'all';
+        $category   = $params['category']   ?? '';
 
         $query = DB::table('comments as c')
             ->join('social_users as su', 'su.id', '=', 'c.social_user_id')
@@ -952,6 +968,10 @@ class ModerationController
         } elseif ($signal === 'none') {
             $query->where('ml.ai_fact_check_suggested', 0)
                   ->where('ml.ai_whataboutism_suggested', 0);
+        }
+
+        if ($category !== '' && preg_match('/^[a-z0-9_]{1,64}$/', $category) === 1) {
+            $query->whereRaw('JSON_CONTAINS(ml.ai_categories, ?)', [json_encode($category)]);
         }
 
         $total = (clone $query)->count();
@@ -1283,6 +1303,7 @@ class ModerationController
         $page      = max(1, (int) ($params['page'] ?? 1));
         $decidedBy = $params['decided_by'] ?? 'all';
         $signal    = $params['signal']     ?? 'all'; // all|fact_check|whataboutism|any|none
+        $category  = $params['category']   ?? '';   // categoria AI da filtrare (vuoto = nessun filtro)
 
         $query = DB::table('comments as c')
             ->join('social_users as su', 'su.id', '=', 'c.social_user_id')
@@ -1312,6 +1333,13 @@ class ModerationController
         } elseif ($signal === 'none') {
             $query->where('ml.ai_fact_check_suggested', 0)
                   ->where('ml.ai_whataboutism_suggested', 0);
+        }
+
+        // Filtro categoria AI via JSON_CONTAINS (MySQL 5.7+ / MariaDB 10.2.3+).
+        // Sanitizziamo la stringa: solo categorie alfanumeriche+underscore così
+        // l'input non può iniettare JSON o caratteri di escape.
+        if ($category !== '' && preg_match('/^[a-z0-9_]{1,64}$/', $category) === 1) {
+            $query->whereRaw('JSON_CONTAINS(ml.ai_categories, ?)', [json_encode($category)]);
         }
 
         $total = (clone $query)->count();

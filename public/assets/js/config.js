@@ -23,7 +23,58 @@ const CAT_LABELS = {
   impersonation:         'Impersonificazione',
   investment_fraud:      'Truffa investimenti',
   fake_testimonial:      'Testimonianza falsa',
+  doxxing:               'Doxxing',
+  journalist_criticism:  'Critica giornalista',
+  outlet_criticism:      'Critica testata',
+  illegal_content:       'Contenuto illegale',
 };
+
+// Per-category color palette: ogni categoria ha la sua identità visiva nei chip.
+// Gruppi cromatici: truffe in rosso, spam in arancione, odio/molestia in magenta,
+// disinformazione in viola, sexual/illegal in tonalità più cupe.
+const CAT_COLORS = {
+  // Truffe e frodi (rossi)
+  pig_butchering:        '#d63a3a',
+  wallet_theft:          '#b91c1c',
+  fake_giveaway:         '#dc2626',
+  phishing:              '#ef4444',
+  scam:                  '#f75252',
+  investment_fraud:      '#c1272d',
+  impersonation:         '#e11d48',
+  fake_testimonial:      '#9f1239',
+  // Spam e coordinati (arancioni / blu chiaro)
+  spam:                  '#f7b244',
+  coordinated_behaviour: '#4fa8f7',
+  // Predatori (rosso scuro / cremisi)
+  grooming:              '#a31515',
+  // Odio e molestie (magenta / ambra)
+  hate_speech:           '#e055a3',
+  harassment:            '#e08c44',
+  // Violenza
+  violence:              '#e05050',
+  // Sesso / illegali (cupi)
+  sexual:                '#7c3aed',
+  illegal_content:       '#991b1b',
+  doxxing:               '#831843',
+  // Disinformazione (viola)
+  misinformation:        '#7c6ef7',
+  // Editoriali (azzurri)
+  journalist_criticism:  '#4f8ef7',
+  outlet_criticism:      '#0ea5e9',
+};
+
+// Restituisce un chip colorato per una categoria. Tono: pieno ma non sgargiante
+// (background 14% opaco + border 28% + testo solido) così resta leggibile sia
+// in tema scuro che chiaro. Fallback a grigio per categorie sconosciute.
+function categoryChip(cat) {
+  const label = CAT_LABELS[cat] || cat.replace(/_/g, ' ');
+  const color = CAT_COLORS[cat] || '#9ca3af';
+  // Costruisce rgba dal hex per background e border.
+  const r = parseInt(color.slice(1, 3), 16);
+  const g = parseInt(color.slice(3, 5), 16);
+  const b = parseInt(color.slice(5, 7), 16);
+  return `<span class="chip" style="background:rgba(${r},${g},${b},.14);color:${color};border:1px solid rgba(${r},${g},${b},.30)">${label}</span>`;
+}
 
 // ── API helper ────────────────────────────────────────────────────
 async function api(path, method = 'GET', body = null) {

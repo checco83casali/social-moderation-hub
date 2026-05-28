@@ -820,6 +820,12 @@
           <button class="filter-btn"        onclick="setHcSignalFilter('none',this)">Nessuna</button>
           <span class="filter-count" id="hidden-count"></span>
         </div>
+        <div class="filter-bar">
+          <span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-right:8px">Categoria:</span>
+          <select id="hc-category-select" class="form-input" style="max-width:240px;padding:6px 10px;font-size:12.5px" onchange="setHcCategoryFilter(this.value)">
+            <option value="">Tutte le categorie</option>
+          </select>
+        </div>
         <div id="hidden-list"><div class="loading">Caricamento…</div></div>
       </div>
     </div>
@@ -853,6 +859,12 @@
           <button class="filter-btn"        onclick="setAcSignalFilter('fact_check',this)">🔍 Fact-check</button>
           <button class="filter-btn"        onclick="setAcSignalFilter('whataboutism',this)">↩️ Whataboutism</button>
           <button class="filter-btn"        onclick="setAcSignalFilter('none',this)">Nessuna</button>
+        </div>
+        <div class="filter-bar">
+          <span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-right:8px">Categoria:</span>
+          <select id="ac-category-select" class="form-input" style="max-width:240px;padding:6px 10px;font-size:12.5px" onchange="setAcCategoryFilter(this.value)">
+            <option value="">Tutte le categorie</option>
+          </select>
         </div>
         <div id="ac-list"><div class="loading">Caricamento…</div></div>
       </div>

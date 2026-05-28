@@ -103,6 +103,7 @@ async function initApp() {
 
   } catch (e) {}
 
+  populateCategorySelects();
   loadQueue();
   loadStats();
   setInterval(() => {
