@@ -23,6 +23,18 @@ async function loadStats() {
       repNav.textContent = d.queue_reportable ?? '0';
       repNav.style.display = (d.queue_reportable ?? 0) > 0 ? '' : 'none';
     }
+
+    // Pro wall reportable: counter "live" delle segnalazioni accumulate.
+    // Visibile solo se il wall stesso è aperto (cioè licenza Pro mancante).
+    const wallCounter = document.getElementById('reportable-wall-counter');
+    const wallCount   = document.getElementById('reportable-wall-count');
+    if (wallCounter && wallCount) {
+      const n = d.queue_reportable ?? 0;
+      wallCount.textContent = n;
+      // Mostra il riquadro solo quando ci sono effettivamente segnalazioni —
+      // così a count=0 il messaggio non dà urgenza inutile.
+      wallCounter.style.display = n > 0 ? 'block' : 'none';
+    }
   } catch (e) {}
 }
 

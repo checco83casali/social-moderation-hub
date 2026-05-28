@@ -95,10 +95,22 @@
 
     <!-- Reportable queue -->
     <div class="screen" id="screen-reportable">
-      <div id="reportable-upgrade-wall" style="display:none;max-width:480px;margin:60px auto;text-align:center;padding:40px 32px;background:var(--bg-card);border:1px solid rgba(99,102,241,.25);border-radius:var(--radius-lg)">
+      <div id="reportable-upgrade-wall" style="display:none;max-width:520px;margin:60px auto;text-align:center;padding:40px 32px;background:var(--bg-card);border:1px solid rgba(99,102,241,.25);border-radius:var(--radius-lg)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:40px;height:40px;color:var(--accent);margin-bottom:16px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         <div style="font-size:16px;font-weight:600;margin-bottom:8px">Funzionalità Pro</div>
-        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:24px">Le <strong>Segnalazioni pericolose</strong> sono disponibili con licenza Pro.<br>Attiva una licenza per accedere al pannello di revisione dei contenuti potenzialmente illeciti.</div>
+
+        <!-- Live counter: aggiornato da loadStats() con queue_reportable -->
+        <div id="reportable-wall-counter" style="display:none;margin:14px 0 20px;padding:14px 16px;background:rgba(247,82,82,.06);border:1px solid rgba(247,82,82,.2);border-radius:var(--radius)">
+          <div style="font-size:30px;font-weight:700;color:var(--danger);line-height:1" id="reportable-wall-count">0</div>
+          <div style="font-size:11.5px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.05em">segnalazioni accumulate in attesa di revisione</div>
+        </div>
+
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:14px;text-align:left;background:rgba(62,207,142,.06);border:1px solid rgba(62,207,142,.2);padding:12px 14px;border-radius:var(--radius)">
+          ✅ <strong style="color:var(--success)">Safety preservata</strong> — i commenti pericolosi sono <strong>già stati nascosti automaticamente dall'AI</strong> su Facebook, anche senza licenza Pro. Il pubblico non li vede.
+        </div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:24px;text-align:left">
+          🔒 Con la licenza Pro sblocchi il <strong>pannello di revisione</strong> per esaminarli, decidere se escalare alle autorità competenti, e scaricare il dossier legale PDF con la cronologia completa.
+        </div>
         <button class="btn-primary" onclick="document.querySelector('[data-screen=settings]').click()">Attiva licenza Pro →</button>
       </div>
       <div id="reportable-content">
