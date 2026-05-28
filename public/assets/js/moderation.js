@@ -36,8 +36,33 @@ async function loadStatsScreen() {
     document.getElementById('ss-appeals').textContent  = d.appeals_pending    ?? '—';
 
     const stageColors = { haiku:'#4f8ef7', sonnet:'#f7b244', human:'#f75252', system:'#9ca3af' };
+    // keepZero=true: mostra tutti gli stage anche se il conteggio è 0,
+    // così Sonnet/Sistema non spariscono quando non sono stati invocati.
     renderBarChart('stage-chart', d.by_stage || {}, stageColors,
-      { haiku:'Haiku', sonnet:'Sonnet', human:'Umano', system:'Sistema' }, true);
+      { haiku:'Haiku', sonnet:'Sonnet', human:'Umano', system:'Sistema' }, true, false, true);
+
+    // Sonnet sub-calls (fact-check + whataboutism): chiamate API che non
+    // appaiono in by_stage perché il log porta lo stage della moderazione.
+    const subCalls = d.sonnet_subcalls || { fact_check: 0, whataboutism: 0 };
+    const subEl = document.getElementById('sonnet-subcalls');
+    if (subEl) {
+      const total = (subCalls.fact_check || 0) + (subCalls.whataboutism || 0);
+      subEl.innerHTML = total === 0
+        ? '<div style="padding:14px;text-align:center;font-size:12px;color:var(--muted)">Nessuna sub-call Sonnet negli ultimi 30 giorni</div>'
+        : `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div style="padding:10px 14px;background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.18);border-radius:var(--radius)">
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">🔍 Fact-check</div>
+            <div style="font-size:20px;font-weight:600;color:var(--accent)">${subCalls.fact_check ?? 0}</div>
+            <div style="font-size:11px;color:var(--muted)">call Sonnet (assess + grounding)</div>
+          </div>
+          <div style="padding:10px 14px;background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.2);border-radius:var(--radius)">
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">↩️ Whataboutism</div>
+            <div style="font-size:20px;font-weight:600;color:#a855f7">${subCalls.whataboutism ?? 0}</div>
+            <div style="font-size:11px;color:var(--muted)">call Sonnet (assess + verify)</div>
+          </div>
+        </div>`;
+    }
 
     const decColors = { allow:'#3ecf8e', remove:'#f75252', uncertain:'#f7b244', hide:'#f7a244', reportable:'#e055a3' };
     renderBarChart('decision-chart', d.by_ai_decision || {}, decColors,
@@ -407,9 +432,9 @@ function openFactcheckReply() {
     ? currentComment.ai_fact_check_sources.filter(s => s && s.url)
     : [];
 
-  // IMPORTANTE: Facebook filtra/rifiuta i commenti delle Pagine che contengono URL
-  // (anti-spam). Il testo pubblicato è quindi SOLO la bozza, senza link grezzi;
-  // le fonti restano come riferimento interno nel pannello qui accanto.
+  // Il moderatore può editare la bozza prima di pubblicare. Gli URL sono ammessi
+  // sia inline nel testo sia tramite il pannello fonti sotto (lasciato come
+  // riferimento visivo, utile quando preferisce citarle per nome nel reply).
   document.getElementById('factcheck-reply-text').value = draft;
   document.getElementById('factcheck-reply-err').style.display = 'none';
 
@@ -665,7 +690,7 @@ async function loadBannedComments() {
           </div>
           <div class="bc-content">${esc(c.content)}</div>
           <div class="bc-footer">
-            ${decider} ${cats}
+            ${decider} ${aiSignalChips(c)} ${cats}
             ${c.ai_reason ? `<span style="font-size:11px;color:var(--muted);flex-basis:100%;margin-top:4px">${esc(c.ai_reason)}</span>` : ''}
             <span class="bc-conf">${conf}</span>
           </div>
@@ -684,16 +709,18 @@ function setBcFilter(val, el) {
 }
 
 // ── Approved comments ─────────────────────────────────────────────
-let currentAcFilter = 'all';
+let currentAcFilter       = 'all'; // decided_by: all|ai|human
+let currentAcSignalFilter = 'all'; // signal: all|any|fact_check|whataboutism|none
 
 async function loadApprovedComments() {
   const list    = document.getElementById('ac-list');
   const countEl = document.getElementById('ac-count');
   list.innerHTML = '<div class="loading">Caricamento…</div>';
   try {
-    const url = currentAcFilter === 'all'
-      ? '/comments/approved?limit=50'
-      : `/comments/approved?limit=50&decided_by=${currentAcFilter}`;
+    const params = new URLSearchParams({ limit: 50 });
+    if (currentAcFilter       !== 'all') params.set('decided_by', currentAcFilter);
+    if (currentAcSignalFilter !== 'all') params.set('signal',     currentAcSignalFilter);
+    const url = `/comments/approved?${params.toString()}`;
     const d = await api(url);
     countEl.textContent = `${d.total} commenti`;
     if (!d.items?.length) { list.innerHTML = '<div class="empty">Nessun commento approvato</div>'; return; }
@@ -737,7 +764,7 @@ async function loadApprovedComments() {
           </div>
           <div class="bc-content">${esc(c.content)}</div>
           <div class="bc-footer">
-            ${decider} ${cats}
+            ${decider} ${aiSignalChips(c)} ${cats}
             ${c.ai_reason ? `<span style="font-size:11px;color:var(--muted);flex-basis:100%;margin-top:4px">${esc(c.ai_reason)}</span>` : ''}
             ${c.human_note ? `<span style="font-size:11px;color:var(--muted);flex-basis:100%;margin-top:2px">📝 ${esc(c.human_note)}</span>` : ''}
             <span class="bc-conf">${conf}</span>
@@ -751,7 +778,15 @@ async function loadApprovedComments() {
 
 function setAcFilter(val, el) {
   currentAcFilter = val;
-  document.querySelectorAll('#screen-approved-comments .filter-btn').forEach(b => b.classList.remove('active'));
+  // Active state isolato al gruppo decided_by — non azzera il filtro signal.
+  document.querySelectorAll('[data-filter-group="ac-decided"] .filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  loadApprovedComments();
+}
+
+function setAcSignalFilter(val, el) {
+  currentAcSignalFilter = val;
+  document.querySelectorAll('[data-filter-group="ac-signal"] .filter-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   loadApprovedComments();
 }
@@ -919,13 +954,17 @@ async function confirmAppealDecision() {
 }
 
 // ── Hidden comments ───────────────────────────────────────────────
+let currentHcSignalFilter = 'all'; // signal: all|any|fact_check|whataboutism|none
+
 async function loadHiddenComments() {
   const list    = document.getElementById('hidden-list');
   const countEl = document.getElementById('hidden-count');
   if (!list) return;
   list.innerHTML = '<div class="loading">Caricamento…</div>';
   try {
-    const d = await api('/comments/hidden?limit=50');
+    const params = new URLSearchParams({ limit: 50 });
+    if (currentHcSignalFilter !== 'all') params.set('signal', currentHcSignalFilter);
+    const d = await api(`/comments/hidden?${params.toString()}`);
     countEl && (countEl.textContent = `${d.total} commenti`);
     if (!d.items?.length) {
       list.innerHTML = '<div class="empty">Nessun commento nascosto</div>';
@@ -964,12 +1003,19 @@ async function loadHiddenComments() {
           ${c.ai_reason ? `<div style="font-size:11px;color:var(--muted);margin-top:4px">Motivazione AI: ${esc(c.ai_reason)}</div>` : ''}
           ${replyBlock}
           <div class="bc-footer" style="margin-top:10px">
-            ${cats}
+            ${aiSignalChips(c)} ${cats}
           </div>
         </div>`;
     }).join('');
   } catch (e) {
     list.innerHTML = '<div class="empty">Errore nel caricamento</div>';
   }
+}
+
+function setHcSignalFilter(val, el) {
+  currentHcSignalFilter = val;
+  document.querySelectorAll('[data-filter-group="hc-signal"] .filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  loadHiddenComments();
 }
 

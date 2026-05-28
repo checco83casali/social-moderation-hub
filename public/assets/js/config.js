@@ -116,11 +116,14 @@ function closeSplash() {
   if (el) el.className = '';
 }
 
-function renderBarChart(elId, data, colors, labels, sortDesc = false, normaliseToMax = false) {
+function renderBarChart(elId, data, colors, labels, sortDesc = false, normaliseToMax = false, keepZero = false) {
   const el = document.getElementById(elId);
   if (!el) return;
-  const entries = Object.entries(data).filter(([, v]) => Number(v) > 0);
-  if (!entries.length) {
+  const allEntries = Object.entries(data);
+  const entries    = keepZero ? allEntries : allEntries.filter(([, v]) => Number(v) > 0);
+  // Se keepZero=true ma TUTTI i valori sono 0, mostra comunque l'avviso vuoto.
+  const totalSum = allEntries.reduce((a, [, v]) => a + Number(v), 0);
+  if (!entries.length || (keepZero && totalSum === 0)) {
     el.innerHTML = '<div style="padding:20px;text-align:center;font-size:12px;color:var(--muted)">Nessun dato disponibile</div>';
     return;
   }
@@ -140,6 +143,23 @@ function renderBarChart(elId, data, colors, labels, sortDesc = false, normaliseT
     </div>`;
   }).join('');
   el.innerHTML = `<div class="chart-bar-wrap">${rows}</div>`;
+}
+
+// ── AI signal chips ───────────────────────────────────────────────
+// Rendering compatto dei flag AI (fact-check / whataboutism) come chip
+// indipendenti dalla decisione finale: utile per vedere COSA aveva segnalato
+// l'AI anche dopo una decisione umana che ha sovrascritto la pipeline.
+function aiSignalChips(c) {
+  const out = [];
+  if (c.ai_fact_check_suggested) {
+    const pct = c.ai_fact_check_confidence ? ' ' + Math.round(c.ai_fact_check_confidence * 100) + '%' : '';
+    out.push(`<span class="chip" style="background:rgba(79,142,247,.14);color:var(--accent);border:1px solid rgba(79,142,247,.25)" title="L'AI ha segnalato un'affermazione fattuale da verificare">🔍 Fact-check${pct}</span>`);
+  }
+  if (c.ai_whataboutism_suggested) {
+    const pct = c.ai_whataboutism_confidence ? ' ' + Math.round(c.ai_whataboutism_confidence * 100) + '%' : '';
+    out.push(`<span class="chip" style="background:rgba(168,85,247,.14);color:#a855f7;border:1px solid rgba(168,85,247,.25)" title="L'AI ha rilevato una deflessione retorica">↩️ Whataboutism${pct}</span>`);
+  }
+  return out.join(' ');
 }
 
 // ── Modals ────────────────────────────────────────────────────────

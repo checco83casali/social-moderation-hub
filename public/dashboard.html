@@ -161,7 +161,10 @@
           <div class="panel"><div class="panel-head"><div class="panel-title">Decisioni AI</div></div><div class="mini-chart" id="decision-chart"><div class="loading">Caricamento…</div></div></div>
         </div>
         <div class="panels" style="margin-top:20px">
+          <div class="panel"><div class="panel-head"><div class="panel-title">Sub-call Sonnet (30gg) <span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:6px">non visibili nello stadio AI</span></div></div><div id="sonnet-subcalls"><div class="loading">Caricamento…</div></div></div>
           <div class="panel"><div class="panel-head"><div class="panel-title">Violazioni per categoria (30gg)</div></div><div class="mini-chart" id="ban-cat-chart"><div class="loading">Caricamento…</div></div></div>
+        </div>
+        <div class="panels" style="margin-top:20px">
           <div class="panel"><div class="panel-head"><div class="panel-title">Decisioni AI vs Umane (30gg)</div></div><div class="mini-chart" id="ban-decider-chart"><div class="loading">Caricamento…</div></div></div>
         </div>
       </div>
@@ -808,7 +811,13 @@
     <div class="screen" id="screen-banned-comments">
       <div class="panel">
         <div class="panel-head"><div class="panel-title">Commenti nascosti</div><button class="panel-action" onclick="loadHiddenComments()">↺ Aggiorna</button></div>
-        <div class="filter-bar">
+        <div class="filter-bar" data-filter-group="hc-signal">
+          <span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-right:8px">Segnalazioni AI:</span>
+          <button class="filter-btn active" onclick="setHcSignalFilter('all',this)">Tutte</button>
+          <button class="filter-btn"        onclick="setHcSignalFilter('any',this)">Con signal</button>
+          <button class="filter-btn"        onclick="setHcSignalFilter('fact_check',this)">🔍 Fact-check</button>
+          <button class="filter-btn"        onclick="setHcSignalFilter('whataboutism',this)">↩️ Whataboutism</button>
+          <button class="filter-btn"        onclick="setHcSignalFilter('none',this)">Nessuna</button>
           <span class="filter-count" id="hidden-count"></span>
         </div>
         <div id="hidden-list"><div class="loading">Caricamento…</div></div>
@@ -830,11 +839,20 @@
     <div class="screen" id="screen-approved-comments">
       <div class="panel">
         <div class="panel-head"><div class="panel-title">Commenti approvati</div><button class="panel-action" onclick="loadApprovedComments()">↺ Aggiorna</button></div>
-        <div class="filter-bar">
+        <div class="filter-bar" data-filter-group="ac-decided">
+          <span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-right:8px">Decisione:</span>
           <button class="filter-btn active" onclick="setAcFilter('all',this)">Tutti</button>
           <button class="filter-btn"        onclick="setAcFilter('ai',this)">Solo AI</button>
           <button class="filter-btn"        onclick="setAcFilter('human',this)">Solo umani</button>
           <span class="filter-count" id="ac-count"></span>
+        </div>
+        <div class="filter-bar" data-filter-group="ac-signal">
+          <span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-right:8px">Segnalazioni AI:</span>
+          <button class="filter-btn active" onclick="setAcSignalFilter('all',this)">Tutte</button>
+          <button class="filter-btn"        onclick="setAcSignalFilter('any',this)">Con signal</button>
+          <button class="filter-btn"        onclick="setAcSignalFilter('fact_check',this)">🔍 Fact-check</button>
+          <button class="filter-btn"        onclick="setAcSignalFilter('whataboutism',this)">↩️ Whataboutism</button>
+          <button class="filter-btn"        onclick="setAcSignalFilter('none',this)">Nessuna</button>
         </div>
         <div id="ac-list"><div class="loading">Caricamento…</div></div>
       </div>
@@ -972,7 +990,7 @@
     <div class="form-group">
       <label class="form-label">Testo risposta (modificabile)</label>
       <textarea class="form-textarea" id="factcheck-reply-text" rows="6" placeholder="Risposta fact-check…" style="width:100%;box-sizing:border-box;resize:vertical"></textarea>
-      <div style="font-size:11px;color:var(--warn,#b45309);margin-top:6px">⚠️ Non inserire link (URL): Facebook rifiuta i commenti delle Pagine che contengono link. Cita le fonti per nome — i link restano qui sotto come riferimento interno.</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">Puoi inserire URL nel testo o lasciare le fonti come riferimento qui sotto.</div>
     </div>
     <div id="factcheck-sources-ref" style="display:none;margin-top:14px;padding:12px 14px;background:rgba(79,142,247,.06);border:1px solid rgba(79,142,247,.15);border-radius:var(--radius)">
       <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">📎 Fonti di riferimento (sola lettura)</div>
@@ -997,7 +1015,6 @@
     <div class="form-group">
       <label class="form-label">Testo risposta (modificabile)</label>
       <textarea class="form-textarea" id="whataboutism-reply-text" rows="5" placeholder="Risposta editoriale…" style="width:100%;box-sizing:border-box;resize:vertical"></textarea>
-      <div style="font-size:11px;color:var(--warn,#b45309);margin-top:6px">⚠️ Non inserire link: Facebook rifiuta i commenti delle Pagine che contengono URL.</div>
     </div>
     <div id="whataboutism-reply-err" style="display:none;font-size:12px;color:var(--danger);margin-top:10px;padding:7px 10px;background:var(--danger-bg);border-radius:var(--radius)"></div>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">

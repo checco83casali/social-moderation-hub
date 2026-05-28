@@ -392,11 +392,11 @@ A comment has already been approved by moderation. Assess a verifiable factual c
 Respond ONLY with valid JSON, no markdown fences:
 {
   "fact_check_confidence": 0.0-1.0,
-  "fact_check_draft": "ready-to-publish reply in Italian (max 3 sentences, neutral, factual, no URLs)"
+  "fact_check_draft": "ready-to-publish reply in Italian (max 3 sentences, neutral, factual)"
 }
 RULES:
 - fact_check_confidence: your confidence that the claim is verifiably inaccurate AND that your correction is factually correct. Be conservative — only above 0.85 when you are certain of both.
-- fact_check_draft: written as the page editor. Acknowledge the topic, state the correct information, neutral non-accusatory tone, always in Italian. Do NOT include any URLs (sources are attached separately, later).
+- fact_check_draft: written as the page editor. Acknowledge the topic, state the correct information, neutral non-accusatory tone, always in Italian. URLs are allowed inline if helpful, but verified sources will also be attached separately.
 FCASSESS;
 
         try {
@@ -460,7 +460,7 @@ A comment has already been approved by moderation. It has been flagged as potent
 Respond ONLY with valid JSON, no markdown fences:
 {
   "whataboutism_confidence": 0.0-1.0,
-  "whataboutism_draft": "ready-to-publish reply in Italian (max 2 sentences, neutral, educational, no URLs, no labels like 'fallacia logica')"
+  "whataboutism_draft": "ready-to-publish reply in Italian (max 2 sentences, neutral, educational, no labels like 'fallacia logica')"
 }
 RULES:
 - whataboutism_confidence: your confidence that this is a clear topical deflection (not on-topic disagreement, not a good-faith parallel). Be conservative — only above 0.90 when the pivot is unambiguous.

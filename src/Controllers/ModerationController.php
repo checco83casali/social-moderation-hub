@@ -484,6 +484,7 @@ class ModerationController
         $params = $request->getQueryParams();
         $limit  = min((int) ($params['limit'] ?? 25), 100);
         $page   = max(1, (int) ($params['page'] ?? 1));
+        $signal = $params['signal'] ?? 'all';
 
         $query = DB::table('comments as c')
             ->join('social_users as su', 'su.id', '=', 'c.social_user_id')
@@ -499,6 +500,20 @@ class ModerationController
             ->leftJoin('admin_users as au', 'au.id', '=', 'ml.human_user_id')
             ->whereIn('c.status', ['hidden', 'hidden_reportable']);
 
+        if ($signal === 'fact_check') {
+            $query->where('ml.ai_fact_check_suggested', 1);
+        } elseif ($signal === 'whataboutism') {
+            $query->where('ml.ai_whataboutism_suggested', 1);
+        } elseif ($signal === 'any') {
+            $query->where(function ($q) {
+                $q->where('ml.ai_fact_check_suggested', 1)
+                  ->orWhere('ml.ai_whataboutism_suggested', 1);
+            });
+        } elseif ($signal === 'none') {
+            $query->where('ml.ai_fact_check_suggested', 0)
+                  ->where('ml.ai_whataboutism_suggested', 0);
+        }
+
         $total = (clone $query)->count();
 
         $items = $query
@@ -509,6 +524,8 @@ class ModerationController
                 'cp.page_name', 'cp.page_id as facebook_page_id',
                 'ml.ai_reason', 'ml.ai_public_reason', 'ml.ai_categories', 'ml.ai_severity',
                 'ml.removal_reply_text', 'ml.human_decision',
+                'ml.ai_fact_check_suggested', 'ml.ai_fact_check_confidence',
+                'ml.ai_whataboutism_suggested', 'ml.ai_whataboutism_confidence',
                 DB::raw("COALESCE(NULLIF(TRIM(au.name), ''), au.email) AS decided_by_name"),
                 'ar.id as appeal_id', 'ar.status as appeal_status', 'ar.submitted_at as appeal_submitted_at',
             ])
@@ -736,7 +753,31 @@ class ModerationController
                 ->selectRaw('ai_decision, COUNT(*) as count')
                 ->groupBy('ai_decision')
                 ->pluck('count', 'ai_decision'),
+            // Sonnet sub-calls: chiamate Sonnet che NON aggiornano lo stage del
+            // log (perché il log porta lo stage della MODERAZIONE, non delle
+            // sub-call). Contiamo righe con confidence > 0 sui due flussi.
+            'sonnet_subcalls' => [
+                'fact_check'   => DB::table('moderation_log')
+                    ->where('created_at', '>=', $since)
+                    ->whereNotNull('ai_fact_check_confidence')
+                    ->count(),
+                'whataboutism' => DB::table('moderation_log')
+                    ->where('created_at', '>=', $since)
+                    ->whereNotNull('ai_whataboutism_confidence')
+                    ->count(),
+            ],
         ];
+
+        // Pad by_stage con tutti gli stage noti (anche a 0) così il chart
+        // mostra sempre Haiku / Sonnet / Umano / Sistema invece di nascondere
+        // le voci assenti.
+        $byStage = (array) $data['by_stage'];
+        foreach (['haiku', 'sonnet', 'human', 'system'] as $st) {
+            if (!array_key_exists($st, $byStage)) {
+                $byStage[$st] = 0;
+            }
+        }
+        $data['by_stage'] = $byStage;
 
         return $this->json($response, $data);
     }
@@ -877,6 +918,7 @@ class ModerationController
         $page       = max(1, (int) ($params['page'] ?? 1));
         $decidedBy  = $params['decided_by'] ?? 'all';
         $pageFilter = (int) ($params['page_id'] ?? 0);
+        $signal     = $params['signal']     ?? 'all';
 
         $query = DB::table('comments as c')
             ->join('social_users as su', 'su.id', '=', 'c.social_user_id')
@@ -898,6 +940,20 @@ class ModerationController
             $query->where('c.page_id', $pageFilter);
         }
 
+        if ($signal === 'fact_check') {
+            $query->where('ml.ai_fact_check_suggested', 1);
+        } elseif ($signal === 'whataboutism') {
+            $query->where('ml.ai_whataboutism_suggested', 1);
+        } elseif ($signal === 'any') {
+            $query->where(function ($q) {
+                $q->where('ml.ai_fact_check_suggested', 1)
+                  ->orWhere('ml.ai_whataboutism_suggested', 1);
+            });
+        } elseif ($signal === 'none') {
+            $query->where('ml.ai_fact_check_suggested', 0)
+                  ->where('ml.ai_whataboutism_suggested', 0);
+        }
+
         $total = (clone $query)->count();
 
         $items = $query
@@ -909,6 +965,8 @@ class ModerationController
                 'ml.stage as ai_stage', 'ml.ai_decision', 'ml.ai_confidence',
                 'ml.ai_reason', 'ml.ai_categories', 'ml.ai_severity',
                 'ml.human_decision', 'ml.human_note', 'ml.human_decided_at',
+                'ml.ai_fact_check_suggested', 'ml.ai_fact_check_confidence',
+                'ml.ai_whataboutism_suggested', 'ml.ai_whataboutism_confidence',
                 DB::raw("COALESCE(NULLIF(TRIM(au.name), ''), au.email) AS decided_by_name"),
             ])
             ->orderByDesc('c.processed_at')
@@ -1224,6 +1282,7 @@ class ModerationController
         $limit     = min((int) ($params['limit'] ?? 25), 100);
         $page      = max(1, (int) ($params['page'] ?? 1));
         $decidedBy = $params['decided_by'] ?? 'all';
+        $signal    = $params['signal']     ?? 'all'; // all|fact_check|whataboutism|any|none
 
         $query = DB::table('comments as c')
             ->join('social_users as su', 'su.id', '=', 'c.social_user_id')
@@ -1239,6 +1298,20 @@ class ModerationController
             $query->whereIn('ml.stage', ['haiku', 'sonnet'])->whereNull('ml.human_decision');
         } elseif ($decidedBy === 'human') {
             $query->where('ml.human_decision', 'allow');
+        }
+
+        if ($signal === 'fact_check') {
+            $query->where('ml.ai_fact_check_suggested', 1);
+        } elseif ($signal === 'whataboutism') {
+            $query->where('ml.ai_whataboutism_suggested', 1);
+        } elseif ($signal === 'any') {
+            $query->where(function ($q) {
+                $q->where('ml.ai_fact_check_suggested', 1)
+                  ->orWhere('ml.ai_whataboutism_suggested', 1);
+            });
+        } elseif ($signal === 'none') {
+            $query->where('ml.ai_fact_check_suggested', 0)
+                  ->where('ml.ai_whataboutism_suggested', 0);
         }
 
         $total = (clone $query)->count();
