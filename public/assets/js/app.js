@@ -82,23 +82,24 @@ async function initApp() {
       const s = await api('/settings');
       if (s.dev_mode) applyDevModeBadge(true);
 
-      // Gate Pro screens (Statistiche + Segnalazioni) — solo per admin
-      // Moderatori/supervisori vedono sempre il contenuto
-      if (currentUserRole === 'admin') {
-        const isPro        = s.license?.is_pro ?? false;
-        const statsWall    = document.getElementById('stats-upgrade-wall');
-        const statsContent = document.getElementById('stats-content');
-        const repWall      = document.getElementById('reportable-upgrade-wall');
-        const repContent   = document.getElementById('reportable-content');
-        const statsBadge   = document.getElementById('nav-stats-pro-badge');
-        const repBadge     = document.getElementById('nav-reportable-pro-badge');
-        if (statsWall)    statsWall.style.display    = isPro ? 'none'         : 'block';
-        if (statsContent) statsContent.style.display = isPro ? 'block'        : 'none';
-        if (repWall)      repWall.style.display      = isPro ? 'none'         : 'block';
-        if (repContent)   repContent.style.display   = isPro ? 'block'        : 'none';
-        if (statsBadge)   statsBadge.style.display   = isPro ? 'none'         : 'inline-block';
-        if (repBadge)     repBadge.style.display     = isPro ? 'none'         : 'inline-block';
-      }
+      // Gate Pro screens (Statistiche + Segnalazioni) per feature specifica,
+      // valido per TUTTI i ruoli — il backend ora restituisce 403 se l'utente
+      // accede via API senza licenza, quindi nascondiamo coerentemente la UI.
+      const features      = s.license?.features ?? [];
+      const hasReportable = features.includes('reportable_queue');
+      const hasStats      = features.includes('advanced_stats');
+      const statsWall     = document.getElementById('stats-upgrade-wall');
+      const statsContent  = document.getElementById('stats-content');
+      const repWall       = document.getElementById('reportable-upgrade-wall');
+      const repContent    = document.getElementById('reportable-content');
+      const statsBadge    = document.getElementById('nav-stats-pro-badge');
+      const repBadge      = document.getElementById('nav-reportable-pro-badge');
+      if (statsWall)    statsWall.style.display    = hasStats      ? 'none'  : 'block';
+      if (statsContent) statsContent.style.display = hasStats      ? 'block' : 'none';
+      if (repWall)      repWall.style.display      = hasReportable ? 'none'  : 'block';
+      if (repContent)   repContent.style.display   = hasReportable ? 'block' : 'none';
+      if (statsBadge)   statsBadge.style.display   = hasStats      ? 'none'  : 'inline-block';
+      if (repBadge)     repBadge.style.display     = hasReportable ? 'none'  : 'inline-block';
     } catch(e) {}
 
   } catch (e) {}

@@ -87,6 +87,13 @@ class ModerationController
     /** Dangerous/potentially illegal comments hidden by AI, awaiting human decision on reporting. */
     public function reportableQueue(ServerRequestInterface $request, Response $response): ResponseInterface
     {
+        // Pro gate: il dashboard di revisione contenuti illegali è una feature Pro.
+        // L'AI continua comunque a nascondere automaticamente i contenuti pericolosi
+        // anche su Free — qui blocchiamo solo l'UI di revisione/escalation.
+        if (!$this->license->hasFeature('reportable_queue')) {
+            return $this->json($response, ['error' => 'Pro license required', 'feature' => 'reportable_queue'], 403);
+        }
+
         $params = $request->getQueryParams();
         $limit  = min((int) ($params['limit'] ?? 25), 100);
         $page   = max(1, (int) ($params['page'] ?? 1));
@@ -133,6 +140,10 @@ class ModerationController
     /** Historical reports already escalated to the legal team (reported_legal). */
     public function reportableArchive(ServerRequestInterface $request, Response $response): ResponseInterface
     {
+        if (!$this->license->hasFeature('reportable_queue')) {
+            return $this->json($response, ['error' => 'Pro license required', 'feature' => 'reportable_queue'], 403);
+        }
+
         $params = $request->getQueryParams();
         $limit  = min((int) ($params['limit'] ?? 50), 100);
         $page   = max(1, (int) ($params['page'] ?? 1));
@@ -183,6 +194,10 @@ class ModerationController
             return $this->json($response, ['error' => 'Admin or supervisor required'], 403);
         }
 
+        if (!$this->license->hasFeature('reportable_queue')) {
+            return $this->json($response, ['error' => 'Pro license required', 'feature' => 'reportable_queue'], 403);
+        }
+
         $commentId = (int) $args['id'];
         $comment   = DB::table('comments')->find($commentId);
         if (!$comment) {
@@ -224,6 +239,10 @@ class ModerationController
         $auth = $request->getAttribute('auth_user');
         if (!in_array($auth->role ?? '', ['admin', 'supervisor'], true)) {
             return $this->json($response, ['error' => 'Admin or supervisor required'], 403);
+        }
+
+        if (!$this->license->hasFeature('reportable_queue')) {
+            return $this->json($response, ['error' => 'Pro license required', 'feature' => 'reportable_queue'], 403);
         }
 
         $commentId = (int) $args['id'];
@@ -728,71 +747,76 @@ class ModerationController
     }
 
     // ── GET /api/stats  ─────────────────────────────────────────────
-    /** Dashboard summary stats. */
+    /**
+     * Dashboard summary stats. Split tra:
+     *   - basic counters (sempre Free) → queue/reportable/hidden/appeals counts,
+     *     active_bans. Servono al navbar e ai badge "in attesa".
+     *   - advanced_stats (Pro) → 30-day breakdown, distribuzione per stage,
+     *     decisioni AI, sub-call Sonnet, trend. Servono allo schermo Statistiche.
+     */
     public function stats(ServerRequestInterface $request, Response $response): ResponseInterface
     {
         $since = date('Y-m-d H:i:s', strtotime('-30 days'));
 
+        // Counters Free — sempre disponibili (necessari per il navbar).
         $data = [
             'queue_pending'      => DB::table('comments')->where('status', 'escalated_human')->count(),
             'queue_reportable'   => DB::table('comments')->where('status', 'escalated_reportable')->count(),
             'hidden_total'       => DB::table('comments')->whereIn('status', ['hidden', 'hidden_reportable'])->count(),
             'appeals_pending'    => DB::table('appeal_records')->where('status', 'pending')->count(),
-            'total_comments_30d' => DB::table('comments')->where('received_at', '>=', $since)->count(),
-            'removed_30d'        => DB::table('comments')->where('status', 'removed')->where('processed_at', '>=', $since)->count(),
-            'hidden_30d'         => DB::table('comments')->whereIn('status', ['hidden', 'hidden_reportable'])->where('processed_at', '>=', $since)->count(),
-            'approved_30d'       => DB::table('comments')->where('status', 'approved')->where('processed_at', '>=', $since)->count(),
             'active_bans'        => DB::table('ban_records')
                 ->where('ban_scope', 'user')
                 ->where('is_active', 1)
                 ->where(function ($q) { $q->whereNull('expires_at')->orWhere('expires_at', '>', date('Y-m-d H:i:s')); })
                 ->count(),
-            'by_stage'           => DB::table('moderation_log')
+        ];
+
+        // Advanced stats — gated da Pro feature 'advanced_stats'.
+        // Se la feature manca, i campi sotto vengono omessi e la UI mostra
+        // un overlay Pro sulla schermata Statistiche.
+        if ($this->license->hasFeature('advanced_stats')) {
+            $byStage = DB::table('moderation_log')
                 ->where('created_at', '>=', $since)
                 ->selectRaw('stage, COUNT(*) as count')
                 ->groupBy('stage')
-                ->pluck('count', 'stage'),
-            'by_ai_decision'     => DB::table('moderation_log')
-                ->where('created_at', '>=', $since)
-                ->whereIn('stage', ['haiku', 'sonnet'])
-                ->selectRaw('ai_decision, COUNT(*) as count')
-                ->groupBy('ai_decision')
-                ->pluck('count', 'ai_decision'),
-            // Sonnet sub-calls: chiamate Sonnet che NON aggiornano lo stage del
-            // log (perché il log porta lo stage della MODERAZIONE, non delle
-            // sub-call). Contiamo righe con confidence > 0 sui due flussi.
-            'sonnet_subcalls' => [
-                'fact_check'   => DB::table('moderation_log')
-                    ->where('created_at', '>=', $since)
-                    ->whereNotNull('ai_fact_check_confidence')
-                    ->count(),
-                'whataboutism' => DB::table('moderation_log')
-                    ->where('created_at', '>=', $since)
-                    ->whereNotNull('ai_whataboutism_confidence')
-                    ->count(),
-            ],
-        ];
+                ->pluck('count', 'stage')
+                ->all();
 
-        // Pad by_stage con tutti gli stage noti (anche a 0) così il chart
-        // mostra sempre Haiku / Sonnet / Umano / Sistema invece di nascondere
-        // le voci assenti.
-        //
-        // NOTA: pluck() ritorna un'Illuminate\Support\Collection. Usare ->all()
-        // (NON il cast (array)$collection) perché il cast PHP esporrebbe anche
-        // le proprietà interne dell'oggetto (*items, *escapeWhenCastingToString,
-        // ecc.) come chiavi, mascherando i dati reali nel JSON.
-        $byStage = $data['by_stage']->all();
-        foreach (['haiku', 'sonnet', 'human', 'system'] as $st) {
-            if (!array_key_exists($st, $byStage)) {
-                $byStage[$st] = 0;
+            // Pad by_stage con tutti gli stage noti a 0 così Haiku/Sonnet/Umano/Sistema
+            // appaiono sempre nel chart anche quando non hanno hit.
+            foreach (['haiku', 'sonnet', 'human', 'system'] as $st) {
+                if (!array_key_exists($st, $byStage)) {
+                    $byStage[$st] = 0;
+                }
             }
-        }
-        // Cast a int per uniformità (pluck può ritornare stringhe da COUNT(*)).
-        $data['by_stage'] = array_map('intval', $byStage);
 
-        // Stesso problema su by_ai_decision: serializziamolo a array puro
-        // così il frontend riceve { allow: N, hide: N, ... } anziché un oggetto Collection.
-        $data['by_ai_decision'] = array_map('intval', $data['by_ai_decision']->all());
+            $data += [
+                'total_comments_30d' => DB::table('comments')->where('received_at', '>=', $since)->count(),
+                'removed_30d'        => DB::table('comments')->where('status', 'removed')->where('processed_at', '>=', $since)->count(),
+                'hidden_30d'         => DB::table('comments')->whereIn('status', ['hidden', 'hidden_reportable'])->where('processed_at', '>=', $since)->count(),
+                'approved_30d'       => DB::table('comments')->where('status', 'approved')->where('processed_at', '>=', $since)->count(),
+                'by_stage'           => array_map('intval', $byStage),
+                'by_ai_decision'     => array_map('intval', DB::table('moderation_log')
+                    ->where('created_at', '>=', $since)
+                    ->whereIn('stage', ['haiku', 'sonnet'])
+                    ->selectRaw('ai_decision, COUNT(*) as count')
+                    ->groupBy('ai_decision')
+                    ->pluck('count', 'ai_decision')
+                    ->all()),
+                // Sonnet sub-calls: chiamate Sonnet che NON aggiornano lo stage
+                // del log (perché il log porta lo stage della MODERAZIONE).
+                'sonnet_subcalls' => [
+                    'fact_check'   => DB::table('moderation_log')
+                        ->where('created_at', '>=', $since)
+                        ->whereNotNull('ai_fact_check_confidence')
+                        ->count(),
+                    'whataboutism' => DB::table('moderation_log')
+                        ->where('created_at', '>=', $since)
+                        ->whereNotNull('ai_whataboutism_confidence')
+                        ->count(),
+                ],
+            ];
+        }
 
         return $this->json($response, $data);
     }
@@ -1005,9 +1029,13 @@ class ModerationController
     }
 
     // ── GET /api/bans/stats  ─────────────────────────────────────────
-    /** Aggregate stats for ban dashboard charts. */
+    /** Aggregate stats for ban dashboard charts (Pro feature: advanced_stats). */
     public function banStats(ServerRequestInterface $request, Response $response): ResponseInterface
     {
+        if (!$this->license->hasFeature('advanced_stats')) {
+            return $this->json($response, ['error' => 'Pro license required', 'feature' => 'advanced_stats'], 403);
+        }
+
         $this->ban->cleanupExpiredBans();
 
         $since = date('Y-m-d H:i:s', strtotime('-30 days'));

@@ -36,6 +36,16 @@ use Monolog\Logger;
  *   fact_check          — AI fact-check draft + sources in moderation pipeline
  *   whataboutism        — AI whataboutism detection + educational reply draft
  *   multi_page          — connect more than one Facebook page (free plan = 1 page)
+ *   reportable_queue    — dedicated queue for potentially-illegal content (auto-hidden,
+ *                         awaiting human decision on legal escalation)
+ *   advanced_stats      — 30-day dashboard, AI distribution charts, sub-call breakdown,
+ *                         category trends. Basic counters (queue/hidden/active bans)
+ *                         remain free.
+ *
+ * NOTE: the pipeline still PRODUCES reportable comments on Free installs (the AI
+ *       continues to hide illegal content automatically — that's a safety feature,
+ *       not a paid one). What `reportable_queue` gates is the dashboard UI to
+ *       review and escalate those reports.
  *
  * ADDING A NEW PRO FEATURE
  * ─────────────────────────────────────────────────────────────────
@@ -79,6 +89,8 @@ class LicenseService
         'fact_check',
         'whataboutism',
         'multi_page',
+        'reportable_queue',
+        'advanced_stats',
     ];
 
     // ── State ────────────────────────────────────────────────────────

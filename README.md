@@ -46,20 +46,44 @@ deletion; sensitive fields are anonymised on a configurable schedule.
 
 ## Features
 
+### Community edition (free, MIT)
+
+The core moderation pipeline and dashboard are fully functional without any
+license. A self-hosted Community install can moderate one Facebook page end-to-end.
+
 - **Two-stage AI pipeline** — Claude Haiku (fast/cheap) → Sonnet (deeper) → Human
 - **Context-aware moderation** — account age, follower count, internal violation history sent to Claude as context
 - **Advanced threat detection** — scam patterns (pig butchering, fake giveaways, wallet theft), grooming signals, coordinated spam
+- **Auto-hide of dangerous content** — the AI continues to auto-hide potentially illegal comments on Free installs too; what's gated is the *review dashboard* for those reports (see Pro below)
 - **Versioned policy management** — edit system prompts from the UI; full version history preserved
 - **Human review queue** — prioritised dashboard with AI reasoning per comment
 - **Appeals workflow** — hidden comments can be contested via a signed-URL form; admins decide
 - **Progressive ban system** — comment removal → 1-day → 7-day → 30-day → permanent
-- **Configurable data retention** — nightly job anonymises PII after N days (statistical fields preserved)
-- **Multi-page Facebook integration** — connect several pages in one click via Facebook Login
+- **Basic dashboard counters** — pending queue, hidden, appeals, active bans (live)
+- **1 Facebook page** — connect a single page (multi-page requires Pro)
 - **Full audit trail** — every AI and human decision logged with model, confidence, latency
 - **OAuth2 login** — Google, Meta, Microsoft (first user auto-becomes admin)
-- **Pluggable Pro features** — optional license server
 - **Self-hosted & private** — your data never leaves your server
+- **Docker support** — `docker-compose up` to run
 - **MIT License** — use, fork, deploy freely
+
+### Pro license features
+
+Unlocked with a license key validated against your own license server (or via
+`LICENSE_OFFLINE_FEATURES` for fully air-gapped installs).
+
+- **Multi-page Facebook integration** — connect several pages in one click (`multi_page`)
+- **Per-page AI thresholds** — custom Haiku/Sonnet confidence per page (`per_page_thresholds`)
+- **AI fact-check** — when a comment contains a verifiable claim, Sonnet drafts a public reply with cited sources, web-grounded; auto-publish above threshold (`fact_check`)
+- **AI whataboutism detection** — rhetorical-deflection detection with educational draft reply that brings the discussion back on topic; auto-publish above threshold (`whataboutism`) — *NEW*
+- **Dangerous reports queue** — dedicated lane to review auto-hidden potentially-illegal content and escalate to authorities, with legal-dossier PDF export (`reportable_queue`)
+- **Advanced statistics** — 30-day dashboard, AI stage distribution, decision charts, category trends, Sonnet sub-call accounting (`advanced_stats`)
+- **Custom reply templates** — editable hide/reportable/ban reply templates (`templates`)
+- **Configurable data retention** — custom GDPR anonymisation window via nightly cron (`data_retention`)
+- **Moderation log export** — CSV / JSON export with date and decision filters (`export_log`)
+
+The feature keys in parentheses are the strings returned by the license server
+in the `features` array (see `src/Services/LicenseService.php::KNOWN_FEATURES`).
 
 ---
 

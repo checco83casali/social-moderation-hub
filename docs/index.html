@@ -644,7 +644,7 @@ footer {
         fast, lightweight, and escalated to humans only when it matters.
       </p>
       <p class="hero-sub reveal">
-        <strong>Free & open source.</strong> ⭐ Pro features available from €9.90/month.<br>
+        <strong>Free & open source.</strong> ⭐ Pro features available from €19.90/month.<br>
         <strong>GDPR-ready. Self-hosted. MIT licensed.</strong>
       </p>
       <div class="pills reveal">
@@ -663,7 +663,7 @@ footer {
       <div class="hero-meta reveal">
         <span>PHP 8.1+</span>
         <span>MySQL 8</span>
-        <span>MIT License ⭐ Pro from €9.90/mo</span>
+        <span>MIT License ⭐ Pro from €19.90/mo</span>
         <span>v1.0.0</span>
       </div>
     </div>
@@ -996,7 +996,7 @@ footer {
       </button>
       <span id="lbl-year" style="opacity:.45;transition:opacity .2s;">
         Annual
-        <span class="billing-save">–16%</span>
+        <span class="billing-save">–17%</span>
       </span>
     </div>
 
@@ -1010,6 +1010,7 @@ footer {
         <ul class="free-features">
           <li><span class="chk">✓</span> Two-stage AI pipeline (Haiku → Sonnet)</li>
           <li><span class="chk">✓</span> Human review queue</li>
+          <li><span class="chk">✓</span> Appeals workflow (HMAC-signed URL)</li>
           <li><span class="chk">✓</span> Progressive ban system</li>
           <li><span class="chk">✓</span> Versioned policy management</li>
           <li><span class="chk">✓</span> Full audit trail</li>
@@ -1017,8 +1018,9 @@ footer {
           <li><span class="chk">✓</span> 1 Facebook page</li>
           <li><span class="chk">✓</span> Docker support</li>
           <li><span class="chk na">–</span> <span class="na-text">Dangerous reports queue</span></li>
-          <li><span class="chk na">–</span> <span class="na-text">Appeals workflow</span></li>
           <li><span class="chk na">–</span> <span class="na-text">Advanced statistics</span></li>
+          <li><span class="chk na">–</span> <span class="na-text">AI fact-check</span></li>
+          <li><span class="chk na">–</span> <span class="na-text">AI whataboutism detection</span></li>
           <li><span class="chk na">–</span> <span class="na-text">Additional Facebook pages</span></li>
           <li><span class="chk na">–</span> <span class="na-text">Per-page AI thresholds</span></li>
         </ul>
@@ -1035,7 +1037,7 @@ footer {
               <div class="pro-badge">PRO</div>
             </div>
             <div class="pro-price-block">
-              <div class="pro-price" id="price-display">€9.90</div>
+              <div class="pro-price" id="price-display">€19.90</div>
               <div class="pro-period" id="price-period">per month · automatic renewal</div>
             </div>
           </div>
@@ -1046,15 +1048,20 @@ footer {
           <ul class="pro-features">
             <li>
               <span class="pro-chk">✓</span>
-              <span><strong>Dangerous reports queue</strong> — dedicated lane for legal review</span>
+              <span><strong>Dangerous reports queue</strong> — dedicated lane for legal review + dossier PDF</span>
             </li>
             <li>
               <span class="pro-chk">✓</span>
-              <span><strong>Appeals workflow</strong> — HMAC-signed URL, moderator accepts/rejects</span>
+              <span><strong>Advanced statistics</strong> — 30-day dashboard, categories, AI trends, Sonnet sub-call breakdown</span>
             </li>
             <li>
               <span class="pro-chk">✓</span>
-              <span><strong>Advanced statistics</strong> — 30-day dashboard, categories, AI trends</span>
+              <span><strong>AI fact-check</strong> — draft reply + web-grounded sources, auto-publish above threshold</span>
+            </li>
+            <li>
+              <span class="pro-chk">✓</span>
+              <span><strong>AI whataboutism detection</strong> — educational draft that brings the discussion back on topic, auto-publish above threshold</span>
+              <span class="pro-soon-badge" style="background:rgba(168,85,247,.18);color:#a855f7">New</span>
             </li>
             <li>
               <span class="pro-chk">✓</span>
@@ -1070,11 +1077,7 @@ footer {
             </li>
             <li>
               <span class="pro-chk">✓</span>
-              <span><strong>AI fact-check</strong> — draft reply + sources, human decides</span>
-            </li>
-            <li>
-              <span class="pro-chk">✓</span>
-              <span><strong>Log export</strong> — CSV/PDF on-demand and scheduled</span>
+              <span><strong>Log export</strong> — CSV/JSON moderation-log export with filters</span>
             </li>
             <li>
               <span class="pro-chk">✓</span>
@@ -1115,7 +1118,7 @@ footer {
           <div class="paypal-btn-wrap">
             <button class="paypal-placeholder" id="paypal-btn" onclick="alert('PayPal Plan ID da configurare')">
               <span class="paypal-logo">Pay<span>Pal</span></span>
-              <span id="paypal-btn-label">Subscribe at €9.90/month</span>
+              <span id="paypal-btn-label">Subscribe at €19.90/month</span>
             </button>
             <p style="text-align:center;font-size:12px;opacity:.38;margin-top:10px;">
               Cancel anytime · Secure payment via PayPal
@@ -1242,14 +1245,14 @@ function toggleBilling() {
   lblY.style.opacity = isAnnual ? '1' : '.45';
 
   if (isAnnual) {
-    price.textContent = '€99.00';
-    period.textContent = 'per year · automatic renewal · save €19.80';
-    paypalLabel.textContent = 'Subscribe at €99.00/year';
+    price.textContent = '€199.00';
+    period.textContent = 'per year · automatic renewal · save €39.80';
+    paypalLabel.textContent = 'Subscribe at €199.00/year';
     // TODO: swap to annual PayPal Plan ID
   } else {
-    price.textContent = '€9.90';
+    price.textContent = '€19.90';
     period.textContent = 'per month · automatic renewal';
-    paypalLabel.textContent = 'Subscribe at €9.90/month';
+    paypalLabel.textContent = 'Subscribe at €19.90/month';
     // TODO: swap to monthly PayPal Plan ID
   }
 }
