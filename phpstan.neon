@@ -1,15 +1,16 @@
 includes:
-    # Errori preesistenti "congelati": per lo più falsi positivi degli stub di
-    # illuminate (nullabilità delle query) + 2 ridondanze innocue. PHPStan d'ora
-    # in poi segnala solo le NUOVE regressioni. Da ripulire in una pass dedicata.
+    # Errori preesistenti "congelati" al livello 6 (per lo più: tipi generici degli
+    # array non specificati nei service + falsi positivi nelle view che usano
+    # extract($vars), + nullability degli stub illuminate). Il NUOVO codice deve
+    # passare il livello 6 — la baseline va ridotta a tappe.
     - phpstan-baseline.neon
 
 parameters:
-    level: 4
+    level: 6
     paths:
         - src
-    # bin/ e public/ contengono script procedurali: verranno aggiunti più avanti,
-    # una volta sistemato il core in src/.
+        - bin
+        - public
     ignoreErrors:
         # Falsi positivi: illuminate/database (standalone, senza Laravel) espone
         # table()/raw()/transaction()/schema() via __callStatic sul Capsule Manager.

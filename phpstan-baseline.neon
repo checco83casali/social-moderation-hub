@@ -1,6 +1,390 @@
 parameters:
 	ignoreErrors:
 		-
+			message: '#^Offset ''skipped'' on array\{skipped\: bool, reason\?\: string, retention_days\?\: int, cutoff\?\: string, anonymised\?\: array\<string, int\>, started_at\?\: string, finished_at\?\: string, duration_ms\?\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: bin/retention-purge.php
+
+		-
+			message: '#^Function verifyToken\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: public/appeal/index.php
+
+		-
+			message: '#^Comparison operation "\>\=" between int\<80100, 80599\> and 80100 is always true\.$#'
+			identifier: greaterOrEqual.alwaysTrue
+			count: 1
+			path: public/install.php
+
+		-
+			message: '#^Function buildEnv\(\) has parameter \$values with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: public/install.php
+
+		-
+			message: '#^Function readExistingEnv\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: public/install.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: public/install.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between non\-falsy\-string and '''' will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: public/install.php
+
+		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 2
+			path: public/install.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: public/privacy.php
+
+		-
+			message: '#^Variable \$appUrl might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: public/registro.php
+
+		-
+			message: '#^Variable \$orgAddress might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: public/registro.php
+
+		-
+			message: '#^Variable \$orgEmail might not be defined\.$#'
+			identifier: variable.undefined
+			count: 2
+			path: public/registro.php
+
+		-
+			message: '#^Variable \$orgName might not be defined\.$#'
+			identifier: variable.undefined
+			count: 4
+			path: public/registro.php
+
+		-
+			message: '#^Variable \$policyName might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: public/registro.php
+
+		-
+			message: '#^Variable \$today might not be defined\.$#'
+			identifier: variable.undefined
+			count: 3
+			path: public/registro.php
+
+		-
+			message: '#^Variable \$totAdmins might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: public/registro.php
+
+		-
+			message: '#^Variable \$totBans might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: public/registro.php
+
+		-
+			message: '#^Variable \$totComments might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: public/registro.php
+
+		-
+			message: '#^Variable \$totPages might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: public/registro.php
+
+		-
+			message: '#^Variable \$totUsers might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: public/registro.php
+
+		-
+			message: '#^Method ModerationHub\\Controllers\\AuthController\:\:callback\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controllers/AuthController.php
+
+		-
+			message: '#^Method ModerationHub\\Controllers\\AuthController\:\:redirect\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controllers/AuthController.php
+
+		-
+			message: '#^Method ModerationHub\\Controllers\\ModerationController\:\:banUser\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controllers/ModerationController.php
+
+		-
+			message: '#^Method ModerationHub\\Controllers\\ModerationController\:\:buildLegalDossierHtml\(\) has parameter \$c with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controllers/ModerationController.php
+
+		-
+			message: '#^Method ModerationHub\\Controllers\\ModerationController\:\:buildLegalDossierHtml\(\) has parameter \$report with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controllers/ModerationController.php
+
+		-
+			message: '#^Method ModerationHub\\Controllers\\ModerationController\:\:decide\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controllers/ModerationController.php
+
+		-
+			message: '#^Method ModerationHub\\Controllers\\ModerationController\:\:decideAppeal\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controllers/ModerationController.php
+
+		-
+			message: '#^Method ModerationHub\\Controllers\\ModerationController\:\:legalDossier\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controllers/ModerationController.php
+
+		-
+			message: '#^Method ModerationHub\\Controllers\\ModerationController\:\:liftBan\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controllers/ModerationController.php
+
+		-
+			message: '#^Method ModerationHub\\Controllers\\ModerationController\:\:reply\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controllers/ModerationController.php
+
+		-
+			message: '#^Method ModerationHub\\Controllers\\ModerationController\:\:reportLegal\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controllers/ModerationController.php
+
+		-
+			message: '#^Method ModerationHub\\Controllers\\ModerationController\:\:userBannedComments\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controllers/ModerationController.php
+
+		-
+			message: '#^Method ModerationHub\\Controllers\\ModerationController\:\:userDetail\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controllers/ModerationController.php
+
+		-
+			message: '#^Method ModerationHub\\Controllers\\PagesController\:\:disconnect\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controllers/PagesController.php
+
+		-
+			message: '#^Method ModerationHub\\Controllers\\PagesController\:\:getPageSettings\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controllers/PagesController.php
+
+		-
+			message: '#^Method ModerationHub\\Controllers\\PagesController\:\:retryWebhook\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controllers/PagesController.php
+
+		-
+			message: '#^Method ModerationHub\\Controllers\\PagesController\:\:toggle\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controllers/PagesController.php
+
+		-
+			message: '#^Method ModerationHub\\Controllers\\PagesController\:\:updatePageSettings\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controllers/PagesController.php
+
+		-
+			message: '#^Method ModerationHub\\Controllers\\PolicyController\:\:activate\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controllers/PolicyController.php
+
+		-
+			message: '#^Method ModerationHub\\Controllers\\PolicyController\:\:show\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controllers/PolicyController.php
+
+		-
+			message: '#^Method ModerationHub\\Controllers\\PolicyController\:\:update\(\) has parameter \$args with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controllers/PolicyController.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\BanService\:\:applyUserBan\(\) has parameter \$categories with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/BanService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\BanService\:\:getConfig\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/BanService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\BanService\:\:getHumanBanLearningData\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/BanService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\BanService\:\:getUserBanStatus\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/BanService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\BanService\:\:loadBanConfig\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/BanService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ClaudeService\:\:sanitizeSources\(\) has parameter \$raw with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ClaudeService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ClaudeService\:\:sanitizeSources\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ClaudeService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ClaudeService\:\:verifyAndFilterSources\(\) has parameter \$sources with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ClaudeService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ClaudeService\:\:verifyAndFilterSources\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ClaudeService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ModerationResult\:\:__construct\(\) has parameter \$categories with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ClaudeService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ModerationResult\:\:__construct\(\) has parameter \$factCheckSources with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ClaudeService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ModerationResult\:\:toArray\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ClaudeService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\LicenseService\:\:buildFreeState\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/LicenseService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\LicenseService\:\:forceRefresh\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/LicenseService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\LicenseService\:\:getStatus\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/LicenseService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\LicenseService\:\:offlineState\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/LicenseService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\LicenseService\:\:persistCache\(\) has parameter \$result with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/LicenseService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\LicenseService\:\:resolve\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/LicenseService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\LicenseService\:\:sanitizeFeatures\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/LicenseService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\LicenseService\:\:stateFromCache\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/LicenseService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\LicenseService\:\:stateFromResult\(\) has parameter \$result with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/LicenseService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\LicenseService\:\:stateFromResult\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/LicenseService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\LicenseService\:\:stateFromSettings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/LicenseService.php
+
+		-
 			message: '#^Offset ''expires_at'' on array\{status\: string, plan\: string, features\: list\<string\>, expires_at\: string, domain\: string, raw\: string\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
@@ -11,6 +395,180 @@ parameters:
 			identifier: nullCoalesce.offset
 			count: 1
 			path: src/Services/LicenseService.php
+
+		-
+			message: '#^Property ModerationHub\\Services\\LicenseService\:\:\$resolvedState type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/LicenseService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\MetaGraphService\:\:getComment\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/MetaGraphService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\MetaGraphService\:\:getManagedPages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/MetaGraphService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\MetaGraphService\:\:getUserPublicProfile\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/MetaGraphService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\MetaGraphService\:\:parseWebhookComments\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/MetaGraphService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\MetaGraphService\:\:parseWebhookComments\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/MetaGraphService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\MetaGraphService\:\:replyToCommentResult\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/MetaGraphService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\MetaGraphService\:\:verifyWebhook\(\) has parameter \$queryParams with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/MetaGraphService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ModerationService\:\:applyHumanDecision\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ModerationService\:\:approveComment\(\) has parameter \$page with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ModerationService\:\:approveComment\(\) has parameter \$socialUser with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ModerationService\:\:approveComment\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ModerationService\:\:buildCommentContext\(\) has parameter \$meta with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ModerationService\:\:buildCommentContext\(\) has parameter \$socialUser with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ModerationService\:\:escalateToHuman\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ModerationService\:\:executeHide\(\) has parameter \$page with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ModerationService\:\:executeHide\(\) has parameter \$socialUser with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ModerationService\:\:executeHide\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ModerationService\:\:fetchAccountMeta\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ModerationService\:\:formatBanDuration\(\) has parameter \$cfg with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ModerationService\:\:pageThresholdOverrides\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ModerationService\:\:processEditedComment\(\) has parameter \$page with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ModerationService\:\:processEditedComment\(\) has parameter \$webhookComment with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ModerationService\:\:processEditedComment\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ModerationService\:\:processWebhookComment\(\) has parameter \$page with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ModerationService\:\:processWebhookComment\(\) has parameter \$webhookComment with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ModerationService\:\:processWebhookComment\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ModerationService\:\:upsertSocialUser\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\ModerationService\:\:verifyAppealToken\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/ModerationService.php
 
 		-
 			message: '#^Ternary operator condition is always true\.$#'
@@ -29,3 +587,33 @@ parameters:
 			identifier: nullsafe.neverNull
 			count: 1
 			path: src/Services/ModerationService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\OAuthService\:\:__construct\(\) has parameter \$providers with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/OAuthService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\OAuthService\:\:handleCallback\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/OAuthService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\OAuthService\:\:loginLocal\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/OAuthService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\RetentionService\:\:lastRun\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/RetentionService.php
+
+		-
+			message: '#^Method ModerationHub\\Services\\RetentionService\:\:recordRun\(\) has parameter \$result with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Services/RetentionService.php

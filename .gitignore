@@ -18,3 +18,9 @@ error_log
 
 # Web installer lock (created after setup)
 .installed
+
+# Internal presentation (not for the public repo)
+PRESENTAZIONE_INTERNA_MODERAZIONE.md
+PRESENTAZIONE_INTERNA_MODERAZIONE.html
+PRESENTAZIONE_INTERNA_MODERAZIONE.pdf
+PRESENTAZIONE_INTERNA_SLIDE.html
