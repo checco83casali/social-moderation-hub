@@ -11,12 +11,12 @@
 
 declare(strict_types=1);
 
-define('MH_VERSION', '1.0.0');
+define('MH_VERSION', '1.5.0');
 
 echo <<<BANNER
 
 ╔═══════════════════════════════════════════════╗
-║     Moderation Hub  v1.0.0  — Installer       ║
+║     Moderation Hub  v1.5.0  — Installer       ║
 ║     MIT License                               ║
 ╚═══════════════════════════════════════════════╝
 

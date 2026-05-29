@@ -414,7 +414,10 @@ h2 {
   font-weight: 800; letter-spacing: -0.5px; line-height: 1.15;
   margin-bottom: 4px;
 }
-.plan-price span { font-size: 14px; opacity: .55; font-weight: 600; }
+/* NB: .price-suffix è la classe dedicata al suffix (es. '/ forever' su Free).
+   NON usare il selettore .plan-price span — schiaccerebbe anche gli <span id="price-display">
+   che contengono il prezzo intero su Pro e Advanced. */
+.plan-price .price-suffix { font-size: 14px; opacity: .55; font-weight: 600; }
 .plan--pro .plan-price {
   background: linear-gradient(120deg, #fff 30%, #a8c8ff 100%);
   -webkit-background-clip: text; background-clip: text;
@@ -732,7 +735,7 @@ footer {
         <span>PHP 8.1+</span>
         <span>MySQL 8</span>
         <span>MIT License ⭐ Pro from €19.90/mo</span>
-        <span>v1.0.0</span>
+        <span>v1.5.0</span>
       </div>
     </div>
   </div>
@@ -1094,7 +1097,7 @@ footer {
       <!-- FREE / COMMUNITY -->
       <div class="plan plan--free">
         <div class="plan-label">Community</div>
-        <div class="plan-price">Free <span>/ forever</span></div>
+        <div class="plan-price">Free <span class="price-suffix">/ forever</span></div>
         <div class="plan-period">Self-hosted · MIT licence</div>
         <div class="plan-desc">The full moderation pipeline, free forever. Connect 1 Facebook page and run it on any server.</div>
 
