@@ -1291,12 +1291,12 @@ footer {
 
 <!-- ABOUT THE PROJECT -->
 <section id="about" style="padding: 96px clamp(20px,4vw,64px); background: #080c18; border-top: 1px solid rgba(255,255,255,.06);">
-  <div class="container" style="max-width: 720px;">
+  <div class="container" style="max-width: 960px;">
 
     <div class="section-label reveal" style="display:inline-block; margin-bottom: 12px;" data-i18n="about.label">Why I built this</div>
 
     <!-- Opening statement -->
-    <blockquote class="reveal" style="
+    <blockquote class="reveal" data-i18n="about.quote" style="
       border-left: 3px solid #3ecf8e;
       padding: 20px 24px;
       margin: 0 0 40px;
@@ -1306,57 +1306,62 @@ footer {
       line-height: 1.75;
       color: rgba(255,255,255,.90);
     ">
-      This tool is not for silencing dissent. It is not for filtering out criticism, inconvenient
-      opinions, or voices that make you uncomfortable. If that's what you're looking for, this is
-      the wrong tool — and honestly, the wrong approach. Moderation exists to protect conversation,
-      not to control it.
+      Questo strumento non serve a silenziare il dissenso. Non serve a filtrare le critiche,
+      le opinioni scomode o le voci che danno fastidio. Se è questo che cercate, avete sbagliato
+      strumento — e, sinceramente, avete sbagliato approccio. La moderazione esiste per proteggere
+      la conversazione, non per controllarla.
     </blockquote>
 
     <!-- Body paragraphs -->
     <div class="reveal" style="display:flex; flex-direction:column; gap:22px; font-size:clamp(14px,1.6vw,16px); line-height:1.8; color:rgba(255,255,255,.65);">
-      <p style="margin:0;">
-        I don't use social media. I haven't for years.<br>
-        But I listen. And what I kept hearing — in evening conversations with my wife, with friends
-        and families, with people genuinely trying to make sense of a difficult world — was
-        frustration. Comment sections on news pages had become places of noise, hostility, and
-        exhaustion. Journalists and editors were spending time they didn't have reading through
-        hundreds of comments just to find the ones that actually needed attention.
+      <p style="margin:0;" data-i18n-html="about.p1">
+        Non uso i social media. Non li uso da anni.<br>
+        Ma ascolto. E quello che continuo a sentire — nelle conversazioni serali con mia moglie,
+        con amici e famiglie, con persone che cercano genuinamente di fare senso di un mondo
+        difficile — è frustrazione. Le sezioni commenti delle pagine di notizie sono diventate
+        luoghi di rumore, ostilità e stanchezza. Giornalisti e redattori passavano un tempo che
+        non avevano a leggere centinaia di commenti solo per trovare quelli che richiedevano
+        davvero attenzione.
       </p>
-      <p style="margin:0;">
-        My children are still too young for social media. I hope by the time they're not, the
-        conversation online will be worth joining.
+      <p style="margin:0;" data-i18n="about.p2">
+        I miei figli stanno iniziando ad avere l'età per entrare nel mondo dei social media.
+        Spero che quando ci entreranno, la conversazione che troveranno valga la pena di
+        essere seguita.
       </p>
-      <p style="margin:0;">
-        I'm not a journalist. I'm not an activist. I'm someone who believes that money shapes too
-        much of this world — and that the world should be shaped by ideas instead. By the freedom
-        to discuss them seriously, without prejudice, without someone's business interests deciding
-        what gets heard and what doesn't.
+      <p style="margin:0;" data-i18n="about.p3">
+        Non sono un giornalista. Non sono un attivista. Sono qualcuno che crede che il denaro
+        condizioni troppo di questo mondo — e che il mondo dovrebbe essere plasmato dalle idee,
+        invece. Dalla libertà di discuterle seriamente, senza pregiudizi, senza che gli interessi
+        economici di qualcuno decidano cosa viene ascoltato e cosa no.
       </p>
-      <p style="margin:0;">
-        So I built something free. Open source. Self-hosted. Not because it was easier — it wasn't
-        — but because the tool itself needed to reflect the values behind it.
+      <p style="margin:0;" data-i18n="about.p4">
+        Quindi ho costruito qualcosa di gratuito. Open source. Self-hosted. Non perché fosse più
+        semplice — non lo era — ma perché lo strumento stesso doveva riflettere i valori che ci
+        stanno dietro.
       </p>
-      <p style="margin:0;">
-        Social Moderation Hub is a two-stage AI pipeline that helps anyone who manages a public
-        conversation at scale — newsrooms protecting editorial integrity, social media managers
-        drowning in daily volume, marketing teams safeguarding brand reputation, community managers
-        trying to keep spaces worth being in. Fast, lightweight, and designed to escalate to human
-        review only when it truly matters — because the hard decisions should always stay human.
+      <p style="margin:0;" data-i18n="about.p5">
+        Social Moderation Hub è una pipeline AI a due stadi che aiuta chiunque gestisca una
+        conversazione pubblica su larga scala — redazioni che proteggono l'integrità editoriale,
+        social media manager sommersi dal volume quotidiano, team di marketing che tutelano la
+        reputazione del brand, community manager che cercano di mantenere spazi in cui valga la
+        pena stare. Veloce, leggero, progettato per escalare alla revisione umana solo quando
+        conta davvero — perché le decisioni difficili devono sempre restare umane.
       </p>
-      <p style="margin:0;">
-        No vendor lock-in. No data sent to third-party servers. No subscription that quietly shapes
-        what the tool does or doesn't flag.
+      <p style="margin:0;" data-i18n="about.p6">
+        Nessun vendor lock-in. Nessun dato inviato a server di terze parti. Nessun abbonamento
+        che condiziona silenziosamente cosa lo strumento segnala o non segnala.
       </p>
     </div>
 
     <!-- Closing line -->
-    <p class="reveal" style="
-      margin: 36px 0 40px;
-      font-size: clamp(15px, 1.8vw, 18px);
-      font-style: italic;
-      color: rgba(255,255,255,.80);
-      line-height: 1.7;
-    " data-i18n="about.closing">Just a useful thing, built carefully, given away freely.</p>
+    <div class="reveal" style="margin: 36px 0 40px;">
+      <p style="margin:0 0 6px; font-size:clamp(15px,1.8vw,18px); font-style:italic; color:rgba(255,255,255,.85); line-height:1.7;">
+        Solo una cosa utile, costruita con cura, regalata liberamente.
+      </p>
+      <p style="margin:0; font-size:clamp(13px,1.5vw,15px); font-style:italic; color:rgba(255,255,255,.38); line-height:1.7;">
+        Just a useful thing, built carefully, given away freely.
+      </p>
+    </div>
 
     <!-- Byline -->
     <div class="reveal" style="display: flex; align-items: center; gap: 14px;">
@@ -1553,7 +1558,15 @@ const TRANS = {
     'cta.label':'Ready to ship','cta.h2':'Start moderating<br>in minutes',
     'cta.sub':'Clone, configure, deploy. The installer walks you through everything. No ops experience required.',
     'cta.btn1':"Deploy now — it's free →",'cta.btn2':'View on GitHub',
-    'about.label':'Why I built this','about.closing':'Just a useful thing, built carefully, given away freely.',
+    'about.label':'Why I built this',
+    'about.quote':'This tool is not for silencing dissent. It is not for filtering out criticism, inconvenient opinions, or voices that make you uncomfortable. If that\'s what you\'re looking for, this is the wrong tool — and honestly, the wrong approach. Moderation exists to protect conversation, not to control it.',
+    'about.p1':'I don\'t use social media. I haven\'t for years.<br>But I listen. And what I kept hearing — in evening conversations with my wife, with friends and families, with people genuinely trying to make sense of a difficult world — was frustration. Comment sections on news pages had become places of noise, hostility, and exhaustion. Journalists and editors were spending time they didn\'t have reading through hundreds of comments just to find the ones that actually needed attention.',
+    'about.p2':'My children are now reaching the age when social media becomes part of the world. I hope that when they step into it, the conversation they find will be worth joining.',
+    'about.p3':'I\'m not a journalist. I\'m not an activist. I\'m someone who believes that money shapes too much of this world — and that the world should be shaped by ideas instead. By the freedom to discuss them seriously, without prejudice, without someone\'s business interests deciding what gets heard and what doesn\'t.',
+    'about.p4':'So I built something free. Open source. Self-hosted. Not because it was easier — it wasn\'t — but because the tool itself needed to reflect the values behind it.',
+    'about.p5':'Social Moderation Hub is a two-stage AI pipeline that helps anyone who manages a public conversation at scale — newsrooms protecting editorial integrity, social media managers drowning in daily volume, marketing teams safeguarding brand reputation, community managers trying to keep spaces worth being in. Fast, lightweight, and designed to escalate to human review only when it truly matters — because the hard decisions should always stay human.',
+    'about.p6':'No vendor lock-in. No data sent to third-party servers. No subscription that quietly shapes what the tool does or doesn\'t flag.',
+    'about.closing':'Just a useful thing, built carefully, given away freely.',
     'footer.tagline':'Hybrid AI + Human content moderation for Facebook pages.',
     'footer.col1':'Product','footer.col2':'Resources','footer.col3':'Legal',
     'footer.gdprlink':'GDPR compliance',
@@ -1622,7 +1635,15 @@ const TRANS = {
     'cta.label':'Pronto per partire','cta.h2':'Inizia a moderare<br>in pochi minuti',
     'cta.sub':'Clona, configura, rilascia. L\'installer ti guida attraverso tutto. Nessuna esperienza ops richiesta.',
     'cta.btn1':'Deploy ora — è gratuito →','cta.btn2':'Vedi su GitHub',
-    'about.label':"Perché l'ho costruito",'about.closing':'Solo una cosa utile, costruita con cura, regalata liberamente.',
+    'about.label':"Perché l'ho costruito",
+    'about.quote':"Questo strumento non serve a silenziare il dissenso. Non serve a filtrare le critiche, le opinioni scomode o le voci che danno fastidio. Se è questo che cercate, avete sbagliato strumento — e, sinceramente, avete sbagliato approccio. La moderazione esiste per proteggere la conversazione, non per controllarla.",
+    'about.p1':"Non uso i social media. Non li uso da anni.<br>Ma ascolto. E quello che continuo a sentire — nelle conversazioni serali con mia moglie, con amici e famiglie, con persone che cercano genuinamente di fare senso di un mondo difficile — è frustrazione. Le sezioni commenti delle pagine di notizie sono diventate luoghi di rumore, ostilità e stanchezza. Giornalisti e redattori passavano un tempo che non avevano a leggere centinaia di commenti solo per trovare quelli che richiedevano davvero attenzione.",
+    'about.p2':"I miei figli stanno iniziando ad avere l'età per entrare nel mondo dei social media. Spero che quando ci entreranno, la conversazione che troveranno valga la pena di essere seguita.",
+    'about.p3':"Non sono un giornalista. Non sono un attivista. Sono qualcuno che crede che il denaro condizioni troppo di questo mondo — e che il mondo dovrebbe essere plasmato dalle idee, invece. Dalla libertà di discuterle seriamente, senza pregiudizi, senza che gli interessi economici di qualcuno decidano cosa viene ascoltato e cosa no.",
+    'about.p4':"Quindi ho costruito qualcosa di gratuito. Open source. Self-hosted. Non perché fosse più semplice — non lo era — ma perché lo strumento stesso doveva riflettere i valori che ci stanno dietro.",
+    'about.p5':"Social Moderation Hub è una pipeline AI a due stadi che aiuta chiunque gestisca una conversazione pubblica su larga scala — redazioni che proteggono l'integrità editoriale, social media manager sommersi dal volume quotidiano, team di marketing che tutelano la reputazione del brand, community manager che cercano di mantenere spazi in cui valga la pena stare. Veloce, leggero, progettato per escalare alla revisione umana solo quando conta davvero — perché le decisioni difficili devono sempre restare umane.",
+    'about.p6':"Nessun vendor lock-in. Nessun dato inviato a server di terze parti. Nessun abbonamento che condiziona silenziosamente cosa lo strumento segnala o non segnala.",
+    'about.closing':'Solo una cosa utile, costruita con cura, regalata liberamente.',
     'footer.tagline':'Moderazione AI + Umana per le pagine Facebook.',
     'footer.col1':'Prodotto','footer.col2':'Risorse','footer.col3':'Legale',
     'footer.gdprlink':'Conformità GDPR',
