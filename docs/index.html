@@ -333,8 +333,21 @@ h2 {
   background: rgba(255,255,255,.06);
   display: flex; align-items: center; justify-content: center;
 }
-.rm-item h4 { font-family: 'Syne', sans-serif; font-size: clamp(15px, 1.6vw, 18px); margin-bottom: 4px; }
+.rm-item h4 {
+  font-family: 'Syne', sans-serif; font-size: clamp(15px, 1.6vw, 18px); margin-bottom: 4px;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
 .rm-item p { font-size: clamp(13px, 1.3vw, 15px); opacity: .65; line-height: 1.5; }
+
+/* Tier badges nella roadmap — stessa palette delle card pricing */
+.rm-badge {
+  display: inline-block; vertical-align: middle;
+  font-size: 9px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 100px; line-height: 1;
+}
+.rm-badge--free     { background: rgba(62,207,142,.14); color: var(--ok);     border: 1px solid rgba(62,207,142,.30); }
+.rm-badge--pro      { background: rgba(79,142,247,.14); color: var(--accent); border: 1px solid rgba(79,142,247,.30); }
+.rm-badge--advanced { background: rgba(168,85,247,.14); color: #a855f7;       border: 1px solid rgba(168,85,247,.32); }
 
 /* ─── LICENSE (PRO) ─── */
 #license {
@@ -390,13 +403,19 @@ h2 {
   pointer-events: none; z-index: 0;
 }
 
-/* Head: label (small uppercase) + optional inline badge */
+/* Head wrapper — same vertical space in all 3 cards
+   (label + price + period + desc, terminated by the first plan-divider). */
+.plan-head { display: flex; flex-direction: column; min-height: 200px; }
+
+/* Head: label (small uppercase) + optional inline badge.
+   Il prefisso (★ Pro, ✨ Advanced) è scritto in linea nel testo per semplicità. */
 .plan-label {
   font-family: 'Syne', sans-serif;
   font-size: 11px; font-weight: 800;
   letter-spacing: .18em; text-transform: uppercase;
   margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
 }
+.plan-label-prefix { font-size: 13px; letter-spacing: 0; }
 .plan--free     .plan-label { opacity: .45; }
 .plan--pro      .plan-label { color: var(--accent); }
 .plan--advanced .plan-label { color: #a855f7; }
@@ -485,10 +504,6 @@ h2 {
 .plan-chk--na {
   background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.09);
   color: rgba(255,255,255,.25); font-size: 14px;
-}
-.plan-chk--advanced {
-  background: rgba(168,85,247,.18); border: 1px solid rgba(168,85,247,.32);
-  color: #a855f7; font-size: 12px;
 }
 .plan-chk--soon {
   background: rgba(247,178,74,.12); border: 1px solid rgba(247,178,74,.25);
@@ -1002,70 +1017,70 @@ footer {
       <div class="rm-item">
         <div class="rm-icon">🔔</div>
         <div>
-          <h4>Slack / email alerts</h4>
+          <h4>Slack / email alerts <span class="rm-badge rm-badge--free">Community</span></h4>
           <p>Notifications when the human review queue exceeds a configurable threshold.</p>
         </div>
       </div>
       <div class="rm-item">
         <div class="rm-icon">📸</div>
         <div>
-          <h4>Instagram support</h4>
+          <h4>Instagram support <span class="rm-badge rm-badge--free">Community</span></h4>
           <p>Extend the same pipeline to Instagram comments via Meta Graph API.</p>
         </div>
       </div>
       <div class="rm-item">
         <div class="rm-icon">🤖</div>
         <div>
-          <h4>Bot & campaign detection</h4>
+          <h4>Bot & campaign detection <span class="rm-badge rm-badge--free">Community</span></h4>
           <p>Cross-user behavioural analysis to detect coordinated inauthentic activity.</p>
         </div>
       </div>
       <div class="rm-item">
         <div class="rm-icon">📊</div>
         <div>
-          <h4>Scheduled report export</h4>
+          <h4>Scheduled report export <span class="rm-badge rm-badge--pro">Pro</span></h4>
           <p>CSV and PDF report generation on a configurable schedule.</p>
         </div>
       </div>
       <div class="rm-item">
         <div class="rm-icon">🧪</div>
         <div>
-          <h4>Policy test mode</h4>
+          <h4>Policy test mode <span class="rm-badge rm-badge--pro">Pro</span></h4>
           <p>Evaluate a sample comment against a new policy version before activating it.</p>
         </div>
       </div>
       <div class="rm-item">
         <div class="rm-icon">🌐</div>
         <div>
-          <h4>Multi-network expansion</h4>
+          <h4>Multi-network expansion <span class="rm-badge rm-badge--advanced">Advanced</span></h4>
           <p>Additional social networks beyond Meta's ecosystem.</p>
         </div>
       </div>
       <div class="rm-item">
         <div class="rm-icon">🔥</div>
         <div>
-          <h4>Flame detection & post lock</h4>
+          <h4>Flame detection & post lock <span class="rm-badge rm-badge--pro">Pro</span></h4>
           <p>Blocco automatico dei commenti su un post quando si rileva flame, un picco anomalo di commenti negativi o un'alta concentrazione di contenuti borderline in un intervallo di tempo configurabile.</p>
         </div>
       </div>
       <div class="rm-item">
         <div class="rm-icon">⚖️</div>
         <div>
-          <h4>Dual confidence scoring <span style="font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#a855f7;background:rgba(168,85,247,.14);border:1px solid rgba(168,85,247,.3);padding:2px 7px;border-radius:100px;margin-left:6px;vertical-align:middle;">Advanced</span></h4>
+          <h4>Dual confidence scoring <span class="rm-badge rm-badge--advanced">Advanced</span></h4>
           <p>Scoring positivo + negativo: ogni commento riceve sia la probabilità di violazione che la probabilità di valore genuino, per filtrare le gemme da amplificare e non solo i troll da nascondere.</p>
         </div>
       </div>
       <div class="rm-item">
         <div class="rm-icon">🧠</div>
         <div>
-          <h4>Contextual grounding <span style="font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#a855f7;background:rgba(168,85,247,.14);border:1px solid rgba(168,85,247,.3);padding:2px 7px;border-radius:100px;margin-left:6px;vertical-align:middle;">Advanced</span></h4>
+          <h4>Contextual grounding <span class="rm-badge rm-badge--advanced">Advanced</span></h4>
           <p>Al primo commento su un post il sistema ne estrae un riassunto e lo aggancia come contesto a tutte le moderazioni successive. Niente più commenti giudicati senza sapere di cosa parla l'articolo.</p>
         </div>
       </div>
       <div class="rm-item">
         <div class="rm-icon">🎯</div>
         <div>
-          <h4>Topic-aware proactive alerts <span style="font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#a855f7;background:rgba(168,85,247,.14);border:1px solid rgba(168,85,247,.3);padding:2px 7px;border-radius:100px;margin-left:6px;vertical-align:middle;">Advanced</span></h4>
+          <h4>Topic-aware proactive alerts <span class="rm-badge rm-badge--advanced">Advanced</span></h4>
           <p>Tagging automatico per topic (politica, sport, esteri, ambiente…); statistiche di engagement e incidence per area tematica; alert predittivo sul rischio di un post appena pubblicato basato sui pattern storici di quel topic.</p>
         </div>
       </div>
@@ -1096,10 +1111,12 @@ footer {
 
       <!-- FREE / COMMUNITY -->
       <div class="plan plan--free">
-        <div class="plan-label">Community</div>
-        <div class="plan-price">Free <span class="price-suffix">/ forever</span></div>
-        <div class="plan-period">Self-hosted · MIT licence</div>
-        <div class="plan-desc">The full moderation pipeline, free forever. Connect 1 Facebook page and run it on any server.</div>
+        <div class="plan-head">
+          <div class="plan-label">Community</div>
+          <div class="plan-price">Free <span class="price-suffix">/ forever</span></div>
+          <div class="plan-period">Self-hosted · MIT licence</div>
+          <div class="plan-desc">The full moderation pipeline, free forever. Connect 1 Facebook page and run it on any server.</div>
+        </div>
 
         <hr class="plan-divider">
 
@@ -1143,10 +1160,12 @@ footer {
 
       <!-- PRO -->
       <div class="plan plan--pro">
-        <div class="plan-label">Pro</div>
-        <div class="plan-price"><span id="price-display">€19.90</span></div>
-        <div class="plan-period" id="price-period">per month · automatic renewal</div>
-        <div class="plan-desc">The everyday moderation tier. Multi-page, AI fact-check, custom templates, legal escalation lane.</div>
+        <div class="plan-head">
+          <div class="plan-label"><span class="plan-label-prefix">★</span> Pro</div>
+          <div class="plan-price"><span id="price-display">€19.90</span></div>
+          <div class="plan-period" id="price-period">per month · automatic renewal</div>
+          <div class="plan-desc">The everyday moderation tier. Multi-page, AI fact-check, custom templates, legal escalation lane.</div>
+        </div>
 
         <hr class="plan-divider">
 
@@ -1186,28 +1205,30 @@ footer {
 
       <!-- ADVANCED (next tier — launching soon) -->
       <div class="plan plan--advanced">
-        <div class="plan-label">
-          Advanced
-          <span class="plan-badge-inline">Launching soon</span>
+        <div class="plan-head">
+          <div class="plan-label">
+            <span class="plan-label-prefix">✨</span> Advanced
+            <span class="plan-badge-inline">Launching soon</span>
+          </div>
+          <div class="plan-price"><span id="adv-price-display">€29.90</span></div>
+          <div class="plan-period" id="adv-price-period">per month · early access opening</div>
+          <div class="plan-desc">Predict, don't just react. Proactive risk prediction and editorial intelligence for high-volume pages.</div>
         </div>
-        <div class="plan-price"><span id="adv-price-display">€29.90</span></div>
-        <div class="plan-period" id="adv-price-period">per month · early access opening</div>
-        <div class="plan-desc">Predict, don't just react. Proactive risk prediction and editorial intelligence for high-volume pages.</div>
 
         <hr class="plan-divider">
 
         <div class="plan-section-title">Everything in Community and Pro, plus</div>
         <ul class="plan-features">
           <li>
-            <span class="plan-chk plan-chk--advanced">✨</span>
+            <span class="plan-chk plan-chk--ok">✓</span>
             <span><strong>Dual confidence scoring</strong> — each comment scored on both axes: probability of violation AND probability of genuine value.</span>
           </li>
           <li>
-            <span class="plan-chk plan-chk--advanced">✨</span>
+            <span class="plan-chk plan-chk--ok">✓</span>
             <span><strong>Contextual grounding</strong> — the post is summarised at the first comment and attached as context to every following moderation call.</span>
           </li>
           <li>
-            <span class="plan-chk plan-chk--advanced">✨</span>
+            <span class="plan-chk plan-chk--ok">✓</span>
             <span><strong>Topic-aware proactive alerts</strong> — posts auto-tagged by topic; risk score predicted from historical patterns when a post is published.</span>
           </li>
         </ul>
