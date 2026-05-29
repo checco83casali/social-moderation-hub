@@ -69,21 +69,18 @@ license. A self-hosted Community install can moderate one Facebook page end-to-e
 
 ### Pro license features
 
-Unlocked with a license key validated against your own license server (or via
-`LICENSE_OFFLINE_FEATURES` for fully air-gapped installs).
+Unlocked with a license key validated against the license server (or via the
+offline-mode setting for fully air-gapped installs).
 
-- **Multi-page Facebook integration** — connect several pages in one click (`multi_page`)
-- **Per-page AI thresholds** — custom Haiku/Sonnet confidence per page (`per_page_thresholds`)
-- **AI fact-check** — when a comment contains a verifiable claim, Sonnet drafts a public reply with cited sources, web-grounded; auto-publish above threshold (`fact_check`)
-- **AI whataboutism detection** — rhetorical-deflection detection with educational draft reply that brings the discussion back on topic; auto-publish above threshold (`whataboutism`) — *NEW*
-- **Dangerous reports queue** — dedicated lane to review auto-hidden potentially-illegal content and escalate to authorities, with legal-dossier PDF export (`reportable_queue`)
-- **Advanced statistics** — 30-day dashboard, AI stage distribution, decision charts, category trends, Sonnet sub-call accounting (`advanced_stats`)
-- **Custom reply templates** — editable hide/reportable/ban reply templates (`templates`)
-- **Configurable data retention** — custom GDPR anonymisation window via nightly cron (`data_retention`)
-- **Moderation log export** — CSV / JSON export with date and decision filters (`export_log`)
-
-The feature keys in parentheses are the strings returned by the license server
-in the `features` array (see `src/Services/LicenseService.php::KNOWN_FEATURES`).
+- **Multi-page Facebook integration** — connect several pages in one click
+- **Per-page AI thresholds** — custom Haiku / Sonnet confidence per page
+- **AI fact-check** — when a comment contains a verifiable claim, Sonnet drafts a public reply with cited sources, web-grounded; auto-publish above threshold
+- **AI whataboutism detection** — rhetorical-deflection detection with educational draft reply that brings the discussion back on topic; auto-publish above threshold — *NEW*
+- **Dangerous reports queue** — dedicated lane to review auto-hidden potentially-illegal content and escalate to authorities, with legal-dossier PDF export
+- **Advanced statistics** — 30-day dashboard, AI stage distribution, decision charts, category trends
+- **Custom reply templates** — editable hide / reportable / ban reply templates
+- **Configurable data retention** — custom GDPR anonymisation window via nightly cron
+- **Moderation log export** — CSV / JSON export with date and decision filters
 
 ---
 
