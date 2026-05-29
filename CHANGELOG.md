@@ -22,12 +22,34 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   Collision policy: se anche `fact_check_suggested` è attivo, il fact-check ha
   priorità editoriale e il whataboutism va a revisione umana senza auto-publish.
 
-### Planned
+### Planned (current Pro tier)
 - Multi-platform support (Instagram, LinkedIn)
 - Slack/email notifications when queue exceeds threshold
 - Bot & coordinated campaign detection
 - Meta account metadata integration (account age, follower count)
 - Scheduled report export (PDF/CSV)
+
+### In design — Newsroom tier (coming soon, separate license)
+A higher tier for newsrooms running large-volume Facebook pages, focused on
+proactive risk-prediction and editorial intelligence. These features are in
+design and will require a separate license key when released.
+
+- **Dual confidence scoring** — alongside the current "probability of violation"
+  the AI will also score a "probability of genuine value" for each comment, so
+  the dashboard can sort by either axis. Useful to surface high-quality but
+  low-engagement comments worth amplifying, not just the ones to moderate.
+- **Contextual grounding** — the first incoming comment on each new post
+  triggers an extractive summary of the post itself; that summary is then
+  attached as context to every subsequent comment sent to Claude, so the
+  moderation prompt knows what the post is about (current pipeline moderates
+  comments in isolation from the post body).
+- **Topic-aware analytics & proactive per-post alerts** — built on Contextual
+  Grounding: posts get auto-tagged by topic (sport, culture, environment,
+  politics, foreign affairs, etc.). The dashboard then shows engagement and
+  incident rates per topic, and when a new post is published the system
+  predicts a risk score based on historical patterns ("this topic averages 40%
+  problematic comments over its lifetime — pre-alert"), giving moderators
+  a heads-up before the wave of comments arrives.
 
 ---
 

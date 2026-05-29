@@ -284,12 +284,36 @@ Key `.env` variables:
 
 See [CHANGELOG.md](CHANGELOG.md) for the full feature list.
 
-Planned next:
+### Planned for the current Pro tier
 - Slack / email alerts when the human queue exceeds a threshold
 - Instagram support (via Meta Graph API)
 - Bot & coordinated campaign detection (cross-user behavioural analysis)
 - Scheduled CSV/PDF report export
 - Policy test mode — evaluate a sample comment before activating a new version
+
+### In design — Newsroom tier (coming soon, separate license)
+
+A higher tier aimed at high-volume newsrooms, focused on **proactive risk
+prediction** and **editorial intelligence**. These features are in design;
+they will require a separate license key when released and are not part of
+the current Pro plan.
+
+- **Dual confidence scoring** — the AI scores not only "probability of
+  violation" (current) but also "probability of genuine value", so the
+  dashboard can sort/filter by either axis (e.g. surface high-quality comments
+  worth amplifying, not only the ones to moderate).
+- **Contextual grounding** — the first comment on a new post triggers an
+  extractive summary of the post body; that summary is then attached as
+  context to every following comment evaluated by Claude. Solves the current
+  blind spot: comments are moderated in isolation from the article they
+  reference.
+- **Topic-aware analytics & proactive per-post alerts** — built on Contextual
+  Grounding. Posts get auto-tagged by topic (sport, culture, environment,
+  politics, foreign affairs…). The stats dashboard then shows engagement and
+  incident rates per topic over time. When a new post is published the system
+  predicts a risk score based on historical patterns ("this topic averages
+  40% problematic comments — pre-alert"), so moderators are notified *before*
+  the wave of comments arrives, not after.
 
 ---
 
