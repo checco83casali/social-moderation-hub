@@ -1099,6 +1099,21 @@ footer {
           <li><span class="chk na">–</span> <span class="na-text">Additional Facebook pages</span></li>
           <li><span class="chk na">–</span> <span class="na-text">Per-page AI thresholds</span></li>
         </ul>
+
+        <div style="font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;opacity:.45;margin-bottom:14px;">Coming soon for Community:</div>
+        <ul class="free-features" style="margin-bottom:24px;">
+          <li>
+            <span class="chk soon" style="background:rgba(247,178,74,.12);border:1px solid rgba(247,178,74,.25);color:var(--warn);width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;">⏳</span>
+            <span style="opacity:.7;">Slack / email alerts — notify when queue exceeds threshold</span>
+            <span class="pro-soon-badge" style="margin-left:auto;">Soon</span>
+          </li>
+          <li>
+            <span class="chk soon" style="background:rgba(247,178,74,.12);border:1px solid rgba(247,178,74,.25);color:var(--warn);width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;">⏳</span>
+            <span style="opacity:.7;">Instagram support — same pipeline on Instagram</span>
+            <span class="pro-soon-badge" style="margin-left:auto;">Soon</span>
+          </li>
+        </ul>
+
         <a href="https://github.com/checco83casali/social-moderation-hub#quick-start" target="_blank" class="btn btn-outline btn-lg" style="width:100%;justify-content:center;margin-top:auto;">
           Deploy free →
         </a>
@@ -1169,16 +1184,6 @@ footer {
             </li>
             <li>
               <span class="pro-chk soon">⏳</span>
-              <span style="opacity:.7;"><strong>Slack / email alerts</strong> — notify when human queue exceeds threshold</span>
-              <span class="pro-soon-badge">Soon</span>
-            </li>
-            <li>
-              <span class="pro-chk soon">⏳</span>
-              <span style="opacity:.7;"><strong>Instagram support</strong> — same pipeline on Instagram</span>
-              <span class="pro-soon-badge">Soon</span>
-            </li>
-            <li>
-              <span class="pro-chk soon">⏳</span>
               <span style="opacity:.7;"><strong>Bot & campaign detection</strong> — cross-user behavioural analysis</span>
               <span class="pro-soon-badge">Soon</span>
             </li>
@@ -1202,10 +1207,14 @@ footer {
         </div>
       </div>
 
-      <!-- ADVANCED (next tier — coming soon) -->
+      <!-- ADVANCED (next tier — launching soon) -->
       <div class="plan-advanced">
-        <div class="plan-name-advanced">Advanced</div>
-        <div class="plan-price-advanced">Coming soon <span>/ pricing TBD</span></div>
+        <div class="plan-name-advanced">
+          Advanced
+          <span style="display:inline-block;margin-left:8px;font-size:9px;letter-spacing:.15em;font-weight:800;color:#a855f7;background:rgba(168,85,247,.14);border:1px solid rgba(168,85,247,.32);padding:3px 9px;border-radius:100px;vertical-align:middle;">Launching soon</span>
+        </div>
+        <div class="plan-price-advanced"><span id="adv-price-display">€29.90</span></div>
+        <div id="adv-price-period" style="font-size:13px;opacity:.55;font-weight:600;margin-top:-2px;margin-bottom:14px;line-height:1.4;">per month · early access opening</div>
         <div class="plan-desc-advanced">Proactive risk prediction and editorial intelligence for high-volume pages.</div>
         <ul class="advanced-features">
           <li>
@@ -1222,7 +1231,7 @@ footer {
           </li>
         </ul>
         <div class="advanced-cta">
-          <strong>In design</strong> — separate license when released.<br>
+          <strong>Not buyable yet</strong> — separate license at release.<br>
           Interested in early access? <a href="mailto:checco83@gmail.com" style="color:#c4a4ff;text-decoration:underline;text-underline-offset:3px;">Get in touch</a>.
         </div>
       </div>
@@ -1344,15 +1353,23 @@ function toggleBilling() {
   lblM.style.opacity = isAnnual ? '.45' : '1';
   lblY.style.opacity = isAnnual ? '1' : '.45';
 
+  // Advanced tier (launching soon — no subscribe button, just info)
+  const advPrice  = document.getElementById('adv-price-display');
+  const advPeriod = document.getElementById('adv-price-period');
+
   if (isAnnual) {
     price.textContent = '€199.00';
     period.textContent = 'per year · automatic renewal · save €39.80';
     paypalLabel.textContent = 'Subscribe at €199.00/year';
+    if (advPrice)  advPrice.textContent  = '€299.00';
+    if (advPeriod) advPeriod.textContent = 'per year · early access opening · save €59.80';
     // TODO: swap to annual PayPal Plan ID
   } else {
     price.textContent = '€19.90';
     period.textContent = 'per month · automatic renewal';
     paypalLabel.textContent = 'Subscribe at €19.90/month';
+    if (advPrice)  advPrice.textContent  = '€29.90';
+    if (advPeriod) advPeriod.textContent = 'per month · early access opening';
     // TODO: swap to monthly PayPal Plan ID
   }
 }

@@ -281,16 +281,21 @@ Key `.env` variables:
 
 See [CHANGELOG.md](CHANGELOG.md) for the full feature list.
 
-### Planned for the current Pro tier
-- Slack / email alerts when the human queue exceeds a threshold
+### Planned for the Community edition
+- Slack / email alerts when the human review queue exceeds a threshold
 - Instagram support (via Meta Graph API)
+
+### Planned for the current Pro tier
+- Flame detection & post lock — auto-lock comments on a post when a flame
+  pattern is detected (spike of negative comments or borderline content cluster)
 - Bot & coordinated campaign detection (cross-user behavioural analysis)
 - Scheduled CSV/PDF report export
-- Policy test mode — evaluate a sample comment before activating a new version
+- Policy test mode — evaluate a sample comment against a new policy version
+  before activating it
 
-### In design — Newsroom tier (coming soon, separate license)
+### In design — Advanced tier (launching soon, separate license)
 
-A higher tier aimed at high-volume newsrooms, focused on **proactive risk
+A higher tier aimed at high-volume pages, focused on **proactive risk
 prediction** and **editorial intelligence**. These features are in design;
 they will require a separate license key when released and are not part of
 the current Pro plan.

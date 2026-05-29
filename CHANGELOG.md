@@ -22,17 +22,21 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   Collision policy: se anche `fact_check_suggested` è attivo, il fact-check ha
   priorità editoriale e il whataboutism va a revisione umana senza auto-publish.
 
+### Planned (Community edition)
+- Slack / email notifications when human queue exceeds threshold
+- Instagram support (same pipeline via Meta Graph API)
+
 ### Planned (current Pro tier)
-- Multi-platform support (Instagram, LinkedIn)
-- Slack/email notifications when queue exceeds threshold
+- Flame detection & post lock
 - Bot & coordinated campaign detection
 - Meta account metadata integration (account age, follower count)
 - Scheduled report export (PDF/CSV)
+- Policy test mode
 
-### In design — Newsroom tier (coming soon, separate license)
-A higher tier for newsrooms running large-volume Facebook pages, focused on
-proactive risk-prediction and editorial intelligence. These features are in
-design and will require a separate license key when released.
+### In design — Advanced tier (launching soon, separate license)
+A higher tier for high-volume pages, focused on proactive risk-prediction
+and editorial intelligence. These features are in design and will require a
+separate license key when released.
 
 - **Dual confidence scoring** — alongside the current "probability of violation"
   the AI will also score a "probability of genuine value" for each comment, so
