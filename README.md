@@ -353,3 +353,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 ## License
 
 [MIT](LICENSE) — free to use, modify, and distribute.
+
+---
+
+## Author
+
+Built by [Francesco Casali](https://github.com/checco83casali).
+Feedback, issues and PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).

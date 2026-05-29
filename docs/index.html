@@ -640,6 +640,10 @@ footer {
   transition: background .2s;
 }
 .gh-btn:hover { background: rgba(255,255,255,.13); }
+.lang-toggle { display: flex; align-items: center; gap: 3px; margin: 0 4px; }
+.lang-btn { background: none; border: 1px solid rgba(255,255,255,.14); border-radius: 6px; color: rgba(255,255,255,.4); font-size: 11px; font-weight: 700; letter-spacing: .07em; padding: 5px 10px; cursor: pointer; transition: all .18s; line-height: 1; }
+.lang-btn.active { background: rgba(255,255,255,.1); color: #fff; border-color: rgba(255,255,255,.28); }
+.lang-btn:hover:not(.active) { border-color: rgba(255,255,255,.25); color: rgba(255,255,255,.72); }
 
 /* ─── REVEAL ANIMATIONS ─── */
 .reveal {
@@ -693,18 +697,22 @@ footer {
     <span class="nav-name">Moderation Hub</span>
   </a>
   <div class="nav-links">
-    <a href="#pipeline">How it works</a>
-    <a href="#features">Features</a>
+    <a href="#pipeline" data-i18n="nav.pipeline">How it works</a>
+    <a href="#features" data-i18n="nav.features">Features</a>
     <a href="#gdpr">GDPR</a>
-    <a href="#license">Pricing</a>
-    <a href="https://github.com/checco83casali/social-moderation-hub" target="_blank">Docs</a>
+    <a href="#license" data-i18n="nav.pricing">Pricing</a>
+    <a href="https://github.com/checco83casali/social-moderation-hub" target="_blank" data-i18n="nav.docs">Docs</a>
+  </div>
+  <div class="lang-toggle">
+    <button class="lang-btn active" id="lang-en" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" id="lang-it" onclick="setLang('it')">IT</button>
   </div>
   <div class="nav-cta">
     <a href="https://github.com/checco83casali/social-moderation-hub" target="_blank" class="btn btn-outline">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.49.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0112 6.8c.85.004 1.71.11 2.51.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10.01 10.01 0 0022 12C22 6.48 17.52 2 12 2z"/></svg>
-      GitHub
+      <span data-i18n="nav.gh">GitHub</span>
     </a>
-    <a href="https://github.com/checco83casali/social-moderation-hub#quick-start" target="_blank" class="btn btn-primary">Deploy now</a>
+    <a href="https://github.com/checco83casali/social-moderation-hub#quick-start" target="_blank" class="btn btn-primary" data-i18n="nav.deploy">Deploy now</a>
   </div>
 </nav>
 
@@ -716,40 +724,40 @@ footer {
     <div class="hero-inner">
       <div class="kicker reveal">
         <span class="kicker-dot"></span>
-        Hybrid AI + Human Content Moderation
+        <span data-i18n="hero.kicker">Hybrid AI + Human Content Moderation</span>
       </div>
       <h1 class="reveal">
         Social Moderation<br>
         <span class="line2">Hub</span>
       </h1>
-      <p class="hero-sub reveal">
+      <p class="hero-sub reveal" data-i18n="hero.sub1">
         Every comment matters — because every reader does
       </p>
-      <p class="hero-sub reveal">
-        Real-time moderation and evaluation by a two-stage AI pipeline — 
+      <p class="hero-sub reveal" data-i18n="hero.sub2">
+        Real-time moderation and evaluation by a two-stage AI pipeline —
         fast, lightweight, and escalated to humans only when it matters.
       </p>
-      <p class="hero-sub reveal">
+      <p class="hero-sub reveal" data-i18n-html="hero.sub3html">
         <strong>Free & open source.</strong> ⭐ Pro features available from €19.90/month.<br>
         <strong>GDPR-ready. Self-hosted. MIT licensed.</strong>
       </p>
       <div class="pills reveal">
-        <span class="pill">⚡ Claude Haiku → Sonnet</span>
-        <span class="pill">🧑‍⚖️ Human-in-the-loop</span>
-        <span class="pill">🔒 Self-hosted</span>
-        <span class="pill">🪪 GDPR by design</span>
-        <span class="pill">📜 Appeals workflow</span>
+        <span class="pill" data-i18n="hero.pill1">⚡ Claude Haiku → Sonnet</span>
+        <span class="pill" data-i18n="hero.pill2">🧑‍⚖️ Human-in-the-loop</span>
+        <span class="pill" data-i18n="hero.pill3">🔒 Self-hosted</span>
+        <span class="pill" data-i18n="hero.pill4">🪪 GDPR by design</span>
+        <span class="pill" data-i18n="hero.pill5">📜 Appeals workflow</span>
       </div>
       <div class="hero-actions reveal">
-        <a href="https://github.com/checco83casali/social-moderation-hub#quick-start" target="_blank" class="btn btn-primary btn-lg">
+        <a href="https://github.com/checco83casali/social-moderation-hub#quick-start" target="_blank" class="btn btn-primary btn-lg" data-i18n="hero.cta1">
           Get started free →
         </a>
-        <a href="#pipeline" class="btn btn-ghost btn-lg">How it works</a>
+        <a href="#pipeline" class="btn btn-ghost btn-lg" data-i18n="hero.cta2">How it works</a>
       </div>
       <div class="hero-meta reveal">
         <span>PHP 8.1+</span>
         <span>MySQL 8</span>
-        <span>MIT License ⭐ Pro from €19.90/mo</span>
+        <span data-i18n="hero.meta3">MIT License ⭐ Pro from €19.90/mo</span>
         <span>v1.5.0</span>
       </div>
     </div>
@@ -760,18 +768,18 @@ footer {
 <section id="pipeline">
   <div class="blob b1" style="width:500px;height:500px;background:rgba(79,142,247,.18);top:-150px;right:-150px;"></div>
   <div class="container">
-    <div class="section-label reveal">The flow</div>
-    <h2 class="reveal">A comment's journey</h2>
-    <p class="section-sub reveal">
+    <div class="section-label reveal" data-i18n="pipe.label">The flow</div>
+    <h2 class="reveal" data-i18n="pipe.h2">A comment's journey</h2>
+    <p class="section-sub reveal" data-i18n-html="pipe.sub">
       From the moment a comment lands on your page to a final decision — in seconds.
       No content is ever deleted; problematic posts are <strong>hidden with an appeal link</strong>.
     </p>
 
     <div class="pipeline-flow stagger">
       <div class="pipe-step">
-        <div class="pipe-no">STAGE 1 · FAST</div>
+        <div class="pipe-no" data-i18n="pipe.s1.no">STAGE 1 · FAST</div>
         <h3>⚡ Claude Haiku</h3>
-        <p>Lightning-fast first pass. If confidence is ≥ 80%, the decision is final and returned immediately.</p>
+        <p data-i18n="pipe.s1.p">Lightning-fast first pass. If confidence is ≥ 80%, the decision is final and returned immediately.</p>
         <div class="pipe-outcomes">
           <span class="tag t-allow">allow</span>
           <span class="tag t-hide">hide</span>
@@ -779,9 +787,9 @@ footer {
       </div>
       <div class="pipe-arrow">→</div>
       <div class="pipe-step">
-        <div class="pipe-no">STAGE 2 · DEEP</div>
+        <div class="pipe-no" data-i18n="pipe.s2.no">STAGE 2 · DEEP</div>
         <h3>🧠 Claude Sonnet</h3>
-        <p>Re-evaluates uncertain cases with full context. If still below threshold, escalates to human.</p>
+        <p data-i18n="pipe.s2.p">Re-evaluates uncertain cases with full context. If still below threshold, escalates to human.</p>
         <div class="pipe-outcomes">
           <span class="tag t-allow">allow</span>
           <span class="tag t-hide">hide</span>
@@ -790,27 +798,27 @@ footer {
       </div>
       <div class="pipe-arrow">→</div>
       <div class="pipe-step human">
-        <div class="pipe-no">STAGE 3 · HUMAN</div>
+        <div class="pipe-no" data-i18n="pipe.s3.no">STAGE 3 · HUMAN</div>
         <h3>🧑‍⚖️ Human review</h3>
-        <p>Moderator sees the AI's reasoning and decides. Every decision is logged with <strong>who</strong> made it.</p>
+        <p data-i18n-html="pipe.s3.p">Moderator sees the AI's reasoning and decides. Every decision is logged with <strong>who</strong> made it.</p>
         <div class="pipe-outcomes">
-          <span class="tag t-human">final decision</span>
+          <span class="tag t-human" data-i18n="pipe.s3.tag">final decision</span>
         </div>
       </div>
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:18px;" class="stagger">
       <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:20px 18px;">
-        <div style="font-size:13px;font-weight:800;letter-spacing:.1em;color:var(--accent);margin-bottom:8px;">BEFORE AI — GATE CHECK</div>
-        <p style="font-size:14px;opacity:.7;line-height:1.55;">Webhook HMAC-SHA256 verification, identity resolution, banned-user fast-path, duplicate SHA-256 fingerprint detection.</p>
+        <div style="font-size:13px;font-weight:800;letter-spacing:.1em;color:var(--accent);margin-bottom:8px;" data-i18n="pipe.g1.label">BEFORE AI — GATE CHECK</div>
+        <p style="font-size:14px;opacity:.7;line-height:1.55;" data-i18n="pipe.g1.p">Webhook HMAC-SHA256 verification, identity resolution, banned-user fast-path, duplicate SHA-256 fingerprint detection.</p>
       </div>
       <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:20px 18px;">
-        <div style="font-size:13px;font-weight:800;letter-spacing:.1em;color:var(--warn);margin-bottom:8px;">RECIDIVISM TRACKING</div>
-        <p style="font-size:14px;opacity:.7;line-height:1.55;">Violations accumulate. Exceeding the threshold triggers progressive bans (configurable): 1-hour → 1-day → 7-day</p>
+        <div style="font-size:13px;font-weight:800;letter-spacing:.1em;color:var(--warn);margin-bottom:8px;" data-i18n="pipe.g2.label">RECIDIVISM TRACKING</div>
+        <p style="font-size:14px;opacity:.7;line-height:1.55;" data-i18n="pipe.g2.p">Violations accumulate. Exceeding the threshold triggers progressive bans (configurable): 1-hour → 1-day → 7-day</p>
       </div>
       <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:20px 18px;">
-        <div style="font-size:13px;font-weight:800;letter-spacing:.1em;color:var(--ok);margin-bottom:8px;">APPEALS WORKFLOW</div>
-        <p style="font-size:14px;opacity:.7;line-height:1.55;">Signed HMAC URL (30-day expiry) lets users contest any hidden comment. Moderators accept (restores) or reject.</p>
+        <div style="font-size:13px;font-weight:800;letter-spacing:.1em;color:var(--ok);margin-bottom:8px;" data-i18n="pipe.g3.label">APPEALS WORKFLOW</div>
+        <p style="font-size:14px;opacity:.7;line-height:1.55;" data-i18n="pipe.g3.p">Signed HMAC URL (30-day expiry) lets users contest any hidden comment. Moderators accept (restores) or reject.</p>
       </div>
     </div>
   </div>
@@ -819,73 +827,73 @@ footer {
 <!-- FEATURES -->
 <section id="features">
   <div class="container">
-    <div class="section-label reveal">Features</div>
-    <h2 class="reveal">Everything you need<br>out of the box</h2>
-    <p class="section-sub reveal">Production-ready features included — not bolted on later.</p>
+    <div class="section-label reveal" data-i18n="feat.label">Features</div>
+    <h2 class="reveal" data-i18n-html="feat.h2">Everything you need<br>out of the box</h2>
+    <p class="section-sub reveal" data-i18n="feat.sub">Production-ready features included — not bolted on later.</p>
 
     <div class="features-grid stagger">
       <div class="feat-card">
         <div class="feat-ic">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L3 7l9 5 9-5-9-5z"/><path d="M3 12l9 5 9-5"/><path d="M3 17l9 5 9-5"/></svg>
         </div>
-        <h3>Context-aware AI</h3>
-        <p>Account age, follower count, and internal violation history are sent as context to every AI call. Smarter decisions, fewer false positives.</p>
+        <h3 data-i18n="feat.1.h">Context-aware AI</h3>
+        <p data-i18n="feat.1.p">Account age, follower count, and internal violation history are sent as context to every AI call. Smarter decisions, fewer false positives.</p>
       </div>
       <div class="feat-card">
         <div class="feat-ic">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         </div>
-        <h3>Advanced threat detection</h3>
-        <p>Scam patterns (pig butchering, fake giveaways, wallet theft), grooming signals, coordinated spam — trained policy, not just keyword lists.</p>
+        <h3 data-i18n="feat.2.h">Advanced threat detection</h3>
+        <p data-i18n="feat.2.p">Scam patterns (pig butchering, fake giveaways, wallet theft), grooming signals, coordinated spam — trained policy, not just keyword lists.</p>
       </div>
       <div class="feat-card">
         <div class="feat-ic">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>
         </div>
-        <h3>Versioned policy management</h3>
-        <p>Edit your moderation rules from the UI. Every change is versioned, audit-logged, and reversible. Activate any version instantly.</p>
+        <h3 data-i18n="feat.3.h">Versioned policy management</h3>
+        <p data-i18n="feat.3.p">Edit your moderation rules from the UI. Every change is versioned, audit-logged, and reversible. Activate any version instantly.</p>
       </div>
       <div class="feat-card">
         <div class="feat-ic" style="background:rgba(62,207,142,.16);color:#3ecf8e;">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </div>
-        <h3>Human review queue</h3>
-        <p>Prioritized dashboard showing AI reasoning per comment. Moderators see confidence scores, categories, and full context before deciding.</p>
+        <h3 data-i18n="feat.4.h">Human review queue</h3>
+        <p data-i18n="feat.4.p">Prioritized dashboard showing AI reasoning per comment. Moderators see confidence scores, categories, and full context before deciding.</p>
       </div>
       <div class="feat-card">
         <div class="feat-ic" style="background:rgba(247,178,74,.16);color:#f7b24a;">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
         </div>
-        <h3>Progressive ban system</h3>
-        <p>Repeated violations escalate automatically. The ban is internal — no notifications to Facebook, no drama. Full history preserved.</p>
+        <h3 data-i18n="feat.5.h">Progressive ban system</h3>
+        <p data-i18n="feat.5.p">Repeated violations escalate automatically. The ban is internal — no notifications to Facebook, no drama. Full history preserved.</p>
       </div>
       <div class="feat-card">
         <div class="feat-ic" style="background:rgba(139,92,246,.16);color:#c4b0ff;">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         </div>
-        <h3>Multi-page & OAuth2 login</h3>
-        <p>Connect multiple Facebook pages in one click. First user auto-becomes admin. Google, Meta, and Microsoft OAuth2 supported.</p>
+        <h3 data-i18n="feat.6.h">Multi-page & OAuth2 login</h3>
+        <p data-i18n="feat.6.p">Connect multiple Facebook pages in one click. First user auto-becomes admin. Google, Meta, and Microsoft OAuth2 supported.</p>
       </div>
       <div class="feat-card">
         <div class="feat-ic">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         </div>
-        <h3>Full audit trail</h3>
-        <p>Every AI and human decision is logged with model name, confidence score, latency, categories, and the name of the human moderator.</p>
+        <h3 data-i18n="feat.7.h">Full audit trail</h3>
+        <p data-i18n="feat.7.p">Every AI and human decision is logged with model name, confidence score, latency, categories, and the name of the human moderator.</p>
       </div>
       <div class="feat-card">
         <div class="feat-ic" style="background:rgba(62,207,142,.16);color:#3ecf8e;">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         </div>
-        <h3>Configurable data retention</h3>
-        <p>Nightly cron anonymizes PII after N days. Statistical fields preserved for analytics. Reset operational data without losing configuration.</p>
+        <h3 data-i18n="feat.8.h">Configurable data retention</h3>
+        <p data-i18n="feat.8.p">Nightly cron anonymizes PII after N days. Statistical fields preserved for analytics. Reset operational data without losing configuration.</p>
       </div>
       <div class="feat-card">
         <div class="feat-ic" style="background:rgba(79,142,247,.16);color:#bcd5ff;">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
         </div>
-        <h3>Auto-deploy via webhook</h3>
-        <p>Push to main → GitHub notifies your server → verified git pull. Fail-closed without a secret. Every deploy logged to logs/deploy.log.</p>
+        <h3 data-i18n="feat.9.h">Auto-deploy via webhook</h3>
+        <p data-i18n="feat.9.p">Push to main → GitHub notifies your server → verified git pull. Fail-closed without a secret. Every deploy logged to logs/deploy.log.</p>
       </div>
     </div>
   </div>
@@ -894,22 +902,22 @@ footer {
 <!-- SPECIAL LANES -->
 <section id="lanes">
   <div class="container">
-    <div class="section-label reveal">Special handling</div>
-    <h2 class="reveal">Three dedicated lanes</h2>
-    <p class="section-sub reveal">Some content types need more than a binary allow/hide decision.</p>
+    <div class="section-label reveal" data-i18n="lanes.label">Special handling</div>
+    <h2 class="reveal" data-i18n="lanes.h2">Three dedicated lanes</h2>
+    <p class="section-sub reveal" data-i18n="lanes.sub">Some content types need more than a binary allow/hide decision.</p>
 
     <div class="lanes-grid stagger">
       <div class="lane lane-1">
-        <h3>🚨 Reportable content</h3>
-        <p>Potentially illegal content is hidden immediately and routed to a dedicated "Reports" queue for legal review. <strong>Never deleted</strong> — preserved as evidence.</p>
+        <h3 data-i18n="lanes.1.h">🚨 Reportable content</h3>
+        <p data-i18n-html="lanes.1.p">Potentially illegal content is hidden immediately and routed to a dedicated "Reports" queue for legal review. <strong>Never deleted</strong> — preserved as evidence.</p>
       </div>
       <div class="lane lane-2">
-        <h3>📰 Editorial criticism</h3>
-        <p>Criticism of journalists or the publication always goes to human review — protecting legitimate editorial debate from over-moderation.</p>
+        <h3 data-i18n="lanes.2.h">📰 Editorial criticism</h3>
+        <p data-i18n="lanes.2.p">Criticism of journalists or the publication always goes to human review — protecting legitimate editorial debate from over-moderation.</p>
       </div>
       <div class="lane lane-3">
-        <h3>🔎 Fact-check</h3>
-        <p>Dubious but not malicious claims: the AI drafts a reply with sources, a human reviews and decides whether to post or hide.</p>
+        <h3 data-i18n="lanes.3.h">🔎 Fact-check</h3>
+        <p data-i18n="lanes.3.p">Dubious but not malicious claims: the AI drafts a reply with sources, a human reviews and decides whether to post or hide.</p>
       </div>
     </div>
   </div>
@@ -919,42 +927,42 @@ footer {
 <section id="gdpr">
   <div class="blob b1"></div>
   <div class="container">
-    <div class="section-label reveal" style="color:rgba(255,255,255,.7);">Compliance</div>
-    <h2 class="reveal">GDPR by design —<br>not an afterthought</h2>
-    <p class="section-sub reveal" style="opacity:.88;">
+    <div class="section-label reveal" style="color:rgba(255,255,255,.7);" data-i18n="gdpr.label">Compliance</div>
+    <h2 class="reveal" data-i18n-html="gdpr.h2">GDPR by design —<br>not an afterthought</h2>
+    <p class="section-sub reveal" style="opacity:.88;" data-i18n="gdpr.sub">
       Data protection is integrated into the architecture at every layer, not added later to check a box.
     </p>
 
     <div class="arts-grid stagger">
       <div class="art">
         <span class="art-badge">Art. 30</span>
-        <h4>Record of Processing</h4>
-        <p>Generated by the system: controller, purposes, legal bases, retention schedule.</p>
+        <h4 data-i18n="gdpr.1.h">Record of Processing</h4>
+        <p data-i18n="gdpr.1.p">Generated by the system: controller, purposes, legal bases, retention schedule.</p>
       </div>
       <div class="art">
         <span class="art-badge">Art. 6.1.f</span>
-        <h4>Legitimate Interest</h4>
-        <p>Proportionate community moderation; LIA documentation available.</p>
+        <h4 data-i18n="gdpr.2.h">Legitimate Interest</h4>
+        <p data-i18n="gdpr.2.p">Proportionate community moderation; LIA documentation available.</p>
       </div>
       <div class="art">
         <span class="art-badge">Art. 22</span>
-        <h4>Automated Decisions</h4>
-        <p>Uncertain cases always go to a human. Users can always contest via the appeal flow.</p>
+        <h4 data-i18n="gdpr.3.h">Automated Decisions</h4>
+        <p data-i18n="gdpr.3.p">Uncertain cases always go to a human. Users can always contest via the appeal flow.</p>
       </div>
       <div class="art">
         <span class="art-badge">Art. 5(1)(e) · 17</span>
-        <h4>Retention & erasure</h4>
-        <p>Nightly anonymization after the retention window. Statistical columns preserved.</p>
+        <h4 data-i18n="gdpr.4.h">Retention & erasure</h4>
+        <p data-i18n="gdpr.4.p">Nightly anonymization after the retention window. Statistical columns preserved.</p>
       </div>
       <div class="art">
         <span class="art-badge">Art. 5(1)(c)</span>
-        <h4>Data minimisation</h4>
-        <p>AI receives only cryptographic pseudonyms — no real user identifiers in plain text.</p>
+        <h4 data-i18n="gdpr.5.h">Data minimisation</h4>
+        <p data-i18n="gdpr.5.p">AI receives only cryptographic pseudonyms — no real user identifiers in plain text.</p>
       </div>
       <div class="art">
         <span class="art-badge">Art. 12–15</span>
-        <h4>Transparency & rights</h4>
-        <p>Public policy, privacy notice, AI reasoning disclosure, and a real appeal process.</p>
+        <h4 data-i18n="gdpr.6.h">Transparency & rights</h4>
+        <p data-i18n="gdpr.6.p">Public policy, privacy notice, AI reasoning disclosure, and a real appeal process.</p>
       </div>
     </div>
   </div>
@@ -967,18 +975,18 @@ footer {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;" class="sh-grid">
       <div>
         <div class="section-divider reveal"></div>
-        <div class="section-label reveal">Self-hosted & open source</div>
-        <h2 class="reveal">Your server.<br>Your data.</h2>
-        <p style="font-size:clamp(16px,1.7vw,20px);opacity:.75;line-height:1.55;margin-bottom:8px;" class="reveal">
+        <div class="section-label reveal" data-i18n="sh.label">Self-hosted & open source</div>
+        <h2 class="reveal" data-i18n-html="sh.h2">Your server.<br>Your data.</h2>
+        <p style="font-size:clamp(16px,1.7vw,20px);opacity:.75;line-height:1.55;margin-bottom:8px;" class="reveal" data-i18n="sh.p1">
           No SaaS subscription, no third-party cloud, no data leaving your infrastructure.
           You're the sole data controller.
         </p>
         <ul class="sh-list stagger">
-          <li>Self-hosted on any PHP 8.1+ server or Docker</li>
-          <li>MIT license — fork, modify, deploy freely</li>
-          <li>Slim 4 + PHP-DI, Composer-managed dependencies</li>
-          <li>PHPStan level 6 · GitHub Actions CI on every push</li>
-          <li>Optional remote license server for Pro features</li>
+          <li data-i18n="sh.li1">Self-hosted on any PHP 8.1+ server or Docker</li>
+          <li data-i18n="sh.li2">MIT license — fork, modify, deploy freely</li>
+          <li data-i18n="sh.li3">Slim 4 + PHP-DI, Composer-managed dependencies</li>
+          <li data-i18n="sh.li4">PHPStan level 6 · GitHub Actions CI on every push</li>
+          <li data-i18n="sh.li5">Optional remote license server for Pro features</li>
         </ul>
       </div>
       <div>
@@ -1009,9 +1017,9 @@ footer {
 <!-- ROADMAP -->
 <section id="roadmap">
   <div class="container">
-    <div class="section-label reveal">Coming next</div>
-    <h2 class="reveal">Roadmap</h2>
-    <p class="section-sub reveal">What's being built next. Contributions welcome.</p>
+    <div class="section-label reveal" data-i18n="road.label">Coming next</div>
+    <h2 class="reveal" data-i18n="road.h2">Roadmap</h2>
+    <p class="section-sub reveal" data-i18n="road.sub">What's being built next. Contributions welcome.</p>
 
     <div class="roadmap-grid stagger">
       <div class="rm-item">
@@ -1091,18 +1099,18 @@ footer {
 <!-- LICENSE / PRICING -->
 <section id="license">
   <div class="container">
-    <div class="section-label reveal">Pricing</div>
-    <h2 class="reveal">Free forever.<br>Pro when you need it.</h2>
-    <p class="section-sub reveal">The core is MIT-licensed and always free. Pro unlocks advanced features via a license key.</p>
+    <div class="section-label reveal" data-i18n="price.label">Pricing</div>
+    <h2 class="reveal" data-i18n-html="price.h2">Free forever.<br>Pro when you need it.</h2>
+    <p class="section-sub reveal" data-i18n="price.sub">The core is MIT-licensed and always free. Pro unlocks advanced features via a license key.</p>
 
     <!-- Toggle mensile/annuale -->
     <div class="billing-toggle-wrap reveal">
-      <span id="lbl-month" style="opacity:1;transition:opacity .2s;">Monthly</span>
+      <span id="lbl-month" style="opacity:1;transition:opacity .2s;" data-i18n="billing.monthly">Monthly</span>
       <button id="billing-toggle" class="billing-knob-track" onclick="toggleBilling()" aria-label="Toggle billing cycle">
         <span id="toggle-knob" class="billing-knob"></span>
       </button>
       <span id="lbl-year" style="opacity:.45;transition:opacity .2s;">
-        Annual
+        <span data-i18n="billing.annual">Annual</span>
         <span class="billing-save">–17%</span>
       </span>
     </div>
@@ -1112,15 +1120,15 @@ footer {
       <!-- FREE / COMMUNITY -->
       <div class="plan plan--free">
         <div class="plan-head">
-          <div class="plan-label">Community</div>
-          <div class="plan-price">Free <span class="price-suffix">/ forever</span></div>
-          <div class="plan-period">Self-hosted · MIT licence</div>
-          <div class="plan-desc">The full moderation pipeline, free forever. Connect 1 Facebook page and run it on any server.</div>
+          <div class="plan-label" data-i18n="plan.free.label">Community</div>
+          <div class="plan-price">Free <span class="price-suffix" data-i18n="plan.free.forever">/ forever</span></div>
+          <div class="plan-period" data-i18n="plan.free.period">Self-hosted · MIT licence</div>
+          <div class="plan-desc" data-i18n="plan.free.desc">The full moderation pipeline, free forever. Connect 1 Facebook page and run it on any server.</div>
         </div>
 
         <hr class="plan-divider">
 
-        <div class="plan-section-title">What's included</div>
+        <div class="plan-section-title" data-i18n="plan.included">What's included</div>
         <ul class="plan-features">
           <li><span class="plan-chk plan-chk--ok">✓</span><span>Two-stage AI pipeline (Haiku → Sonnet)</span></li>
           <li><span class="plan-chk plan-chk--ok">✓</span><span>Human review queue</span></li>
@@ -1139,7 +1147,7 @@ footer {
           <li><span class="plan-chk plan-chk--na">–</span><span class="na-text">Per-page AI thresholds</span></li>
         </ul>
 
-        <div class="plan-section-title">Coming soon for Community</div>
+        <div class="plan-section-title" data-i18n="plan.free.soon">Coming soon for Community</div>
         <ul class="plan-features">
           <li>
             <span class="plan-chk plan-chk--soon">⏳</span>
@@ -1155,7 +1163,7 @@ footer {
 
         <hr class="plan-divider">
 
-        <a href="https://github.com/checco83casali/social-moderation-hub#quick-start" target="_blank" class="btn btn-outline btn-lg plan-cta-btn">Deploy free →</a>
+        <a href="https://github.com/checco83casali/social-moderation-hub#quick-start" target="_blank" class="btn btn-outline btn-lg plan-cta-btn" data-i18n="plan.free.cta">Deploy free →</a>
       </div>
 
       <!-- PRO -->
@@ -1163,13 +1171,13 @@ footer {
         <div class="plan-head">
           <div class="plan-label"><span class="plan-label-prefix">★</span> Pro</div>
           <div class="plan-price"><span id="price-display">€19.90</span></div>
-          <div class="plan-period" id="price-period">per month · automatic renewal</div>
-          <div class="plan-desc">The everyday moderation tier. Multi-page, AI fact-check, custom templates, legal escalation lane.</div>
+          <div class="plan-period" id="price-period" data-i18n="plan.pro.period">per month · automatic renewal</div>
+          <div class="plan-desc" data-i18n="plan.pro.desc">The everyday moderation tier. Multi-page, AI fact-check, custom templates, legal escalation lane.</div>
         </div>
 
         <hr class="plan-divider">
 
-        <div class="plan-section-title">Everything in Community, plus</div>
+        <div class="plan-section-title" data-i18n="plan.pro.included">Everything in Community, plus</div>
         <ul class="plan-features">
           <li><span class="plan-chk plan-chk--ok">✓</span><span><strong>Dangerous reports queue</strong> — dedicated lane for legal review + dossier PDF.</span></li>
           <li><span class="plan-chk plan-chk--ok">✓</span><span><strong>Advanced statistics</strong> — 30-day dashboard, categories, AI trends, Sonnet sub-call breakdown.</span></li>
@@ -1182,7 +1190,7 @@ footer {
           <li><span class="plan-chk plan-chk--ok">✓</span><span><strong>Configurable data retention</strong> — custom GDPR anonymization window.</span></li>
         </ul>
 
-        <div class="plan-section-title">Coming soon for Pro</div>
+        <div class="plan-section-title" data-i18n="plan.pro.soon">Coming soon for Pro</div>
         <ul class="plan-features">
           <li><span class="plan-chk plan-chk--soon">⏳</span><span class="desc-soon"><strong>Flame detection & post lock</strong> — auto-lock comments on posts under flame.</span><span class="plan-pill">Soon</span></li>
           <li><span class="plan-chk plan-chk--soon">⏳</span><span class="desc-soon"><strong>Bot & campaign detection</strong> — cross-user behavioural analysis.</span><span class="plan-pill">Soon</span></li>
@@ -1195,9 +1203,9 @@ footer {
         <div class="paypal-btn-wrap" style="margin-top:auto;">
           <button class="paypal-placeholder" id="paypal-btn" onclick="alert('PayPal Plan ID da configurare')">
             <span class="paypal-logo">Pay<span>Pal</span></span>
-            <span id="paypal-btn-label">Subscribe at €19.90/month</span>
+            <span id="paypal-btn-label" data-i18n="plan.pro.paybtn">Subscribe at €19.90/month</span>
           </button>
-          <p style="text-align:center;font-size:12px;opacity:.38;margin-top:10px;">
+          <p style="text-align:center;font-size:12px;opacity:.38;margin-top:10px;" data-i18n="plan.pro.payinfo">
             Cancel anytime · Secure payment via PayPal
           </p>
         </div>
@@ -1208,16 +1216,16 @@ footer {
         <div class="plan-head">
           <div class="plan-label">
             <span class="plan-label-prefix">✨</span> Advanced
-            <span class="plan-badge-inline">Launching soon</span>
+            <span class="plan-badge-inline" data-i18n="plan.adv.badge">Launching soon</span>
           </div>
           <div class="plan-price"><span id="adv-price-display">€29.90</span></div>
-          <div class="plan-period" id="adv-price-period">per month · early access opening</div>
-          <div class="plan-desc">Predict, don't just react. Proactive risk prediction and editorial intelligence for high-volume pages.</div>
+          <div class="plan-period" id="adv-price-period" data-i18n="plan.adv.period">per month · early access opening</div>
+          <div class="plan-desc" data-i18n="plan.adv.desc">Predict, don't just react. Proactive risk prediction and editorial intelligence for high-volume pages.</div>
         </div>
 
         <hr class="plan-divider">
 
-        <div class="plan-section-title">Everything in Community and Pro, plus</div>
+        <div class="plan-section-title" data-i18n="plan.adv.included">Everything in Community and Pro, plus</div>
         <ul class="plan-features">
           <li>
             <span class="plan-chk plan-chk--ok">✓</span>
@@ -1236,8 +1244,8 @@ footer {
         <hr class="plan-divider">
 
         <div class="plan-cta-info">
-          <strong>Not buyable yet</strong> — separate license at release.<br>
-          Interested in early access? <a href="mailto:checco83@gmail.com" style="color:#c4a4ff;text-decoration:underline;text-underline-offset:3px;">Get in touch</a>.
+          <strong data-i18n="plan.adv.notyet">Not buyable yet</strong> — <span data-i18n="plan.adv.notyetdesc">separate license at release.</span><br>
+          <span data-i18n="plan.adv.earlyaccess">Interested in early access?</span> <a href="mailto:checco83@gmail.com" style="color:#c4a4ff;text-decoration:underline;text-underline-offset:3px;" data-i18n="plan.adv.contact">Get in touch</a>.
         </div>
       </div>
 
@@ -1251,7 +1259,7 @@ footer {
         <p style="font-size:14px;line-height:1.6;max-width:80ch;opacity:.8;">
           The pricing above covers the Social Moderation Hub license only. AI processing is billed separately by Anthropic on a pay-per-use basis.
           Typical cost is <strong style="color:#eef2fb;">€0.005 – €0.01 per comment</strong> depending on content length, model used (Haiku vs Sonnet), and how often the second stage is triggered.
-          Costs can be controlled by tuning the confidence thresholds in your <code style="background:rgba(255,255,255,.08);padding:2px 7px;border-radius:5px;font-size:12px;">.env</code> file.
+          Costs can be controlled by adjusting the confidence thresholds from the <strong style="color:#eef2fb;">dashboard settings</strong> (or in your <code style="background:rgba(255,255,255,.08);padding:2px 7px;border-radius:5px;font-size:12px;">.env</code> file).
           See <a href="https://www.anthropic.com/pricing" target="_blank" style="color:var(--accent);text-decoration:underline;text-underline-offset:3px;">anthropic.com/pricing</a> for current API rates.
         </p>
       </div>
@@ -1263,21 +1271,111 @@ footer {
   <div class="blob b1"></div>
   <div class="blob b2"></div>
   <div class="container">
-    <div class="section-label reveal" style="text-align:center;display:block;">Ready to ship</div>
-    <h2 class="reveal">Start moderating<br>in minutes</h2>
-    <p class="section-sub reveal">
+    <div class="section-label reveal" style="text-align:center;display:block;" data-i18n="cta.label">Ready to ship</div>
+    <h2 class="reveal" data-i18n-html="cta.h2">Start moderating<br>in minutes</h2>
+    <p class="section-sub reveal" data-i18n="cta.sub">
       Clone, configure, deploy. The installer walks you through everything.
       No ops experience required.
     </p>
     <div class="cta-actions reveal">
-      <a href="https://github.com/checco83casali/social-moderation-hub#quick-start" target="_blank" class="btn btn-primary btn-lg">
+      <a href="https://github.com/checco83casali/social-moderation-hub#quick-start" target="_blank" class="btn btn-primary btn-lg" data-i18n="cta.btn1">
         Deploy now — it's free →
       </a>
       <a href="https://github.com/checco83casali/social-moderation-hub" target="_blank" class="btn btn-ghost btn-lg">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.49.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0112 6.8c.85.004 1.71.11 2.51.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10.01 10.01 0 0022 12C22 6.48 17.52 2 12 2z"/></svg>
-        View on GitHub
+        <span data-i18n="cta.btn2">View on GitHub</span>
       </a>
     </div>
+  </div>
+</section>
+
+<!-- ABOUT THE PROJECT -->
+<section id="about" style="padding: 96px clamp(20px,4vw,64px); background: #080c18; border-top: 1px solid rgba(255,255,255,.06);">
+  <div class="container" style="max-width: 720px;">
+
+    <div class="section-label reveal" style="display:inline-block; margin-bottom: 12px;" data-i18n="about.label">Why I built this</div>
+
+    <!-- Opening statement -->
+    <blockquote class="reveal" style="
+      border-left: 3px solid #3ecf8e;
+      padding: 20px 24px;
+      margin: 0 0 40px;
+      background: rgba(62,207,142,.06);
+      border-radius: 0 8px 8px 0;
+      font-size: clamp(15px, 1.8vw, 18px);
+      line-height: 1.75;
+      color: rgba(255,255,255,.90);
+    ">
+      This tool is not for silencing dissent. It is not for filtering out criticism, inconvenient
+      opinions, or voices that make you uncomfortable. If that's what you're looking for, this is
+      the wrong tool — and honestly, the wrong approach. Moderation exists to protect conversation,
+      not to control it.
+    </blockquote>
+
+    <!-- Body paragraphs -->
+    <div class="reveal" style="display:flex; flex-direction:column; gap:22px; font-size:clamp(14px,1.6vw,16px); line-height:1.8; color:rgba(255,255,255,.65);">
+      <p style="margin:0;">
+        I don't use social media. I haven't for years.<br>
+        But I listen. And what I kept hearing — in evening conversations with my wife, with friends
+        and families, with people genuinely trying to make sense of a difficult world — was
+        frustration. Comment sections on news pages had become places of noise, hostility, and
+        exhaustion. Journalists and editors were spending time they didn't have reading through
+        hundreds of comments just to find the ones that actually needed attention.
+      </p>
+      <p style="margin:0;">
+        My children are still too young for social media. I hope by the time they're not, the
+        conversation online will be worth joining.
+      </p>
+      <p style="margin:0;">
+        I'm not a journalist. I'm not an activist. I'm someone who believes that money shapes too
+        much of this world — and that the world should be shaped by ideas instead. By the freedom
+        to discuss them seriously, without prejudice, without someone's business interests deciding
+        what gets heard and what doesn't.
+      </p>
+      <p style="margin:0;">
+        So I built something free. Open source. Self-hosted. Not because it was easier — it wasn't
+        — but because the tool itself needed to reflect the values behind it.
+      </p>
+      <p style="margin:0;">
+        Social Moderation Hub is a two-stage AI pipeline that helps anyone who manages a public
+        conversation at scale — newsrooms protecting editorial integrity, social media managers
+        drowning in daily volume, marketing teams safeguarding brand reputation, community managers
+        trying to keep spaces worth being in. Fast, lightweight, and designed to escalate to human
+        review only when it truly matters — because the hard decisions should always stay human.
+      </p>
+      <p style="margin:0;">
+        No vendor lock-in. No data sent to third-party servers. No subscription that quietly shapes
+        what the tool does or doesn't flag.
+      </p>
+    </div>
+
+    <!-- Closing line -->
+    <p class="reveal" style="
+      margin: 36px 0 40px;
+      font-size: clamp(15px, 1.8vw, 18px);
+      font-style: italic;
+      color: rgba(255,255,255,.80);
+      line-height: 1.7;
+    " data-i18n="about.closing">Just a useful thing, built carefully, given away freely.</p>
+
+    <!-- Byline -->
+    <div class="reveal" style="display: flex; align-items: center; gap: 14px;">
+      <div style="
+        width: 44px; height: 44px; border-radius: 50%;
+        background: linear-gradient(135deg,#3ecf8e 0%,#4f7cff 100%);
+        display: flex; align-items: center; justify-content: center;
+        font-family:'Syne',sans-serif; font-weight:800; font-size:15px; color:#fff;
+        flex-shrink: 0; letter-spacing:.03em;
+      ">FC</div>
+      <div>
+        <div style="font-weight:700; font-size:15px; color:rgba(255,255,255,.9);">Francesco Casali</div>
+        <div style="font-size:13px; color:rgba(255,255,255,.4); margin-top:3px;">
+          Founder &amp; developer ·
+          <a href="https://github.com/checco83casali" target="_blank" style="color:rgba(255,255,255,.55); text-decoration:underline; text-underline-offset:3px;">@checco83casali</a>
+        </div>
+      </div>
+    </div>
+
   </div>
 </section>
 
@@ -1294,31 +1392,31 @@ footer {
         </div>
         <span class="footer-brand-name">Social Moderation Hub</span>
       </div>
-      <div class="footer-tagline">Hybrid AI + Human content moderation for Facebook pages.</div>
+      <div class="footer-tagline" data-i18n="footer.tagline">Hybrid AI + Human content moderation for Facebook pages.</div>
     </div>
     <div class="footer-links">
       <div class="footer-col">
-        <h5>Product</h5>
-        <a href="#pipeline">How it works</a>
-        <a href="#features">Features</a>
-        <a href="#gdpr">GDPR compliance</a>
-        <a href="#roadmap">Roadmap</a>
+        <h5 data-i18n="footer.col1">Product</h5>
+        <a href="#pipeline" data-i18n="nav.pipeline">How it works</a>
+        <a href="#features" data-i18n="nav.features">Features</a>
+        <a href="#gdpr" data-i18n="footer.gdprlink">GDPR compliance</a>
+        <a href="#roadmap" data-i18n="road.h2">Roadmap</a>
       </div>
       <div class="footer-col">
-        <h5>Resources</h5>
+        <h5 data-i18n="footer.col2">Resources</h5>
         <a href="https://github.com/checco83casali/social-moderation-hub" target="_blank">GitHub</a>
         <a href="https://github.com/checco83casali/social-moderation-hub/blob/main/README.md" target="_blank">Documentation</a>
         <a href="https://github.com/checco83casali/social-moderation-hub/blob/main/CHANGELOG.md" target="_blank">Changelog</a>
         <a href="https://github.com/checco83casali/social-moderation-hub/blob/main/CONTRIBUTING.md" target="_blank">Contributing</a>
       </div>
       <div class="footer-col">
-        <h5>Legal</h5>
+        <h5 data-i18n="footer.col3">Legal</h5>
         <a href="https://github.com/checco83casali/social-moderation-hub/blob/main/LICENSE" target="_blank">MIT License</a>
       </div>
     </div>
   </div>
   <div class="footer-bottom">
-    <span>© 2026 Social Moderation Hub · MIT License</span>
+    <span>© 2026 <a href="https://github.com/checco83casali" target="_blank" style="opacity:1;text-decoration:underline;text-underline-offset:3px;">Francesco Casali</a> · Social Moderation Hub · MIT License</span>
     <a href="https://github.com/checco83casali/social-moderation-hub" target="_blank" class="gh-btn">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.49.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0112 6.8c.85.004 1.71.11 2.51.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10.01 10.01 0 0022 12C22 6.48 17.52 2 12 2z"/></svg>
       Star on GitHub
@@ -1386,6 +1484,166 @@ window.addEventListener('scroll', () => {
     ? 'rgba(14,18,32,.97)'
     : 'rgba(14,18,32,.82)';
 }, { passive: true });
+
+// ─── i18n ────────────────────────────────────────────────────────────────────
+let _lang = 'en';
+
+const TRANS = {
+  en: {
+    'nav.pipeline':'How it works','nav.features':'Features','nav.pricing':'Pricing',
+    'nav.docs':'Docs','nav.gh':'GitHub','nav.deploy':'Deploy now',
+    'hero.kicker':'Hybrid AI + Human Content Moderation',
+    'hero.sub1':'Every comment matters — because every reader does',
+    'hero.sub2':'Real-time moderation and evaluation by a two-stage AI pipeline — fast, lightweight, and escalated to humans only when it matters.',
+    'hero.sub3html':'<strong>Free &amp; open source.</strong> ⭐ Pro features available from €19.90/month.<br><strong>GDPR-ready. Self-hosted. MIT licensed.</strong>',
+    'hero.pill1':'⚡ Claude Haiku → Sonnet','hero.pill2':'🧑‍⚖️ Human-in-the-loop',
+    'hero.pill3':'🔒 Self-hosted','hero.pill4':'🪪 GDPR by design','hero.pill5':'📜 Appeals workflow',
+    'hero.cta1':'Get started free →','hero.cta2':'How it works',
+    'hero.meta3':'MIT License ⭐ Pro from €19.90/mo',
+    'pipe.label':'The flow','pipe.h2':"A comment's journey",
+    'pipe.sub':'From the moment a comment lands on your page to a final decision — in seconds. No content is ever deleted; problematic posts are <strong>hidden with an appeal link</strong>.',
+    'pipe.s1.no':'STAGE 1 · FAST','pipe.s1.p':'Lightning-fast first pass. If confidence is ≥ 80%, the decision is final and returned immediately.',
+    'pipe.s2.no':'STAGE 2 · DEEP','pipe.s2.p':'Re-evaluates uncertain cases with full context. If still below threshold, escalates to human.',
+    'pipe.s3.no':'STAGE 3 · HUMAN','pipe.s3.p':'Moderator sees the AI\'s reasoning and decides. Every decision is logged with <strong>who</strong> made it.',
+    'pipe.s3.tag':'final decision',
+    'pipe.g1.label':'BEFORE AI — GATE CHECK','pipe.g1.p':'Webhook HMAC-SHA256 verification, identity resolution, banned-user fast-path, duplicate SHA-256 fingerprint detection.',
+    'pipe.g2.label':'RECIDIVISM TRACKING','pipe.g2.p':'Violations accumulate. Exceeding the threshold triggers progressive bans (configurable): 1-hour → 1-day → 7-day',
+    'pipe.g3.label':'APPEALS WORKFLOW','pipe.g3.p':'Signed HMAC URL (30-day expiry) lets users contest any hidden comment. Moderators accept (restores) or reject.',
+    'feat.label':'Features','feat.h2':'Everything you need<br>out of the box','feat.sub':'Production-ready features included — not bolted on later.',
+    'feat.1.h':'Context-aware AI','feat.1.p':'Account age, follower count, and internal violation history are sent as context to every AI call. Smarter decisions, fewer false positives.',
+    'feat.2.h':'Advanced threat detection','feat.2.p':'Scam patterns (pig butchering, fake giveaways, wallet theft), grooming signals, coordinated spam — trained policy, not just keyword lists.',
+    'feat.3.h':'Versioned policy management','feat.3.p':'Edit your moderation rules from the UI. Every change is versioned, audit-logged, and reversible. Activate any version instantly.',
+    'feat.4.h':'Human review queue','feat.4.p':'Prioritized dashboard showing AI reasoning per comment. Moderators see confidence scores, categories, and full context before deciding.',
+    'feat.5.h':'Progressive ban system','feat.5.p':'Repeated violations escalate automatically. The ban is internal — no notifications to Facebook, no drama. Full history preserved.',
+    'feat.6.h':'Multi-page & OAuth2 login','feat.6.p':'Connect multiple Facebook pages in one click. First user auto-becomes admin. Google, Meta, and Microsoft OAuth2 supported.',
+    'feat.7.h':'Full audit trail','feat.7.p':'Every AI and human decision is logged with model name, confidence score, latency, categories, and the name of the human moderator.',
+    'feat.8.h':'Configurable data retention','feat.8.p':'Nightly cron anonymizes PII after N days. Statistical fields preserved for analytics. Reset operational data without losing configuration.',
+    'feat.9.h':'Auto-deploy via webhook','feat.9.p':'Push to main → GitHub notifies your server → verified git pull. Fail-closed without a secret. Every deploy logged to logs/deploy.log.',
+    'lanes.label':'Special handling','lanes.h2':'Three dedicated lanes','lanes.sub':'Some content types need more than a binary allow/hide decision.',
+    'lanes.1.h':'🚨 Reportable content','lanes.1.p':'Potentially illegal content is hidden immediately and routed to a dedicated "Reports" queue for legal review. <strong>Never deleted</strong> — preserved as evidence.',
+    'lanes.2.h':'📰 Editorial criticism','lanes.2.p':'Criticism of journalists or the publication always goes to human review — protecting legitimate editorial debate from over-moderation.',
+    'lanes.3.h':'🔎 Fact-check','lanes.3.p':'Dubious but not malicious claims: the AI drafts a reply with sources, a human reviews and decides whether to post or hide.',
+    'gdpr.label':'Compliance','gdpr.h2':'GDPR by design —<br>not an afterthought','gdpr.sub':'Data protection is integrated into the architecture at every layer, not added later to check a box.',
+    'gdpr.1.h':'Record of Processing','gdpr.1.p':'Generated by the system: controller, purposes, legal bases, retention schedule.',
+    'gdpr.2.h':'Legitimate Interest','gdpr.2.p':'Proportionate community moderation; LIA documentation available.',
+    'gdpr.3.h':'Automated Decisions','gdpr.3.p':'Uncertain cases always go to a human. Users can always contest via the appeal flow.',
+    'gdpr.4.h':'Retention & erasure','gdpr.4.p':'Nightly anonymization after the retention window. Statistical columns preserved.',
+    'gdpr.5.h':'Data minimisation','gdpr.5.p':'AI receives only cryptographic pseudonyms — no real user identifiers in plain text.',
+    'gdpr.6.h':'Transparency & rights','gdpr.6.p':'Public policy, privacy notice, AI reasoning disclosure, and a real appeal process.',
+    'sh.label':'Self-hosted & open source','sh.h2':'Your server.<br>Your data.',
+    'sh.p1':"No SaaS subscription, no third-party cloud, no data leaving your infrastructure. You're the sole data controller.",
+    'sh.li1':'Self-hosted on any PHP 8.1+ server or Docker','sh.li2':'MIT license — fork, modify, deploy freely',
+    'sh.li3':'Slim 4 + PHP-DI, Composer-managed dependencies','sh.li4':'PHPStan level 6 · GitHub Actions CI on every push',
+    'sh.li5':'Optional remote license server for Pro features',
+    'road.label':'Coming next','road.h2':'Roadmap','road.sub':"What's being built next. Contributions welcome.",
+    'billing.monthly':'Monthly','billing.annual':'Annual',
+    'price.label':'Pricing','price.h2':'Free forever.<br>Pro when you need it.','price.sub':'The core is MIT-licensed and always free. Pro unlocks advanced features via a license key.',
+    'plan.included':"What's included",
+    'plan.free.label':'Community','plan.free.forever':'/ forever','plan.free.period':'Self-hosted · MIT licence',
+    'plan.free.desc':'The full moderation pipeline, free forever. Connect 1 Facebook page and run it on any server.',
+    'plan.free.soon':'Coming soon for Community','plan.free.cta':'Deploy free →',
+    'plan.pro.period':'per month · automatic renewal','plan.pro.desc':'The everyday moderation tier. Multi-page, AI fact-check, custom templates, legal escalation lane.',
+    'plan.pro.included':'Everything in Community, plus','plan.pro.soon':'Coming soon for Pro',
+    'plan.pro.paybtn':'Subscribe at €19.90/month','plan.pro.payinfo':'Cancel anytime · Secure payment via PayPal',
+    'plan.adv.badge':'Launching soon','plan.adv.period':'per month · early access opening',
+    'plan.adv.desc':"Predict, don't just react. Proactive risk prediction and editorial intelligence for high-volume pages.",
+    'plan.adv.included':'Everything in Community and Pro, plus',
+    'plan.adv.notyet':'Not buyable yet','plan.adv.notyetdesc':'separate license at release.',
+    'plan.adv.earlyaccess':'Interested in early access?','plan.adv.contact':'Get in touch',
+    'cta.label':'Ready to ship','cta.h2':'Start moderating<br>in minutes',
+    'cta.sub':'Clone, configure, deploy. The installer walks you through everything. No ops experience required.',
+    'cta.btn1':"Deploy now — it's free →",'cta.btn2':'View on GitHub',
+    'about.label':'Why I built this','about.closing':'Just a useful thing, built carefully, given away freely.',
+    'footer.tagline':'Hybrid AI + Human content moderation for Facebook pages.',
+    'footer.col1':'Product','footer.col2':'Resources','footer.col3':'Legal',
+    'footer.gdprlink':'GDPR compliance',
+  },
+  it: {
+    'nav.pipeline':'Come funziona','nav.features':'Funzionalità','nav.pricing':'Prezzi',
+    'nav.docs':'Documentazione','nav.gh':'GitHub','nav.deploy':'Inizia ora',
+    'hero.kicker':'Moderazione AI + Umana per i contenuti social',
+    'hero.sub1':'Ogni commento conta — perché conta ogni lettore',
+    'hero.sub2':'Moderazione in tempo reale con una pipeline AI a due stadi — veloce, leggera, con escalation umana solo quando necessario.',
+    'hero.sub3html':'<strong>Gratuito e open source.</strong> ⭐ Funzionalità Pro da €19,90/mese.<br><strong>GDPR-ready. Self-hosted. Licenza MIT.</strong>',
+    'hero.pill1':'⚡ Claude Haiku → Sonnet','hero.pill2':'🧑‍⚖️ Controllo umano',
+    'hero.pill3':'🔒 Self-hosted','hero.pill4':'🪪 GDPR by design','hero.pill5':'📜 Flusso di appello',
+    'hero.cta1':'Inizia gratis →','hero.cta2':'Come funziona',
+    'hero.meta3':'Licenza MIT ⭐ Pro da €19,90/mese',
+    'pipe.label':'Il flusso','pipe.h2':'Il percorso di un commento',
+    'pipe.sub':'Dal momento in cui un commento arriva sulla tua pagina fino alla decisione finale — in pochi secondi. Nessun contenuto viene mai eliminato; i post problematici vengono <strong>nascosti con un link di appello</strong>.',
+    'pipe.s1.no':'STADIO 1 · VELOCE','pipe.s1.p':'Prima analisi fulminea. Se la confidenza è ≥ 80%, la decisione è definitiva e viene restituita immediatamente.',
+    'pipe.s2.no':'STADIO 2 · APPROFONDITO','pipe.s2.p':'Rivaluta i casi incerti con il contesto completo. Se ancora sotto soglia, passa alla revisione umana.',
+    'pipe.s3.no':'STADIO 3 · UMANO','pipe.s3.p':"Il moderatore vede il ragionamento dell'AI e decide. Ogni decisione è registrata con <strong>chi</strong> l'ha presa.",
+    'pipe.s3.tag':'decisione finale',
+    'pipe.g1.label':"PRIMA DELL'AI — VERIFICA",'pipe.g1.p':'Verifica firma HMAC-SHA256 del webhook, risoluzione identità, fast-path utenti bannati, rilevamento duplicati SHA-256.',
+    'pipe.g2.label':'TRACCIAMENTO RECIDIVA','pipe.g2.p':'Le violazioni si accumulano. Superare la soglia attiva ban progressivi (configurabili): 1 ora → 1 giorno → 7 giorni',
+    'pipe.g3.label':'FLUSSO DI APPELLO','pipe.g3.p':'URL firmato HMAC (scadenza 30 giorni) consente agli utenti di contestare qualsiasi commento nascosto. I moderatori accettano (ripristinano) o rifiutano.',
+    'feat.label':'Funzionalità','feat.h2':'Tutto quello che serve<br>già incluso','feat.sub':'Funzionalità pronte per la produzione — non aggiunte in seguito.',
+    'feat.1.h':'AI con contesto','feat.1.p':"Età dell'account, follower e storico delle violazioni interne vengono inviati come contesto ad ogni chiamata AI. Decisioni più intelligenti, meno falsi positivi.",
+    'feat.2.h':'Rilevamento minacce avanzato','feat.2.p':'Schemi di truffa (pig butchering, finti giveaway, furto di wallet), segnali di adescamento, spam coordinato — policy addestrata, non solo liste di parole chiave.',
+    'feat.3.h':'Policy con versioning','feat.3.p':"Modifica le regole di moderazione dall'interfaccia. Ogni modifica è versionata, registrata in audit e reversibile. Attiva qualsiasi versione istantaneamente.",
+    'feat.4.h':'Coda di revisione umana','feat.4.p':'Dashboard prioritizzata con il ragionamento AI per ogni commento. I moderatori vedono punteggi di confidenza, categorie e contesto completo prima di decidere.',
+    'feat.5.h':'Sistema di ban progressivo','feat.5.p':'Le violazioni ripetute scalano automaticamente. Il ban è interno — nessuna notifica a Facebook, nessun dramma. Storico completo preservato.',
+    'feat.6.h':'Multi-pagina & login OAuth2','feat.6.p':'Collega più pagine Facebook in un clic. Il primo utente diventa admin automaticamente. Supporto OAuth2 Google, Meta e Microsoft.',
+    'feat.7.h':'Audit trail completo','feat.7.p':'Ogni decisione AI e umana viene registrata con nome modello, punteggio di confidenza, latenza, categorie e nome del moderatore.',
+    'feat.8.h':'Retention dati configurabile','feat.8.p':'Cron notturno anonimizza i dati personali dopo N giorni. Campi statistici preservati per analytics. Reset dei dati operativi senza perdere la configurazione.',
+    'feat.9.h':'Auto-deploy via webhook','feat.9.p':'Push su main → GitHub notifica il tuo server → git pull verificato. Fail-closed senza segreto configurato. Ogni deploy registrato in logs/deploy.log.',
+    'lanes.label':'Gestione speciale','lanes.h2':'Tre corsie dedicate','lanes.sub':'Alcuni tipi di contenuto richiedono più di una semplice decisione mostra/nascondi.',
+    'lanes.1.h':'🚨 Contenuto segnalabile','lanes.1.p':'Il contenuto potenzialmente illegale viene nascosto immediatamente e instradato verso una coda "Segnalazioni" dedicata per revisione legale. <strong>Mai eliminato</strong> — conservato come prova.',
+    'lanes.2.h':'📰 Critica editoriale','lanes.2.p':"Le critiche a giornalisti o alla testata vanno sempre in revisione umana — proteggendo il legittimo dibattito editoriale dalla sovra-moderazione.",
+    'lanes.3.h':'🔎 Fact-check','lanes.3.p':"L'AI bozza una risposta con fonti per affermazioni dubbie; un umano rivede e decide se pubblicare o nascondere il commento.",
+    'gdpr.label':'Conformità','gdpr.h2':'GDPR by design —<br>non un ripensamento','gdpr.sub':"La protezione dei dati è integrata nell'architettura ad ogni livello, non aggiunta in seguito per spuntare una casella.",
+    'gdpr.1.h':'Registro del trattamento','gdpr.1.p':'Generato dal sistema: titolare, finalità, basi giuridiche, piano di retention.',
+    'gdpr.2.h':'Legittimo interesse','gdpr.2.p':'Moderazione comunitaria proporzionata; documentazione LIA disponibile.',
+    'gdpr.3.h':'Decisioni automatizzate','gdpr.3.p':'I casi incerti vanno sempre a un umano. Gli utenti possono contestare tramite il flusso di appello.',
+    'gdpr.4.h':'Retention & cancellazione','gdpr.4.p':'Anonimizzazione notturna dopo la finestra di retention. Colonne statistiche preservate.',
+    'gdpr.5.h':'Minimizzazione dei dati','gdpr.5.p':"L'AI riceve solo pseudonimi crittografici — nessun identificatore utente reale in chiaro.",
+    'gdpr.6.h':'Trasparenza & diritti','gdpr.6.p':'Policy pubblica, informativa privacy, disclosure del ragionamento AI e un vero processo di appello.',
+    'sh.label':'Self-hosted e open source','sh.h2':'Il tuo server.<br>I tuoi dati.',
+    'sh.p1':"Nessun abbonamento SaaS, nessun cloud di terze parti, nessun dato che lascia la tua infrastruttura. Sei l'unico titolare del trattamento.",
+    'sh.li1':'Self-hosted su qualsiasi server PHP 8.1+ o Docker','sh.li2':'Licenza MIT — usa, modifica, distribuisci liberamente',
+    'sh.li3':'Slim 4 + PHP-DI, dipendenze gestite con Composer','sh.li4':'PHPStan livello 6 · GitHub Actions CI ad ogni push',
+    'sh.li5':'Server licenze remoto opzionale per le funzionalità Pro',
+    'road.label':'Prossimamente','road.h2':'Roadmap','road.sub':"Cosa stiamo costruendo. Contributi benvenuti.",
+    'billing.monthly':'Mensile','billing.annual':'Annuale',
+    'price.label':'Gratuito o Pro','price.h2':'Gratuito per sempre.<br>Pro quando serve.','price.sub':'Il core è sotto licenza MIT e sempre gratuito. Pro sblocca funzionalità avanzate tramite una chiave di licenza.',
+    'plan.included':'Cosa è incluso',
+    'plan.free.label':'Community','plan.free.forever':'/ per sempre','plan.free.period':'Self-hosted · Licenza MIT',
+    'plan.free.desc':'La pipeline di moderazione completa, gratuita per sempre. Collega 1 pagina Facebook e avviala su qualsiasi server.',
+    'plan.free.soon':'Prossimamente per Community','plan.free.cta':'Deploy gratuito →',
+    'plan.pro.period':'al mese · rinnovo automatico','plan.pro.desc':'Il livello di moderazione quotidiana. Multi-pagina, fact-check AI, template personalizzati, corsia di escalation legale.',
+    'plan.pro.included':'Tutto di Community, più','plan.pro.soon':'Prossimamente per Pro',
+    'plan.pro.paybtn':'Abbonati a €19,90/mese','plan.pro.payinfo':'Cancella in qualsiasi momento · Pagamento sicuro via PayPal',
+    'plan.adv.badge':'In arrivo','plan.adv.period':'al mese · apertura early access',
+    'plan.adv.desc':'Previeni, non solo reagisci. Predizione proattiva del rischio e intelligence editoriale per pagine ad alto volume.',
+    'plan.adv.included':'Tutto di Community e Pro, più',
+    'plan.adv.notyet':'Non ancora acquistabile','plan.adv.notyetdesc':'licenza separata al rilascio.',
+    'plan.adv.earlyaccess':'Interessato all\'early access?','plan.adv.contact':'Contattami',
+    'cta.label':'Pronto per partire','cta.h2':'Inizia a moderare<br>in pochi minuti',
+    'cta.sub':'Clona, configura, rilascia. L\'installer ti guida attraverso tutto. Nessuna esperienza ops richiesta.',
+    'cta.btn1':'Deploy ora — è gratuito →','cta.btn2':'Vedi su GitHub',
+    'about.label':"Perché l'ho costruito",'about.closing':'Solo una cosa utile, costruita con cura, regalata liberamente.',
+    'footer.tagline':'Moderazione AI + Umana per le pagine Facebook.',
+    'footer.col1':'Prodotto','footer.col2':'Risorse','footer.col3':'Legale',
+    'footer.gdprlink':'Conformità GDPR',
+  }
+};
+
+function setLang(lang) {
+  if (lang === _lang) return;
+  _lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const t = TRANS[lang]?.[el.dataset.i18n];
+    if (t !== undefined) el.textContent = t;
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const t = TRANS[lang]?.[el.dataset.i18nHtml];
+    if (t !== undefined) el.innerHTML = t;
+  });
+  document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+  document.getElementById('lang-it').classList.toggle('active', lang === 'it');
+  document.documentElement.setAttribute('lang', lang);
+}
 </script>
 </body>
 </html>
