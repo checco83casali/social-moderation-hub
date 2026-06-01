@@ -56,7 +56,7 @@ license. A self-hosted Community install can moderate one Facebook page end-to-e
 - **Advanced threat detection** — scam patterns (pig butchering, fake giveaways, wallet theft), grooming signals, coordinated spam
 - **Auto-hide of dangerous content** — the AI continues to auto-hide potentially illegal comments on Free installs too; what's gated is the *review dashboard* for those reports (see Pro below)
 - **Versioned policy management** — edit system prompts from the UI; full version history preserved
-- **Human review queue** — prioritised dashboard with AI reasoning per comment
+- **Human review queue** — prioritised dashboard with AI reasoning per comment; moderators see only a pseudonymised ID (never the real name), eliminating identity bias
 - **Appeals workflow** — hidden comments can be contested via a signed-URL form; admins decide
 - **Progressive ban system** — comment removal → 1-day → 7-day → 30-day → permanent
 - **Basic dashboard counters** — pending queue, hidden, appeals, active bans (live)

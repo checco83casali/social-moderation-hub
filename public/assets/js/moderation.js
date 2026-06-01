@@ -115,10 +115,10 @@ async function loadQueue() {
     d.items.forEach(item => { queueMap[item.id] = item; });
     list.innerHTML = d.items.map(item => `
       <div class="q-item${currentComment && currentComment.id === item.id ? ' selected' : ''}" data-id="${item.id}" onclick="selectComment(${item.id})">
-        <div class="q-avatar">${(item.display_name||'?')[0].toUpperCase()}</div>
+        <div class="q-avatar">U</div>
         <div class="q-body">
           <div class="q-header">
-            <span class="q-name">${esc(item.display_name || 'Anonimo')}</span>
+            <span class="q-name">Utente #${item.social_user_id}</span>
             ${item.ai_severity==='high'   ? '<span class="chip chip-danger">alto rischio</span>' : ''}
             ${item.ai_severity==='medium' ? '<span class="chip chip-warn">medio</span>' : ''}
             ${item.violation_count > 0 ? `<span class="chip chip-info">${item.violation_count} violaz.</span>` : ''}
@@ -160,8 +160,8 @@ async function loadReportableQueue() {
       return `
         <div class="bc-item" id="rep-${item.id}" style="border-left:3px solid var(--danger)">
           <div class="bc-header">
-            <div class="ban-avatar" style="width:26px;height:26px;font-size:10px;background:var(--danger)">${(item.display_name||'?')[0].toUpperCase()}</div>
-            <span class="bc-user">${esc(item.display_name||'Anonimo')}</span>
+            <div class="ban-avatar" style="width:26px;height:26px;font-size:10px;background:var(--danger)">U</div>
+            <span class="bc-user">Utente #${item.social_user_id}</span>
             <span class="bc-page">${esc(item.page_name)}</span>
             ${item.violation_count > 0 ? `<span class="chip chip-danger">${item.violation_count} violaz.</span>` : ''}
             <span class="bc-time">${relTime(item.received_at)}</span>
@@ -304,9 +304,9 @@ function renderDetail(c) {
     <div class="detail-section">
       <div class="detail-section-title">Utente</div>
       <div class="user-row">
-        <div class="q-avatar">${(c.display_name||'?')[0].toUpperCase()}</div>
+        <div class="q-avatar">U</div>
         <div class="user-info">
-          <div class="user-display">${esc(c.display_name || 'Anonimo')}</div>
+          <div class="user-display">Utente #${c.social_user_id}</div>
           <div class="user-meta">${c.violation_count || 0} violazioni · ${c.ban_status || 'clean'} · ${esc(c.page_name)}</div>
         </div>
       </div>

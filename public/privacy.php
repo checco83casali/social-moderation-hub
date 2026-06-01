@@ -332,6 +332,7 @@ amministrate per conto di terzi. La presente informativa è rivolta a:</p>
 <p>Misure di salvaguardia implementate:</p>
 <ul>
   <li>Le decisioni ad alta confidenza sono revisionate a campione dagli amministratori.</li>
+  <li><strong>Revisione cieca (blind review):</strong> quando un commento è escalato alla revisione umana, il moderatore vede esclusivamente uno pseudonimo interno (es. «Utente #4821»), mai il nome reale Facebook. Il nome reale non viene mai trasmesso al client durante il processo di revisione.</li>
   <li>Qualsiasi decisione di nascondimento può essere contestata tramite la <strong>procedura di appello</strong> (vedi §8).</li>
   <li>Le decisioni di ban definitivo sono sempre soggette a revisione umana preventiva.</li>
   <li>I feedback dei moderatori umani retroalimentano il sistema per ridurre errori futuri.</li>
@@ -610,6 +611,7 @@ DPO contact: <a href="mailto:<?= $orgEmail ?>"><?= $orgEmail ?></a></p>
 <p>Implemented safeguards:</p>
 <ul>
   <li>High-confidence automated decisions are subject to sample review by administrators.</li>
+  <li><strong>Blind review:</strong> when a comment is escalated to human review, the moderator sees only an internal pseudonym (e.g. «User #4821»), never the real Facebook name. The real name is never transmitted to the client during the review process.</li>
   <li>Any hiding decision can be contested via the <strong>appeal procedure</strong> (see §8).</li>
   <li>Permanent ban decisions are always subject to prior human review.</li>
   <li>Human moderator feedback is used to improve the system and reduce future errors.</li>

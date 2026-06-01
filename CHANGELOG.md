@@ -9,6 +9,12 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Coda di revisione anonimizzata** — i moderatori umani vedono solo uno pseudonimo interno
+  (`Utente #ID`) nella coda di revisione, mai il nome reale Facebook. Il `display_name` è escluso
+  dal SELECT delle API `/api/queue` e `/api/queue/reportable` (mai trasmesso al client in contesto
+  di revisione). Elimina il pregiudizio basato sull'identità dell'autore e minimizza ulteriormente
+  l'impatto GDPR del trattamento.
+
 - **DPIA export (art. 35 GDPR)** — documento di Valutazione d'Impatto sulla Protezione dei Dati
   scaricabile dalle Impostazioni → Privacy Policy. Il documento si genera dinamicamente con i dati
   reali dell'installazione (titolare, retention configurata, statistiche live) e copre: descrizione

@@ -51,7 +51,7 @@ class ModerationController
             ->where('c.status', 'escalated_human')
             ->select([
                 'c.id', 'c.content', 'c.received_at', 'c.platform_comment_id', 'c.status',
-                'su.id as social_user_id', 'su.display_name', 'su.violation_count', 'su.ban_status',
+                'su.id as social_user_id', 'su.violation_count', 'su.ban_status',
                 'cp.page_name', 'cp.page_id as facebook_page_id',
                 'ml.stage as ai_stage', 'ml.ai_decision', 'ml.ai_confidence',
                 'ml.ai_reason', 'ml.ai_public_reason', 'ml.ai_categories', 'ml.ai_severity',
@@ -110,7 +110,7 @@ class ModerationController
             ->where('c.status', 'escalated_reportable')
             ->select([
                 'c.id', 'c.content', 'c.received_at', 'c.platform_comment_id', 'c.status',
-                'su.id as social_user_id', 'su.display_name', 'su.violation_count', 'su.ban_status',
+                'su.id as social_user_id', 'su.violation_count', 'su.ban_status',
                 'cp.page_name', 'cp.page_id as facebook_page_id',
                 'ml.stage as ai_stage', 'ml.ai_decision', 'ml.ai_confidence',
                 'ml.ai_reason', 'ml.ai_public_reason', 'ml.ai_categories', 'ml.ai_severity',

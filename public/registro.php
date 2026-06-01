@@ -163,7 +163,7 @@
       </div>
       <div class="t-cell">
         <div class="t-label">Decisioni automatizzate (art. 22)</div>
-        <div class="t-val">Sì. Pipeline a 3 livelli: Haiku → Sonnet → Umano. Ogni decisione contestabile via procedura di appello.</div>
+        <div class="t-val">Sì. Pipeline a 3 livelli: Haiku → Sonnet → Umano. Ogni decisione contestabile via procedura di appello. Revisione umana in modalità <em>blind</em>: il moderatore vede solo uno pseudonimo interno, mai il nome reale Facebook.</div>
       </div>
       <div class="t-cell">
         <div class="t-label">Conservazione</div>

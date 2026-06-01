@@ -292,10 +292,10 @@
         <td><span class="risk risk-residual">Basso</span></td>
       </tr>
       <tr>
-        <td><strong>R5 — Bias del modello AI</strong></td>
+        <td><strong>R5 — Bias del modello AI e del revisore umano</strong></td>
         <td><span class="risk risk-medium">Medio</span></td>
-        <td>Il modello AI può mostrare bias sistematici (es. maggiore tasso di falsi positivi su certi gruppi linguistici o culturali), generando trattamenti discriminatori involontari.</td>
-        <td><span class="risk risk-residual">Medio</span></td>
+        <td>Il modello AI può mostrare bias sistematici. I moderatori umani possono introdurre pregiudizi basati sull'identità (nome, etnia percepita, genere percepito) dell'autore del commento.</td>
+        <td><span class="risk risk-low">Basso</span></td>
       </tr>
       <tr>
         <td><strong>R6 — Dipendenza da servizio terzo</strong></td>
@@ -346,11 +346,11 @@
     <li><strong>Nessun training:</strong> i dati inviati ad Anthropic tramite API non vengono usati per addestrare i modelli (policy Anthropic API as of data di redazione).</li>
   </ul>
 
-  <h3>R5 — Bias del modello AI</h3>
+  <h3>R5 — Bias del modello AI e del revisore umano</h3>
   <ul class="measures">
-    <li><strong>Revisione umana sistematica:</strong> i casi a confidenza medio-bassa finiscono sempre in coda umana. I moderatori fungono da controllo sul comportamento del modello.</li>
+    <li><strong>Revisione cieca (blind review):</strong> quando un commento è escalato alla revisione umana, il moderatore vede esclusivamente uno pseudonimo interno (es. «Utente #4821»), mai il nome reale Facebook. Il <code>display_name</code> non viene selezionato né trasmesso al client nelle API della coda di revisione (<code>/api/queue</code>, <code>/api/queue/reportable</code>). Elimina il pregiudizio basato su nome, etnia percepita o genere percepito del commentatore.</li>
     <li><strong>Policy configurabile:</strong> il system prompt è modificabile dal titolare per correggere comportamenti sistematicamente errati rilevati nella revisione umana.</li>
-    <li><strong>Monitoraggio statistico:</strong> il dashboard mostra la distribuzione delle decisioni per stadio e categoria, permettendo di rilevare deviazioni sistematiche.</li>
+    <li><strong>Monitoraggio statistico:</strong> il dashboard mostra la distribuzione delle decisioni per stadio e categoria, permettendo di rilevare deviazioni sistematiche nel comportamento del modello AI.</li>
   </ul>
 
   <h3>R6 — Dipendenza da servizio terzo</h3>
@@ -399,9 +399,9 @@
         <td>Accettabile subordinatamente alla firma del DPA con Anthropic e alla verifica delle basi di trasferimento.</td>
       </tr>
       <tr>
-        <td>R5 — Bias AI</td>
-        <td><span class="risk risk-residual">Medio</span></td>
-        <td>Parzialmente residuo. Non eliminabile completamente data la natura dei modelli LLM. Mitigato dalla revisione umana sistematica. Richiede monitoraggio periodico delle statistiche di decisione.</td>
+        <td>R5 — Bias AI + pregiudizio revisore</td>
+        <td><span class="risk risk-low">Basso</span></td>
+        <td>Accettabile. La blind review elimina il pregiudizio identitario del revisore umano. Il bias residuo del modello AI è contenuto dalla revisione umana e dal monitoraggio statistico.</td>
       </tr>
       <tr>
         <td>R6 — Dipendenza terzo</td>
