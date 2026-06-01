@@ -1583,6 +1583,52 @@ class ModerationController
             ->withStatus(200);
     }
 
+    // ── GET /api/dpia  ──────────────────────────────────────────────
+    /**
+     * Genera la DPIA (Valutazione d'Impatto) ai sensi dell'art. 35 GDPR.
+     * Admin only. Restituisce HTML scaricabile come documento.
+     */
+    public function exportDpia(ServerRequestInterface $request, Response $response): ResponseInterface
+    {
+        $auth = $request->getAttribute('auth_user');
+        if (!in_array($auth->role ?? '', ['admin', 'supervisor'], true)) {
+            return $this->json($response, ['error' => 'Admin required'], 403);
+        }
+
+        $settings = DB::table('app_settings')->pluck('value', 'key')->toArray();
+        $orgName    = $settings['privacy_org_name']    ?? '[Titolare non configurato]';
+        $orgAddress = $settings['privacy_org_address'] ?? '[Indirizzo non configurato]';
+        $orgEmail   = $settings['privacy_org_email']   ?? '[Email non configurata]';
+        $orgCountry = $settings['privacy_org_country'] ?? '[Paese non configurato]';
+        $supervisory = $settings['privacy_supervisory_authority'] ?? '[Autorità non configurata]';
+        $appUrl     = rtrim($settings['app_url'] ?? '', '/');
+        $retentionDays = (int)($settings['retention_days'] ?? 90);
+        $appVersion = defined('MH_VERSION') ? MH_VERSION : '1.5.0';
+        $today      = date('d/m/Y');
+
+        $totComments = DB::table('comments')->count();
+        $totUsers    = DB::table('social_users')->count();
+        $totBans     = DB::table('ban_records')->where('is_active', 1)->count();
+        $totPages    = DB::table('connected_pages')->where('is_active', 1)->count();
+
+        $vars = compact(
+            'orgName','orgAddress','orgEmail','orgCountry','supervisory',
+            'appUrl','retentionDays','appVersion','today',
+            'totComments','totUsers','totBans','totPages'
+        );
+
+        ob_start();
+        extract($vars);
+        require __DIR__ . '/../../public/dpia.php';
+        $html = ob_get_clean();
+
+        $response->getBody()->write($html);
+        return $response
+            ->withHeader('Content-Type', 'text/html; charset=utf-8')
+            ->withHeader('Content-Disposition', 'inline; filename="dpia-' . date('Y-m-d') . '.html"')
+            ->withStatus(200);
+    }
+
     // ── GET /api/retention/status  ───────────────────────────────────
     /**
      * Returns the configured retention window and the last cron execution.

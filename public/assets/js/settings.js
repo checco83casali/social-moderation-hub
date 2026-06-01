@@ -363,6 +363,20 @@ async function openRegistro() {
     setTimeout(() => URL.revokeObjectURL(url), 60000);
   } catch (e) { toast('Errore apertura registro', 'err'); }
 }
+async function openDpia() {
+  try {
+    const token = localStorage.getItem('mh_token');
+    const res   = await fetch('/api/dpia', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) { toast('Errore apertura DPIA', 'err'); return; }
+    const html = await res.text();
+    const blob = new Blob([html], { type: 'text/html' });
+    const url  = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (e) { toast('Errore apertura DPIA', 'err'); }
+}
 function onDevModeChange(checked) {
   const label = document.getElementById('dev-mode-label');
   if (label) {

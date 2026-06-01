@@ -195,6 +195,9 @@ $app->group('/api', function ($group) {
     // Registro dei Trattamenti art. 30 GDPR (admin/supervisor)
     $group->get('/registro-trattamenti',       [ModerationController::class, 'registroTrattamenti']);
 
+    // DPIA art. 35 GDPR (admin/supervisor)
+    $group->get('/dpia',                       [ModerationController::class, 'exportDpia']);
+
     // Approved comments
     $group->get('/comments/approved',          [ModerationController::class, 'approvedComments']);
 
