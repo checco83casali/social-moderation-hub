@@ -280,9 +280,9 @@
         <td><span class="risk risk-residual">Basso</span></td>
       </tr>
       <tr>
-        <td><strong>R3 — Violazione dati / accesso non autorizzato</strong></td>
+        <td><strong>R3 — Violazione dati / data breach</strong></td>
         <td><span class="risk risk-high">Alto</span></td>
-        <td>Accesso non autorizzato al database con commenti, log e dati utente (incluse le motivazioni testuali delle decisioni AI).</td>
+        <td>Accesso non autorizzato al database (credenziali compromesse, SQL injection, server compromise, insider threat, backup in chiaro). Dati esposti: commenti, pseudonimi, storico violazioni, log AI, token di appello, account amministratori. Obbligo di notifica artt. 33–34 GDPR.</td>
         <td><span class="risk risk-low">Basso</span></td>
       </tr>
       <tr>
@@ -330,14 +330,140 @@
     <li><strong>Politica di moderazione versionata:</strong> il system prompt inviato a Claude è gestito tramite UI con versioning; le modifiche sono tracciate con data e autore.</li>
   </ul>
 
-  <h3>R3 — Violazione dati</h3>
+  <h3>R3 — Violazione dati (Data Breach)</h3>
+
+  <p style="font-size:12.5px;color:#555;margin-bottom:.8rem">
+    Ai sensi degli artt. 33–34 GDPR, una violazione dei dati personali deve essere notificata
+    all'autorità di controllo entro 72 ore dalla scoperta (art. 33) e, se il rischio per gli
+    interessati è elevato, anche direttamente agli stessi (art. 34).
+  </p>
+
+  <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#555;margin-bottom:.4rem">
+    Scenari di breach, probabilità e impatto
+  </p>
+  <table style="margin-bottom:1.2rem">
+    <thead>
+      <tr>
+        <th style="width:22%">Scenario</th>
+        <th style="width:10%">Probabilità</th>
+        <th style="width:28%">Impatto</th>
+        <th style="width:12%">Notifica art. 33</th>
+        <th style="width:12%">Notifica art. 34</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Compromissione credenziali amministratore</strong> (phishing, password debole, SSO compromesso)</td>
+        <td><span class="risk risk-medium">Medio</span></td>
+        <td>Accesso a tutta la dashboard, log di moderazione, dati social utenti. Se l'attaccante esporta il DB: esposizione massiva di commenti + storico violazioni + token di appello attivi.</td>
+        <td>✅ Obbligatoria</td>
+        <td>⚠️ Valutare</td>
+      </tr>
+      <tr>
+        <td><strong>SQL injection / accesso diretto al DB</strong> tramite vulnerabilità applicativa</td>
+        <td><span class="risk risk-low">Basso</span></td>
+        <td>Dump completo del database. Dati esposti: commenti, pseudonimi, contatori violazioni, log AI, token di appello, account amministratori.</td>
+        <td>✅ Obbligatoria</td>
+        <td>✅ Probabile</td>
+      </tr>
+      <tr>
+        <td><strong>Compromissione del server / hosting</strong> (accesso SSH, pannello cPanel)</td>
+        <td><span class="risk risk-low">Basso</span></td>
+        <td>Accesso a tutti i file incluso <code>.env</code> (segreti, chiavi API). Possibile esfiltrazione completa del DB e delle chiavi di cifratura.</td>
+        <td>✅ Obbligatoria</td>
+        <td>✅ Probabile</td>
+      </tr>
+      <tr>
+        <td><strong>Esposizione accidentale del dashboard</strong> (misconfiguration firewall/IP allowlist)</td>
+        <td><span class="risk risk-medium">Medio</span></td>
+        <td>Dashboard accessibile da internet senza restrizioni IP. In assenza di exploit attivo: solo rischio di brute-force. Con credenziali deboli: accesso ai dati.</td>
+        <td>⚠️ Solo se accesso confermato</td>
+        <td>❌ Solo se dati esfiltrati</td>
+      </tr>
+      <tr>
+        <td><strong>Insider threat</strong> (moderatore autorizzato che esporta/condivide dati)</td>
+        <td><span class="risk risk-low">Basso</span></td>
+        <td>Esportazione non autorizzata di log di moderazione o dati utente. Impatto limitato dalla minimizzazione (nomi reali non presenti nella coda di revisione).</td>
+        <td>✅ Obbligatoria</td>
+        <td>⚠️ Valutare</td>
+      </tr>
+      <tr>
+        <td><strong>Perdita o furto di backup</strong></td>
+        <td><span class="risk risk-low">Basso</span></td>
+        <td>Se i backup non sono cifrati, un dump del DB contiene tutti i dati personali trattati.</td>
+        <td>✅ Se backup in chiaro</td>
+        <td>⚠️ Valutare</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#555;margin-bottom:.4rem">
+    Misure di prevenzione
+  </p>
   <ul class="measures">
-    <li><strong>Accesso ristretto:</strong> il dashboard di moderazione è concepito per essere accessibile solo da IP interni o tramite VPN (guida <code>docs/deployment-security.md</code>). Solo il webhook Meta (<code>/webhook/meta</code>) deve essere esposto pubblicamente.</li>
-    <li><strong>Autenticazione JWT:</strong> tutte le API richiedono un token JWT firmato con <code>APP_SECRET</code> (≥ 32 char, generato in fase di installazione). I JWT scadono e non vengono conservati lato server.</li>
-    <li><strong>OAUTH_ALLOWED_EMAIL_DOMAINS:</strong> configurabile per limitare l'accesso ai soli account del dominio aziendale.</li>
-    <li><strong>Anonimizzazione programmata:</strong> il cron notturno elimina i campi PII dopo il periodo di retention, riducendo la superficie di esposizione nel tempo.</li>
-    <li><strong>Segreti distinti:</strong> <code>APP_SECRET</code>, <code>META_WEBHOOK_VERIFY_TOKEN</code> e <code>META_APP_SECRET</code> devono essere valori distinti (verificato dall'installer).</li>
+    <li><strong>Accesso ristretto per IP:</strong> il dashboard è concepito per essere accessibile solo da IP interni o VPN (<code>docs/deployment-security.md</code>). Solo <code>/webhook/meta</code> è pubblico.</li>
+    <li><strong>Autenticazione JWT + SSO:</strong> token firmati con <code>APP_SECRET</code> ≥ 32 char; MFA tramite Azure AD/Entra ID per gli amministratori.</li>
+    <li><strong>OAUTH_ALLOWED_EMAIL_DOMAINS:</strong> limita il login ai soli account del dominio aziendale, prevenendo accessi con account OAuth personali.</li>
+    <li><strong>Segreti distinti e forti:</strong> <code>APP_SECRET</code>, <code>META_WEBHOOK_VERIFY_TOKEN</code>, <code>META_APP_SECRET</code> devono essere valori distinti (verificato dall'installer). Il file <code>.env</code> non deve essere versionato né accessibile via web.</li>
+    <li><strong>TLS obbligatorio:</strong> tutte le comunicazioni (dashboard, API, webhook) devono transitare su HTTPS. HTTP deve essere rediretto o bloccato.</li>
+    <li><strong>Anonimizzazione programmata:</strong> il cron notturno riduce progressivamente la superficie di esposizione eliminando i PII dopo il periodo configurato.</li>
+    <li><strong>Minimizzazione in coda:</strong> il nome reale degli utenti non è mai trasmesso al client in contesto di revisione (blind review), riducendo il valore del dato in caso di intercettazione.</li>
+    <li><strong>Backup cifrati:</strong> il titolare si impegna a cifrare i backup del DB. I backup in chiaro non devono essere archiviati su storage accessibile via rete senza autenticazione.</li>
   </ul>
+
+  <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#555;margin:.8rem 0 .4rem">
+    Rilevamento degli incidenti
+  </p>
+  <ul class="measures">
+    <li><strong>Log di accesso amministratori:</strong> ogni accesso alla dashboard è registrato (IP, user-agent, timestamp). Revisione periodica raccomandata (mensile o automatizzata con alert su login da IP inusuali).</li>
+    <li><strong>Audit trail delle decisioni:</strong> ogni azione di moderazione è attribuita a un utente amministratore. Azioni di massa anomale sono rilevabili a posteriori.</li>
+    <li><strong>Monitoraggio server:</strong> il titolare deve attivare alert sull'hosting per accessi SSH insoliti, variazioni ai file di configurazione (<code>.env</code>, <code>index.php</code>) e picchi di query DB.</li>
+  </ul>
+
+  <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#555;margin:.8rem 0 .4rem">
+    Procedura di risposta e notifica (artt. 33–34 GDPR)
+  </p>
+  <table>
+    <thead>
+      <tr><th style="width:20%">Fase</th><th style="width:20%">Tempistica</th><th>Azioni</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>1. Rilevamento e contenimento</strong></td>
+        <td>Immediato (h0)</td>
+        <td>Isolare il sistema compromesso (blocco IP, revoca credenziali, spegnimento servizio se necessario). Preservare i log per l'analisi forense. Non cancellare dati che potrebbero servire all'indagine.</td>
+      </tr>
+      <tr>
+        <td><strong>2. Valutazione</strong></td>
+        <td>Entro 24h</td>
+        <td>Determinare: categorie e volume di dati coinvolti, numero approssimativo di interessati, probabilità di danno per gli interessati (esposizione, uso fraudolento). Coinvolgere il DPO se designato.</td>
+      </tr>
+      <tr>
+        <td><strong>3. Notifica al Garante (art. 33)</strong></td>
+        <td>Entro 72h dalla scoperta</td>
+        <td>Notifica a <?= htmlspecialchars($supervisory, ENT_QUOTES) ?> tramite il portale telematico dell'autorità. Contenuto obbligatorio: natura della violazione, categorie/numero di interessati, conseguenze probabili, misure adottate. Se non si rispetta il termine delle 72h: indicare i motivi del ritardo.</td>
+      </tr>
+      <tr>
+        <td><strong>4. Notifica agli interessati (art. 34)</strong></td>
+        <td>Senza ingiustificato ritardo</td>
+        <td>Obbligatoria se il rischio per i diritti e le libertà degli interessati è <em>elevato</em>. Canale: commento di notifica sulla Pagina Facebook + email se disponibile. Contenuto: natura della violazione, contatto DPO, conseguenze probabili, misure adottate o proposte.</td>
+      </tr>
+      <tr>
+        <td><strong>5. Recovery</strong></td>
+        <td>Appena possibile</td>
+        <td>Ripristino da backup cifrato verificato. Rinnovo di tutti i segreti (<code>APP_SECRET</code>, <code>META_APP_SECRET</code>, chiavi OAuth). Revisione delle misure di sicurezza che hanno fallito. Aggiornamento della presente DPIA.</td>
+      </tr>
+      <tr>
+        <td><strong>6. Registro interno (art. 33.5)</strong></td>
+        <td>Permanente</td>
+        <td>Documentare la violazione nel registro interno degli incidenti (anche se non notificata al Garante): data scoperta, natura, dati coinvolti, azioni intraprese, decisione su notifica e motivazione.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:12px;color:#777;margin-top:-.3rem;margin-bottom:1.5rem">
+    <strong>Nota:</strong> la soglia per la notifica al Garante è "rischio per i diritti e le libertà" — non è richiesta certezza del danno, è sufficiente la possibilità. In caso di dubbio, notificare.
+  </p>
 
   <h3>R4 — Trasferimento a Anthropic</h3>
   <ul class="measures">
@@ -389,9 +515,9 @@
         <td>Accettabile. I ban sono revocabili dai moderatori in qualsiasi momento. Il sistema richiede più violazioni confermate prima del ban automatico.</td>
       </tr>
       <tr>
-        <td>R3 — Violazione dati</td>
+        <td>R3 — Violazione dati (data breach)</td>
         <td><span class="risk risk-low">Basso</span></td>
-        <td>Accettabile con applicazione delle misure di hardening dell'accesso (restrizione IP, HTTPS, allowlist domini). Il titolare è responsabile della corretta configurazione del server.</td>
+        <td>Accettabile con applicazione delle misure di hardening (restrizione IP, HTTPS, allowlist domini, backup cifrati, MFA). Il titolare è responsabile della configurazione del server e dell'attivazione della procedura di notifica artt. 33–34 entro 72h in caso di incidente.</td>
       </tr>
       <tr>
         <td>R4 — Trasferimento Anthropic</td>
