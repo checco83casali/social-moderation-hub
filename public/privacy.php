@@ -296,7 +296,7 @@ amministrate per conto di terzi. La presente informativa è rivolta a:</p>
 <h2>5. Trattamento automatizzato con Intelligenza Artificiale <span class="badge">Art. 22 GDPR</span></h2>
 
 <div class="highlight">
-  <strong>Informazione essenziale:</strong> il contenuto dei commenti pubblicati sulle Pagine gestite è sottoposto a un processo automatizzato di analisi tramite modelli di Intelligenza Artificiale (IA). Tale processo può produrre effetti giuridicamente rilevanti sull'interessato (es. nascondimento o rimozione del commento, applicazione di un ban).
+  <strong>Informazione essenziale:</strong> il contenuto dei commenti pubblicati sulle Pagine gestite è sottoposto a un processo automatizzato di analisi tramite modelli di Intelligenza Artificiale (IA). Tale processo può produrre effetti giuridicamente rilevanti sull'interessato (es. nascondimento temporaneo del commento, applicazione di un ban).
 </div>
 
 <h3>5.1 Come funziona il sistema</h3>
@@ -306,7 +306,7 @@ amministrate per conto di terzi. La presente informativa è rivolta a:</p>
   <li><strong>Livello 2 – AI approfondita (Claude Sonnet):</strong> attivata in caso di bassa confidenza del Livello 1 per un'analisi più accurata.</li>
   <li><strong>Livello 3 – Revisione umana:</strong> attivata quando entrambi i livelli AI producono un esito incerto. Un moderatore umano prende la decisione finale.</li>
 </ol>
-<p>Esiti possibili della moderazione: approvazione (nessuna azione), nascondimento temporaneo (visibile solo all'autore), rimozione, segnalazione per revisione legale, ban dell'utente.</p>
+<p>Esiti possibili della moderazione: approvazione (nessuna azione), nascondimento temporaneo (visibile solo all'autore), segnalazione per revisione legale, ban dell'utente.</p>
 
 <h3>5.2 Dati inviati al servizio AI</h3>
 <p>Al servizio di Intelligenza Artificiale esterno vengono trasmessi <strong>esclusivamente</strong>:</p>
@@ -332,7 +332,7 @@ amministrate per conto di terzi. La presente informativa è rivolta a:</p>
 <p>Misure di salvaguardia implementate:</p>
 <ul>
   <li>Le decisioni ad alta confidenza sono revisionate a campione dagli amministratori.</li>
-  <li>Qualsiasi decisione di nascondimento o rimozione può essere contestata tramite la <strong>procedura di appello</strong> (vedi §8).</li>
+  <li>Qualsiasi decisione di nascondimento può essere contestata tramite la <strong>procedura di appello</strong> (vedi §8).</li>
   <li>Le decisioni di ban definitivo sono sempre soggette a revisione umana preventiva.</li>
   <li>I feedback dei moderatori umani retroalimentano il sistema per ridurre errori futuri.</li>
 </ul>
@@ -382,7 +382,7 @@ amministrate per conto di terzi. La presente informativa è rivolta a:</p>
       <td>12 mesi dalla ricezione, poi cancellazione automatica</td>
     </tr>
     <tr>
-      <td>Commenti nascosti o rimossi + log di moderazione</td>
+      <td>Commenti nascosti + log di moderazione</td>
       <td>24 mesi (necessari per gestire appelli e contenziosi)</td>
     </tr>
     <tr>
@@ -574,7 +574,7 @@ DPO contact: <a href="mailto:<?= $orgEmail ?>"><?= $orgEmail ?></a></p>
 <h2>5. Automated processing and Artificial Intelligence <span class="badge">Art. 22 GDPR</span></h2>
 
 <div class="highlight">
-  <strong>Essential notice:</strong> comments posted on managed Pages are subject to automated analysis by Artificial Intelligence (AI) models. This process may produce legally significant effects on the data subject (e.g. comment hiding or removal, application of a ban).
+  <strong>Essential notice:</strong> comments posted on managed Pages are subject to automated analysis by Artificial Intelligence (AI) models. This process may produce legally significant effects on the data subject (e.g. temporary comment hiding, application of a ban).
 </div>
 
 <h3>5.1 How the system works</h3>
@@ -584,7 +584,7 @@ DPO contact: <a href="mailto:<?= $orgEmail ?>"><?= $orgEmail ?></a></p>
   <li><strong>Tier 2 – Deep AI (Claude Sonnet):</strong> triggered when Tier 1 confidence is low, for more thorough analysis.</li>
   <li><strong>Tier 3 – Human review:</strong> triggered when both AI tiers produce an uncertain outcome. A human moderator makes the final decision.</li>
 </ol>
-<p>Possible outcomes: approval (no action), temporary hiding (visible only to the author), removal, flagging for legal review, user ban.</p>
+<p>Possible outcomes: approval (no action), temporary hiding (visible only to the author), flagging for legal review, user ban.</p>
 
 <h3>5.2 Data sent to the AI service</h3>
 <p>Only the following is transmitted to the external AI service:</p>
@@ -610,7 +610,7 @@ DPO contact: <a href="mailto:<?= $orgEmail ?>"><?= $orgEmail ?></a></p>
 <p>Implemented safeguards:</p>
 <ul>
   <li>High-confidence automated decisions are subject to sample review by administrators.</li>
-  <li>Any hiding or removal decision can be contested via the <strong>appeal procedure</strong> (see §8).</li>
+  <li>Any hiding decision can be contested via the <strong>appeal procedure</strong> (see §8).</li>
   <li>Permanent ban decisions are always subject to prior human review.</li>
   <li>Human moderator feedback is used to improve the system and reduce future errors.</li>
 </ul>
@@ -660,7 +660,7 @@ DPO contact: <a href="mailto:<?= $orgEmail ?>"><?= $orgEmail ?></a></p>
       <td>12 months from receipt, then automatic deletion</td>
     </tr>
     <tr>
-      <td>Hidden or removed comments + moderation log</td>
+      <td>Hidden comments + moderation log</td>
       <td>24 months (required for appeals and disputes)</td>
     </tr>
     <tr>

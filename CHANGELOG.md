@@ -8,6 +8,22 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **DPIA export (art. 35 GDPR)** — documento di Valutazione d'Impatto sulla Protezione dei Dati
+  scaricabile dalle Impostazioni → Privacy Policy. Il documento si genera dinamicamente con i dati
+  reali dell'installazione (titolare, retention configurata, statistiche live) e copre: descrizione
+  del trattamento, base giuridica, fattori di rischio WP248 (8 criteri), identificazione 8 rischi
+  con livello iniziale/residuo, misure di mitigazione tecniche e organizzative, spazio parere DPO,
+  consultazione preventiva art. 36, piano di riesame e blocco firme. Endpoint `GET /api/dpia`,
+  metodo `ModerationController::exportDpia()`, template `public/dpia.php`.
+
+### Fixed
+- **Privacy policy pubblica e registro trattamenti** — rimossi tutti i riferimenti a
+  "rimozione/removal" dei commenti; la terminologia corretta è "nascondimento temporaneo".
+  Aggiornati: `public/privacy.php` (sezioni IT ed EN §5, §7), `public/registro.php` (T1
+  conservazione), `public/dpia.php` (fail-safe). In linea con la policy editoriale del sistema:
+  l'azione preferita è il nascondimento con possibilità di appello, non la cancellazione.
+
 ### Planned (Community edition)
 - Slack / email notifications when human queue exceeds threshold
 - Instagram support (same pipeline via Meta Graph API)

@@ -167,7 +167,7 @@
       </div>
       <div class="t-cell">
         <div class="t-label">Conservazione</div>
-        <div class="t-val">Commenti approvati: 12 mesi. Commenti nascosti/rimossi + log: 24 mesi. Eliminazione automatica.</div>
+        <div class="t-val">Commenti approvati: 12 mesi. Commenti nascosti + log: 24 mesi. Eliminazione automatica.</div>
       </div>
       <div class="t-cell t-full">
         <div class="t-label">Destinatari / Responsabili</div>

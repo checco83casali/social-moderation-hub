@@ -355,7 +355,7 @@
 
   <h3>R6 — Dipendenza da servizio terzo</h3>
   <ul class="measures">
-    <li><strong>Fail-safe:</strong> se l'API Anthropic non risponde, il commento viene automaticamente escalato alla coda di revisione umana invece di essere bloccato o auto-rimosso.</li>
+    <li><strong>Fail-safe:</strong> se l'API Anthropic non risponde, il commento viene automaticamente escalato alla coda di revisione umana invece di essere nascosto automaticamente.</li>
     <li><strong>Modelli multipli:</strong> la pipeline usa Haiku (cost-efficient) e Sonnet (qualità). L'architettura consente di aggiornare i model ID in configurazione senza modifiche al codice.</li>
   </ul>
 
