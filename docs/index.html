@@ -560,22 +560,6 @@ h2 {
   border-radius: 100px; margin-left: 6px;
 }
 
-/* paypal btn */
-.paypal-btn-wrap { margin-top: 4px; }
-.paypal-placeholder {
-  width: 100%; padding: 16px; border-radius: 14px;
-  background: #FFC439; border: none; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  font-size: 16px; font-weight: 700; color: #003087;
-  transition: filter .2s, transform .18s;
-  box-shadow: 0 6px 24px rgba(255,196,57,.35);
-}
-.paypal-placeholder:hover { filter: brightness(1.07); transform: translateY(-1px); }
-.paypal-logo {
-  font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px;
-  color: #003087; letter-spacing: -0.5px;
-}
-.paypal-logo span { color: #009CDE; }
 .plan-name-free {
   font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800;
   letter-spacing: .15em; text-transform: uppercase; opacity: .5; margin-bottom: 8px;
@@ -1205,15 +1189,9 @@ footer {
 
         <hr class="plan-divider">
 
-        <!-- PayPal Subscription Button placeholder -->
-        <div class="paypal-btn-wrap" style="margin-top:auto;">
-          <button class="paypal-placeholder" id="paypal-btn" onclick="alert('PayPal Plan ID da configurare')">
-            <span class="paypal-logo">Pay<span>Pal</span></span>
-            <span id="paypal-btn-label" data-i18n="plan.pro.paybtn">Subscribe at €19.90/month</span>
-          </button>
-          <p style="text-align:center;font-size:12px;opacity:.38;margin-top:10px;" data-i18n="plan.pro.payinfo">
-            Cancel anytime · Secure payment via PayPal
-          </p>
+        <div class="plan-cta-info" style="margin-top:auto;">
+          <strong data-i18n="plan.pro.notyet">Not buyable yet</strong> — <span data-i18n="plan.pro.notyetdesc">license server launching soon.</span><br>
+          <span data-i18n="plan.pro.earlyaccess">Interested in early access?</span> <a href="mailto:checco83@gmail.com" style="color:#c4a4ff;text-decoration:underline;text-underline-offset:3px;" data-i18n="plan.pro.contact">Get in touch</a>.
         </div>
       </div>
 
@@ -1457,30 +1435,24 @@ function toggleBilling() {
   const lblY = document.getElementById('lbl-year');
   const price = document.getElementById('price-display');
   const period = document.getElementById('price-period');
-  const paypalLabel = document.getElementById('paypal-btn-label');
 
   knob.style.transform = isAnnual ? 'translateX(24px)' : 'translateX(0)';
   lblM.style.opacity = isAnnual ? '.45' : '1';
   lblY.style.opacity = isAnnual ? '1' : '.45';
 
-  // Advanced tier (launching soon — no subscribe button, just info)
   const advPrice  = document.getElementById('adv-price-display');
   const advPeriod = document.getElementById('adv-price-period');
 
   if (isAnnual) {
     price.textContent = '€199.00';
     period.textContent = 'per year · automatic renewal · save €39.80';
-    paypalLabel.textContent = 'Subscribe at €199.00/year';
     if (advPrice)  advPrice.textContent  = '€299.00';
     if (advPeriod) advPeriod.textContent = 'per year · early access opening · save €59.80';
-    // TODO: swap to annual PayPal Plan ID
   } else {
     price.textContent = '€19.90';
     period.textContent = 'per month · automatic renewal';
-    paypalLabel.textContent = 'Subscribe at €19.90/month';
     if (advPrice)  advPrice.textContent  = '€29.90';
     if (advPeriod) advPeriod.textContent = 'per month · early access opening';
-    // TODO: swap to monthly PayPal Plan ID
   }
 }
 
@@ -1552,7 +1524,8 @@ const TRANS = {
     'plan.free.soon':'Coming soon for Community','plan.free.cta':'Deploy free →',
     'plan.pro.period':'per month · automatic renewal','plan.pro.desc':'The everyday moderation tier. Multi-page, AI fact-check, custom templates, legal escalation lane.',
     'plan.pro.included':'Everything in Community, plus','plan.pro.soon':'Coming soon for Pro',
-    'plan.pro.paybtn':'Subscribe at €19.90/month','plan.pro.payinfo':'Cancel anytime · Secure payment via PayPal',
+    'plan.pro.notyet':'Not buyable yet','plan.pro.notyetdesc':'license server launching soon.',
+    'plan.pro.earlyaccess':'Interested in early access?','plan.pro.contact':'Get in touch',
     'plan.adv.badge':'Launching soon','plan.adv.period':'per month · early access opening',
     'plan.adv.desc':"Predict, don't just react. Proactive risk prediction and editorial intelligence for high-volume pages.",
     'plan.adv.included':'Everything in Community and Pro, plus',
@@ -1654,7 +1627,8 @@ const TRANS = {
     'plan.free.soon':'Prossimamente per Community','plan.free.cta':'Deploy gratuito →',
     'plan.pro.period':'al mese · rinnovo automatico','plan.pro.desc':'Il livello di moderazione quotidiana. Multi-pagina, fact-check AI, template personalizzati, corsia di escalation legale.',
     'plan.pro.included':'Tutto di Community, più','plan.pro.soon':'Prossimamente per Pro',
-    'plan.pro.paybtn':'Abbonati a €19,90/mese','plan.pro.payinfo':'Cancella in qualsiasi momento · Pagamento sicuro via PayPal',
+    'plan.pro.notyet':'Non ancora acquistabile','plan.pro.notyetdesc':'server licenze in arrivo.',
+    'plan.pro.earlyaccess':'Interessato all\'early access?','plan.pro.contact':'Contattami',
     'plan.adv.badge':'In arrivo','plan.adv.period':'al mese · apertura early access',
     'plan.adv.desc':'Previeni, non solo reagisci. Predizione proattiva del rischio e intelligence editoriale per pagine ad alto volume.',
     'plan.adv.included':'Tutto di Community e Pro, più',
