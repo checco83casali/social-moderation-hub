@@ -23,6 +23,13 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   consultazione preventiva art. 36, piano di riesame e blocco firme. Endpoint `GET /api/dpia`,
   metodo `ModerationController::exportDpia()`, template `public/dpia.php`.
 
+- **DPIA — sezione data breach (artt. 33–34 GDPR)** — R3 espansa con: tabella 6 scenari
+  di breach (credenziali compromesse, SQL injection, server compromise, insider threat,
+  backup in chiaro, esposizione accidentale dashboard) ciascuno con probabilità, impatto
+  e obbligo di notifica; misure di rilevamento; procedura di risposta a 6 fasi con
+  tempistiche obbligatorie (h0 contenimento → 24h valutazione → 72h notifica Garante
+  art. 33 → notifica interessati art. 34 → recovery → registro interno incidenti).
+
 ### Fixed
 - **Privacy policy pubblica e registro trattamenti** — rimossi tutti i riferimenti a
   "rimozione/removal" dei commenti; la terminologia corretta è "nascondimento temporaneo".
