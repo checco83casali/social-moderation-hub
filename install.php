@@ -77,7 +77,7 @@ if (!file_exists(__DIR__ . '/.env')) {
 ok('.env present');
 
 // Load .env
-$env = parse_ini_file(__DIR__ . '/.env');
+$env = parse_ini_file(__DIR__ . '/.env', false, INI_SCANNER_RAW);
 foreach ($env as $k => $v) {
     $_ENV[$k] = $v;
     putenv("{$k}={$v}");
