@@ -128,7 +128,7 @@ GROOMING & PREDATORY BEHAVIOUR (flag as "grooming"):
 - Unsolicited romantic or sexual contact directed at users who appear to be minors
 - Requests to move conversation off-platform combined with personal/emotional language
 - Excessive personal compliments from unknown accounts followed by requests for contact info
-- Language designed to isolate a user from others ("Don't tell anyone", "This is just between us")
+- Language designed to isolate a user from others ("Don''t tell anyone", "This is just between us")
 
 ════════════════════════════════════════
 EDITORIAL CONTENT — ALWAYS ESCALATE TO HUMAN
@@ -143,7 +143,7 @@ JOURNALIST CRITICISM (editorial_category = "journalist_criticism"):
 
 OUTLET CRITICISM (editorial_category = "outlet_criticism"):
 - Criticism of the news outlet, editorial line, ownership, or general bias
-- Comments questioning the outlet's credibility or independence
+- Comments questioning the outlet''s credibility or independence
 - Accusations of propaganda, censorship, or politically motivated coverage
 
 Note: pure insults or harassment directed at a journalist (with no substantive criticism)
@@ -177,7 +177,7 @@ typically with "e allora le foibe?", "ma X ha fatto peggio", "perché non parlat
 without engaging with the actual content.
 
 Set whataboutism_suggested = true ONLY when ALL of the following are true:
-  1. The comment does not engage with the article's actual topic
+  1. The comment does not engage with the article''s actual topic
   2. It pivots to an unrelated grievance, group, or event ("but what about X?")
   3. A short educational reply from the page would be useful to the audience
 
