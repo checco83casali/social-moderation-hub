@@ -409,12 +409,11 @@
               Chiave API Anthropic usata per la moderazione AI. Viene salvata nel file <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">.env</code> sul server.<br>
               La chiave attuale è mostrata mascherata. Lascia il campo vuoto per non modificarla.
             </p>
-            <div style="display:flex;gap:10px;align-items:center;max-width:520px">
+            <div style="max-width:520px">
               <input class="form-input" type="password" id="set-anthropic-key"
                 placeholder="Chiave attuale: —"
                 autocomplete="new-password"
-                style="flex:1;font-family:var(--mono);font-size:13px">
-              <button class="btn btn-sm" type="button" onclick="toggleApiKeyVisibility()" id="set-anthropic-key-toggle" style="white-space:nowrap">Mostra</button>
+                style="width:100%;font-family:var(--mono);font-size:13px">
             </div>
             <p style="font-size:11px;color:var(--muted);margin-top:8px">La chiave deve iniziare con <code style="font-family:var(--mono)">sk-ant-</code>. Salvala con il pulsante "Salva impostazioni" qui sotto.</p>
           </div>

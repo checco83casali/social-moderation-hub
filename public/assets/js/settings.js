@@ -430,16 +430,6 @@ function applyDevModeBadge(active) {
   }
 }
 
-// ── Claude API key visibility toggle ─────────────────────────────
-function toggleApiKeyVisibility() {
-  const input  = document.getElementById('set-anthropic-key');
-  const btn    = document.getElementById('set-anthropic-key-toggle');
-  if (!input) return;
-  const show   = input.type === 'password';
-  input.type   = show ? 'text' : 'password';
-  if (btn) btn.textContent = show ? 'Nascondi' : 'Mostra';
-}
-
 // ── Reply enabled toggle ─────────────────────────────────────────
 function onReplyEnabledChange(checked) {
   const gdprWarn = document.getElementById('reply-gdpr-warning');
