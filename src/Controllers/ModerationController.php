@@ -1227,6 +1227,13 @@ class ModerationController
             ]);
         }
 
+        // Mask the Anthropic API key: expose only the first 10 chars
+        $rawKey = $_ENV['ANTHROPIC_API_KEY'] ?? '';
+        $merged['anthropic_api_key_set']    = $rawKey !== '';
+        $merged['anthropic_api_key_masked'] = $rawKey !== ''
+            ? substr($rawKey, 0, 10) . '…****'
+            : '';
+
         // Append license status for admin (no key exposed)
         $licenseStatus = $this->license->getStatus();
 
@@ -1330,6 +1337,18 @@ class ModerationController
         // Apply timezone immediately if changed (no restart required)
         if (isset($saved['app_timezone'])) {
             date_default_timezone_set($saved['app_timezone']);
+        }
+
+        // Anthropic API key — written to .env, never stored in DB
+        if (array_key_exists('anthropic_api_key', $body)) {
+            $newKey = trim((string) $body['anthropic_api_key']);
+            if ($newKey !== '') {
+                if (!str_starts_with($newKey, 'sk-ant-')) {
+                    return $this->json($response, ['error' => 'Chiave Anthropic non valida (deve iniziare con sk-ant-).'], 422);
+                }
+                $this->writeEnvKey('ANTHROPIC_API_KEY', $newKey);
+                $saved['anthropic_api_key_masked'] = substr($newKey, 0, 10) . '…****';
+            }
         }
 
         return $this->json($response, ['saved' => true, 'settings' => $saved]);
@@ -1659,5 +1678,34 @@ class ModerationController
         return $response
             ->withHeader('Content-Type', 'application/json')
             ->withStatus($status);
+    }
+
+    /**
+     * Atomically update a single key in the .env file and propagate to $_ENV/putenv.
+     * Creates the key at the end of the file if not already present.
+     */
+    private function writeEnvKey(string $key, string $value): void
+    {
+        $envFile = dirname(__DIR__, 2) . '/.env';
+        if (!is_file($envFile) || !is_writable($envFile)) {
+            throw new \RuntimeException('.env non trovato o non scrivibile.');
+        }
+
+        $content = file_get_contents($envFile);
+        $quoted  = '"' . addcslashes($value, '"\\') . '"';
+        $pattern = '/^' . preg_quote($key, '/') . '=.*$/m';
+
+        if (preg_match($pattern, $content)) {
+            $content = preg_replace($pattern, $key . '=' . $quoted, $content);
+        } else {
+            $content .= "\n" . $key . '=' . $quoted . "\n";
+        }
+
+        $tmp = $envFile . '.tmp.' . getmypid();
+        file_put_contents($tmp, $content, LOCK_EX);
+        rename($tmp, $envFile);
+
+        $_ENV[$key] = $value;
+        putenv("{$key}={$value}");
     }
 }

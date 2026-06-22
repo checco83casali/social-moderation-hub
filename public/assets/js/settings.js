@@ -71,6 +71,19 @@ async function loadSettings() {
       document.getElementById('settings-save-btn').style.cursor  = 'not-allowed';
     }
 
+    // ── Claude AI key panel (admin only) ────────────────────────────
+    const claudePanel = document.getElementById('claude-key-panel');
+    if (claudePanel) claudePanel.style.display = isAdmin ? 'block' : 'none';
+    if (isAdmin) {
+      const keyInput = document.getElementById('set-anthropic-key');
+      if (keyInput) {
+        keyInput.placeholder = d.anthropic_api_key_set
+          ? 'Attuale: ' + (d.anthropic_api_key_masked ?? '…') + ' — lascia vuoto per non modificare'
+          : 'Inserisci la chiave sk-ant-…';
+        keyInput.value = '';
+      }
+    }
+
     // ── License & Pro panels (admin only) ───────────────────────────
     if (isAdmin) {
       const lic = d.license ?? {};
@@ -306,7 +319,20 @@ async function saveSettings() {
       if (!isNaN(wbVal) && wbVal >= 0.5 && wbVal <= 1.0) payload.whataboutism_auto_publish_threshold = wbVal;
     }
 
+    // Anthropic API key — solo se l'utente ha inserito qualcosa
+    const apiKeyEl = document.getElementById('set-anthropic-key');
+    if (apiKeyEl && apiKeyEl.value.trim()) {
+      payload.anthropic_api_key = apiKeyEl.value.trim();
+    }
+
     await api('/settings', 'PUT', payload);
+
+    // Reset campo chiave dopo salvataggio riuscito
+    if (apiKeyEl && apiKeyEl.value.trim()) {
+      apiKeyEl.value = '';
+      await loadSettings(); // ricarica per aggiornare il placeholder con la nuova chiave mascherata
+      return;
+    }
 
     // Aggiorna i link di anteprima con il nuovo app_url
     const privLinkAfter   = document.getElementById('privacy-preview-link');
@@ -402,6 +428,16 @@ function applyDevModeBadge(active) {
     badge?.remove();
     document.body.classList.remove('dev-mode-active');
   }
+}
+
+// ── Claude API key visibility toggle ─────────────────────────────
+function toggleApiKeyVisibility() {
+  const input  = document.getElementById('set-anthropic-key');
+  const btn    = document.getElementById('set-anthropic-key-toggle');
+  if (!input) return;
+  const show   = input.type === 'password';
+  input.type   = show ? 'text' : 'password';
+  if (btn) btn.textContent = show ? 'Nascondi' : 'Mostra';
 }
 
 // ── Reply enabled toggle ─────────────────────────────────────────

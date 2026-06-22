@@ -398,6 +398,29 @@
 
       </div>
 
+      <!-- Claude AI API key (admin only) -->
+      <div id="claude-key-panel" style="display:none;margin-top:20px;max-width:900px">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">🤖 Integrazione Claude AI</div>
+          </div>
+          <div class="policy-form">
+            <p style="font-size:12.5px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+              Chiave API Anthropic usata per la moderazione AI. Viene salvata nel file <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">.env</code> sul server.<br>
+              La chiave attuale è mostrata mascherata. Lascia il campo vuoto per non modificarla.
+            </p>
+            <div style="display:flex;gap:10px;align-items:center;max-width:520px">
+              <input class="form-input" type="password" id="set-anthropic-key"
+                placeholder="Chiave attuale: —"
+                autocomplete="new-password"
+                style="flex:1;font-family:var(--mono);font-size:13px">
+              <button class="btn btn-sm" type="button" onclick="toggleApiKeyVisibility()" id="set-anthropic-key-toggle" style="white-space:nowrap">Mostra</button>
+            </div>
+            <p style="font-size:11px;color:var(--muted);margin-top:8px">La chiave deve iniziare con <code style="font-family:var(--mono)">sk-ant-</code>. Salvala con il pulsante "Salva impostazioni" qui sotto.</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Dev mode panel (admin only) -->
       <div id="dev-mode-panel" style="display:none;margin-top:20px;max-width:900px">
         <div class="panel" style="border-color:rgba(247,178,68,.3)">
