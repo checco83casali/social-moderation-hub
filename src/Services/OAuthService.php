@@ -251,7 +251,8 @@ class OAuthService
     /**
      * Create a brand-new local-only user with an auto-generated temporary password (no OAuth).
      * Used by admin to create moderator/supervisor/admin accounts.
-     * Returns ['user_id' => int, 'temp_password' => string].
+     *
+     * @return array{user_id: int, temp_password: string}
      */
     public function setPasswordForNewUser(string $name, string $email, string $role): array
     {
