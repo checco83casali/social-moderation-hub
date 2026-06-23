@@ -89,15 +89,14 @@ $app->get('/', function ($request, $response) {
     return $response->withHeader('Location', '/dashboard.html')->withStatus(302);
 });
 
+// Public: static auth routes (must be registered before dynamic {provider} routes)
+$app->post('/auth/local',              [AuthController::class, 'localLogin']);
+$app->get('/auth/providers',           [AuthController::class, 'providers']);
+
 // Public: OAuth login (GET redirect + GET/POST callback for Microsoft)
 $app->get('/auth/{provider}',          [AuthController::class, 'redirect']);
 $app->get('/auth/{provider}/callback', [AuthController::class, 'callback']);
 $app->post('/auth/{provider}/callback',[AuthController::class, 'callback']);
-
-// Public: local (username + password) login
-$app->post('/auth/local',              [AuthController::class, 'localLogin']);
-// Public: which OAuth providers are configured (used by login screen to hide unconfigured buttons)
-$app->get('/auth/providers',           [AuthController::class, 'providers']);
 
 // ── Public transparency endpoints (no auth required) ──────────────
 $app->get('/public/policy', function ($request, $response) {
