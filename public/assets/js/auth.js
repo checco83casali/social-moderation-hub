@@ -19,10 +19,22 @@ function logout() {
   location.reload();
 }
 
-// Set OAuth button hrefs once DOM is ready
-document.getElementById('btn-google').href = HUB_URL + '/auth/google';
-document.getElementById('btn-meta').href   = HUB_URL + '/auth/meta';
-document.getElementById('btn-ms').href     = HUB_URL + '/auth/microsoft';
+// Set OAuth button hrefs and hide unconfigured providers
+(async () => {
+  document.getElementById('btn-google').href = HUB_URL + '/auth/google';
+  document.getElementById('btn-meta').href   = HUB_URL + '/auth/meta';
+  document.getElementById('btn-ms').href     = HUB_URL + '/auth/microsoft';
+  try {
+    const res = await fetch(HUB_URL + '/auth/providers');
+    const p   = await res.json();
+    if (!p.google)    document.getElementById('btn-google').style.display = 'none';
+    if (!p.meta)      document.getElementById('btn-meta').style.display   = 'none';
+    if (!p.microsoft) document.getElementById('btn-ms').style.display     = 'none';
+    if (!p.google && !p.meta && !p.microsoft) {
+      document.getElementById('login-oauth-sep').style.display = 'none';
+    }
+  } catch (_) { /* se la chiamata fallisce i pulsanti restano visibili */ }
+})();
 
 // ── Local (email + password) login ───────────────────────────────
 async function doLocalLogin() {

@@ -192,6 +192,19 @@ class AuthController
         return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
     }
 
+    // ── GET /auth/providers  ─────────────────────────────────────────
+    /** Public: returns which OAuth providers are configured (no credentials exposed). */
+    public function providers(ServerRequestInterface $request, Response $response): ResponseInterface
+    {
+        $configured = [
+            'google'    => !empty($_ENV['OAUTH_GOOGLE_CLIENT_ID'])    && !empty($_ENV['OAUTH_GOOGLE_CLIENT_SECRET']),
+            'meta'      => !empty($_ENV['OAUTH_META_CLIENT_ID'])      && !empty($_ENV['OAUTH_META_CLIENT_SECRET']),
+            'microsoft' => !empty($_ENV['OAUTH_MICROSOFT_CLIENT_ID']) && !empty($_ENV['OAUTH_MICROSOFT_CLIENT_SECRET']),
+        ];
+        $response->getBody()->write(json_encode($configured));
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
     private function error(Response $response, string $message, int $status): ResponseInterface
     {
         $response->getBody()->write(json_encode(['error' => $message]));

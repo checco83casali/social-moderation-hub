@@ -96,6 +96,8 @@ $app->post('/auth/{provider}/callback',[AuthController::class, 'callback']);
 
 // Public: local (username + password) login
 $app->post('/auth/local',              [AuthController::class, 'localLogin']);
+// Public: which OAuth providers are configured (used by login screen to hide unconfigured buttons)
+$app->get('/auth/providers',           [AuthController::class, 'providers']);
 
 // ── Public transparency endpoints (no auth required) ──────────────
 $app->get('/public/policy', function ($request, $response) {
