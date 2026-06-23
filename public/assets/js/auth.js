@@ -47,9 +47,31 @@ async function doLocalLogin() {
     TOKEN = data.token;
     localStorage.setItem('mh_token', TOKEN);
     document.getElementById('login-screen').style.display = 'none';
-    initApp();
+    if (data.must_change_password) {
+      document.getElementById('forced-pwd-screen').style.display = 'flex';
+    } else {
+      initApp();
+    }
   } catch (e) {
     errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  }
+}
+
+async function saveForcedPassword() {
+  const newPwd  = document.getElementById('forced-pwd-new').value;
+  const confirm = document.getElementById('forced-pwd-confirm').value;
+  const errEl   = document.getElementById('forced-pwd-err');
+  errEl.style.display = 'none';
+  if (!newPwd)            { errEl.textContent = 'Inserisci la nuova password.';  errEl.style.display = 'block'; return; }
+  if (newPwd !== confirm) { errEl.textContent = 'Le password non coincidono.';   errEl.style.display = 'block'; return; }
+  if (newPwd.length < 8)  { errEl.textContent = 'Minimo 8 caratteri.';          errEl.style.display = 'block'; return; }
+  try {
+    await api('/me/password', 'POST', { password: newPwd, password_confirm: confirm });
+    document.getElementById('forced-pwd-screen').style.display = 'none';
+    initApp();
+  } catch (e) {
+    errEl.textContent = e.message || 'Errore nel salvataggio.';
     errEl.style.display = 'block';
   }
 }

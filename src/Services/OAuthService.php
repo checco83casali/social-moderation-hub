@@ -200,8 +200,9 @@ class OAuthService
         $jwt = $this->issueJwt($user->id, $user->role, $user->name, $user->email);
 
         return [
-            'token' => $jwt,
-            'user'  => [
+            'token'                => $jwt,
+            'must_change_password' => (bool) ($user->must_change_password ?? false),
+            'user'                 => [
                 'id'         => $user->id,
                 'name'       => $user->name,
                 'email'      => $user->email,
@@ -227,8 +228,9 @@ class OAuthService
         $affected = DB::table('admin_users')
             ->where('id', $userId)
             ->update([
-                'password_hash' => $hash,
-                'updated_at'    => date('Y-m-d H:i:s'),
+                'password_hash'        => $hash,
+                'must_change_password' => 0,
+                'updated_at'           => date('Y-m-d H:i:s'),
             ]);
 
         if (!$affected) {
@@ -247,27 +249,28 @@ class OAuthService
     }
 
     /**
-     * Create a brand-new local-only user with a password (no OAuth).
-     * Used by admin to create moderator accounts.
+     * Create a brand-new local-only user with an auto-generated temporary password (no OAuth).
+     * Used by admin to create moderator/supervisor/admin accounts.
+     * Returns ['user_id' => int, 'temp_password' => string].
      */
-    public function setPasswordForNewUser(string $name, string $email, string $password, string $role): int
+    public function setPasswordForNewUser(string $name, string $email, string $role): array
     {
-        if (mb_strlen($password) < 8) {
-            throw new \RuntimeException('La password deve essere di almeno 8 caratteri.');
-        }
+        $tempPassword = bin2hex(random_bytes(8)); // 16-char hex, 128-bit entropy
+        $hash         = password_hash($tempPassword, PASSWORD_BCRYPT);
+        $now          = date('Y-m-d H:i:s');
 
-        $hash = password_hash($password, PASSWORD_BCRYPT);
-        $now  = date('Y-m-d H:i:s');
-
-        return (int) DB::table('admin_users')->insertGetId([
-            'name'          => $name,
-            'email'         => $email,
-            'password_hash' => $hash,
-            'role'          => $role,
-            'is_active'     => 1,
-            'created_at'    => $now,
-            'updated_at'    => $now,
+        $userId = (int) DB::table('admin_users')->insertGetId([
+            'name'                 => $name,
+            'email'                => $email,
+            'password_hash'        => $hash,
+            'must_change_password' => 1,
+            'role'                 => $role,
+            'is_active'            => 1,
+            'created_at'           => $now,
+            'updated_at'           => $now,
         ]);
+
+        return ['user_id' => $userId, 'temp_password' => $tempPassword];
     }
 
     /**

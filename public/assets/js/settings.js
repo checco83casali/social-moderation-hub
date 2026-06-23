@@ -444,33 +444,44 @@ function onReplyEnabledChange(checked) {
 
 // ── Local users (admin only) ──────────────────────────────────────
 function openCreateUser() {
-  ['cu-name', 'cu-email', 'cu-password'].forEach(id => document.getElementById(id).value = '');
+  ['cu-name', 'cu-email'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('cu-role').value = 'moderator';
   document.getElementById('cu-err').style.display = 'none';
   openModal('modal-create-user');
 }
 
 async function createLocalUser() {
-  const name     = document.getElementById('cu-name').value.trim();
-  const email    = document.getElementById('cu-email').value.trim();
-  const password = document.getElementById('cu-password').value;
-  const role     = document.getElementById('cu-role').value;
-  const errEl    = document.getElementById('cu-err');
+  const name  = document.getElementById('cu-name').value.trim();
+  const email = document.getElementById('cu-email').value.trim();
+  const role  = document.getElementById('cu-role').value;
+  const errEl = document.getElementById('cu-err');
   errEl.style.display = 'none';
-  if (!name || !email || !password) {
-    errEl.textContent = 'Tutti i campi sono obbligatori.';
+  if (!name || !email) {
+    errEl.textContent = 'Nome ed email sono obbligatori.';
     errEl.style.display = 'block';
     return;
   }
   try {
-    await api('/users/local', 'POST', { name, email, password, role });
-    toast('Utente creato', 'ok');
+    const res = await api('/users/local', 'POST', { name, email, role });
     closeModal('modal-create-user');
     loadLocalUsers();
+    document.getElementById('tp-email').textContent    = email;
+    document.getElementById('tp-password').textContent = res.temp_password;
+    document.getElementById('tp-copy-btn').textContent = 'Copia';
+    openModal('modal-temp-password');
   } catch (e) {
     errEl.textContent = e.message || 'Errore nella creazione.';
     errEl.style.display = 'block';
   }
+}
+
+function copyTempPassword() {
+  const pwd = document.getElementById('tp-password').textContent;
+  navigator.clipboard.writeText(pwd).then(() => {
+    const btn = document.getElementById('tp-copy-btn');
+    btn.textContent = 'Copiata!';
+    setTimeout(() => { btn.textContent = 'Copia'; }, 2000);
+  });
 }
 
 async function loadLocalUsers() {

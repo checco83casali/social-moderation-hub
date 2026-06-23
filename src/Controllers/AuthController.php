@@ -150,7 +150,7 @@ class AuthController
     }
 
     // ── POST /api/users/local  ───────────────────────────────────────
-    /** Create a new local user (admin only). */
+    /** Create a new local user (admin only). Returns the one-time temp password. */
     public function createLocalUser(ServerRequestInterface $request, Response $response): ResponseInterface
     {
         $auth = $request->getAttribute('auth_user');
@@ -158,22 +158,18 @@ class AuthController
             return $this->error($response, 'Accesso negato.', 403);
         }
 
-        $body     = (array) $request->getParsedBody();
-        $name     = trim((string) ($body['name']     ?? ''));
-        $email    = trim((string) ($body['email']    ?? ''));
-        $password =       (string) ($body['password'] ?? '');
-        $role     =       (string) ($body['role']     ?? 'moderator');
+        $body  = (array) $request->getParsedBody();
+        $name  = trim((string) ($body['name']  ?? ''));
+        $email = trim((string) ($body['email'] ?? ''));
+        $role  =       (string) ($body['role']  ?? 'moderator');
 
-        if (empty($name) || empty($email) || empty($password)) {
-            return $this->error($response, 'Nome, email e password sono obbligatori.', 400);
+        if (empty($name) || empty($email)) {
+            return $this->error($response, 'Nome ed email sono obbligatori.', 400);
         }
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return $this->error($response, 'Email non valida.', 400);
         }
-        if (mb_strlen($password) < 8) {
-            return $this->error($response, 'La password deve essere di almeno 8 caratteri.', 400);
-        }
-        if (!in_array($role, ['admin', 'moderator'], true)) {
+        if (!in_array($role, ['admin', 'moderator', 'supervisor'], true)) {
             $role = 'moderator';
         }
 
@@ -184,12 +180,15 @@ class AuthController
         }
 
         try {
-            $this->oauth->setPasswordForNewUser($name, $email, $password, $role);
+            $result = $this->oauth->setPasswordForNewUser($name, $email, $role);
         } catch (\Throwable $e) {
             return $this->error($response, $e->getMessage(), 422);
         }
 
-        $response->getBody()->write(json_encode(['ok' => true]));
+        $response->getBody()->write(json_encode([
+            'ok'            => true,
+            'temp_password' => $result['temp_password'],
+        ]));
         return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
     }
 

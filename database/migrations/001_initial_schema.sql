@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS `admin_users` (
     `oauth_provider` ENUM('google','meta','microsoft') NULL COMMENT 'NULL for local-only accounts',
     `oauth_id`       VARCHAR(255) NULL,
     `password_hash`  VARCHAR(255) NULL COMMENT 'bcrypt hash, NULL if only OAuth login',
+    `must_change_password` TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Se 1, l''utente deve cambiare la password al prossimo accesso',
     `role`           ENUM('admin','moderator','supervisor') NOT NULL DEFAULT 'moderator',
     `is_active`      TINYINT(1) NOT NULL DEFAULT 1,
     `last_login_at`  TIMESTAMP NULL,
@@ -484,5 +485,13 @@ CREATE TABLE IF NOT EXISTS `license_cache` (
 --
 -- INSERT IGNORE INTO `app_settings` (`key`, `value`) VALUES
 -- ('whataboutism_auto_publish_threshold', '0.95');
+
+-- ============================================================
+-- UPGRADE: password temporanea al primo accesso (migration 003)
+-- ============================================================
+-- ALTER TABLE `admin_users`
+--   ADD COLUMN `must_change_password` TINYINT(1) NOT NULL DEFAULT 0
+--         COMMENT 'Se 1, l''utente deve cambiare la password al prossimo accesso'
+--         AFTER `password_hash`;
 
 SET FOREIGN_KEY_CHECKS = 1;
