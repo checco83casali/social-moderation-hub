@@ -941,7 +941,19 @@
     <div style="font-size:15px;font-weight:600;margin-bottom:18px">Nuovo utente locale</div>
     <div class="form-group"><label class="form-label">Nome</label><input class="form-input" type="text" id="cu-name" placeholder="Mario Rossi" style="width:100%;box-sizing:border-box"></div>
     <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="cu-email" placeholder="mario@esempio.it" style="width:100%;box-sizing:border-box"></div>
-    <div class="form-group"><label class="form-label">Ruolo</label><select class="form-input" id="cu-role" style="width:100%;box-sizing:border-box"><option value="moderator">Moderatore</option><option value="supervisor">Supervisore</option><option value="admin">Admin</option></select></div>
+    <div class="form-group">
+      <label class="form-label" style="display:flex;align-items:center;gap:6px">Ruolo
+        <span style="position:relative;display:inline-flex;align-items:center" class="role-tip-wrap">
+          <span style="width:15px;height:15px;border-radius:50%;background:var(--border);color:var(--muted);font-size:10px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;cursor:default;flex-shrink:0">?</span>
+          <span style="position:absolute;left:22px;top:50%;transform:translateY(-50%);width:260px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:11px;font-weight:400;color:var(--text);box-shadow:0 4px 16px rgba(0,0,0,.18);z-index:10;display:none;line-height:1.5" class="role-tip-box">
+            <strong>Moderatore</strong> — revisione commenti, approvazioni, rimozioni e ban utenti.<br><br>
+            <strong>Supervisore</strong> — come Moderatore, più segnalazioni legali, dossier, export log e registro trattamenti (DPIA). Non può bannare utenti.<br><br>
+            <strong>Admin</strong> — accesso completo: include tutto del Supervisore più impostazioni, policy AI, pagine Facebook, licenza e gestione utenti.
+          </span>
+        </span>
+      </label>
+      <select class="form-input" id="cu-role" style="width:100%;box-sizing:border-box"><option value="moderator">Moderatore</option><option value="supervisor">Supervisore</option><option value="admin">Admin</option></select>
+    </div>
     <div id="cu-err" style="display:none;font-size:12px;color:var(--danger);margin-bottom:10px"></div>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
       <button class="btn-secondary" onclick="closeModal('modal-create-user')">Annulla</button>
@@ -1126,6 +1138,8 @@
 
 <!-- Facebook JS SDK (loaded lazily when the user opens "Add pages" modal) -->
 <div id="fb-root"></div>
+
+<style>.role-tip-wrap:hover .role-tip-box{display:block!important}</style>
 
 <!-- Scripts (order matters) -->
 <script src="assets/js/config.js"></script>
