@@ -19,7 +19,7 @@ connettere Social Moderation Hub alle pagine Facebook.
 2. Clicca **Crea app**
 3. Scegli il tipo: **Business** (obbligatorio per le API delle pagine)
 4. Inserisci:
-   - **Nome app**: es. `SMTV Moderation` (non viene mostrato agli utenti)
+   - **Nome app**: es. `MyBrand Moderation` (non viene mostrato agli utenti)
    - **Email contatto**: la tua email
    - **Business account**: collega il Business Manager se ce l'hai
 5. Clicca **Crea app**
@@ -51,7 +51,7 @@ Facebook Login è necessario per connettere le pagine dalla dashboard.
 3. Scegli **Web**
 4. In **URI di reindirizzamento OAuth validi** aggiungi:
    ```
-   https://moderation.sanmarinortv.sm/auth/meta/callback
+   https://moderation.tuodominio.com/auth/meta/callback
    ```
 5. Salva le modifiche
 
@@ -82,7 +82,7 @@ Il webhook riceve in tempo reale i nuovi commenti dalla pagina Facebook.
 
 Compila i campi:
 
-- **URL di callback**: `https://moderation.sanmarinortv.sm/webhook/meta`
+- **URL di callback**: `https://moderation.tuodominio.com/webhook/meta`
 - **Token di verifica**: il valore di `META_WEBHOOK_VERIFY_TOKEN` dal tuo `.env`
 
 ```env
@@ -116,7 +116,7 @@ META_FB_LOGIN_CONFIG_ID=123456789
 
 ## Step 6 — Connetti la pagina dalla dashboard
 
-1. Apri `https://moderation.sanmarinortv.sm/dashboard.html`
+1. Apri `https://moderation.tuodominio.com/dashboard.html`
 2. Vai su **Pagine Facebook → + Connetti pagina**
 3. Segui il flusso Facebook Login
 4. Seleziona la pagina da moderare
