@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Go-Live Checklist — Social Moderation Hub</title>
+<meta name="description" content="Checklist interattiva per mettere in produzione Social Moderation Hub.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --accent:#4f8ef7; --accent2:#3f6fe0; --ok:#3ecf8e; --warn:#f7b24a; --danger:#f25c54;
+  --ink:#0e1220; --ink2:#161b2e; --ink3:#1d2540;
+  --paper:#f6f8fc; --muted:#7b8499; --line:#e3e8f2;
+  --nav-h: 68px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #eef2fb;
+  background: var(--ink);
+  overflow-x: hidden;
+}
+a { color: inherit; text-decoration: none; }
+
+/* ─── NAV ─── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: var(--nav-h);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 clamp(20px, 4vw, 64px);
+  background: rgba(14,18,32,.82);
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  transition: background .3s;
+}
+.nav-brand { display: flex; align-items: center; gap: 11px; }
+.nav-logo {
+  width: 38px; height: 38px; border-radius: 11px;
+  background: rgba(79,142,247,.22);
+  border: 1px solid rgba(79,142,247,.3);
+  display: flex; align-items: center; justify-content: center;
+}
+.nav-name { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 800; letter-spacing: -.3px; }
+.nav-links { display: flex; align-items: center; gap: 32px; }
+.nav-links a { font-size: 14px; font-weight: 500; opacity: .78; transition: opacity .2s; }
+.nav-links a:hover { opacity: 1; }
+.nav-cta { display: flex; align-items: center; gap: 12px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 22px; border-radius: 100px; font-size: 14px; font-weight: 600;
+  cursor: pointer; border: none; transition: transform .18s, box-shadow .18s;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn-outline {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.26);
+  color: #eef2fb;
+}
+.btn-outline:hover { border-color: rgba(255,255,255,.5); }
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #fff;
+  box-shadow: 0 6px 24px rgba(79,142,247,.4);
+}
+.btn-primary:hover { box-shadow: 0 8px 30px rgba(79,142,247,.6); }
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .nav-cta .btn-outline { display: none; }
+}
+
+/* ─── HERO ─── */
+#hero {
+  background: radial-gradient(1200px 600px at 60% -10%, #3f6fe0 0%, #2b50b8 50%, var(--ink) 100%);
+  padding: calc(var(--nav-h) + 80px) 0 80px;
+  position: relative; overflow: hidden;
+}
+.blob {
+  position: absolute; border-radius: 50%; filter: blur(60px);
+  opacity: .4; pointer-events: none; z-index: 0;
+}
+.container {
+  position: relative; z-index: 2;
+  width: 100%; max-width: 860px;
+  margin: 0 auto; padding: 0 clamp(20px, 4vw, 48px);
+}
+.container--wide { max-width: 1100px; }
+.kicker {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 700; letter-spacing: .18em;
+  text-transform: uppercase; opacity: .85; margin-bottom: 18px;
+}
+.kicker-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(36px, 6vw, 72px);
+  font-weight: 800; letter-spacing: -1px; line-height: 1.12;
+  margin-bottom: 16px;
+}
+.hero-sub {
+  font-size: clamp(16px, 1.8vw, 20px);
+  opacity: .8; max-width: 56ch; line-height: 1.6; margin-bottom: 0;
+}
+
+/* ─── PROGRESS BAR ─── */
+#progress-wrap {
+  position: sticky; top: var(--nav-h); z-index: 90;
+  background: rgba(14,18,32,.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  padding: 14px clamp(20px, 4vw, 48px);
+}
+.progress-inner {
+  max-width: 860px; margin: 0 auto;
+  display: flex; align-items: center; gap: 16px;
+}
+.progress-label {
+  font-size: 13px; font-weight: 600; white-space: nowrap;
+  opacity: .75; min-width: 80px;
+}
+.progress-bar-track {
+  flex: 1; height: 6px; border-radius: 3px;
+  background: rgba(255,255,255,.1);
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--ok));
+  transition: width .4s cubic-bezier(.2,.7,.2,1);
+  width: 0%;
+}
+.progress-pct {
+  font-size: 13px; font-weight: 700; min-width: 36px; text-align: right;
+  color: var(--ok);
+}
+.progress-reset {
+  font-size: 12px; opacity: .4; cursor: pointer;
+  background: none; border: none; color: inherit;
+  padding: 4px 8px; border-radius: 6px; transition: opacity .2s;
+}
+.progress-reset:hover { opacity: .75; }
+
+/* ─── MAIN ─── */
+main {
+  padding: 48px 0 80px;
+  background: var(--ink);
+}
+.section-label {
+  font-size: 12px; font-weight: 800; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 12px;
+}
+.section-divider {
+  width: 48px; height: 4px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--ok));
+  margin-bottom: 20px;
+}
+
+/* ─── SECTION BLOCK ─── */
+.checklist-section {
+  margin-bottom: 40px;
+}
+.section-header {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 16px;
+}
+.section-icon {
+  width: 46px; height: 46px; border-radius: 14px; flex-shrink: 0;
+  background: rgba(79,142,247,.14); border: 1px solid rgba(79,142,247,.22);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; transition: background .3s, border-color .3s;
+}
+.section-icon.done { background: rgba(62,207,142,.16); border-color: rgba(62,207,142,.3); }
+.section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(18px, 2.2vw, 24px);
+  font-weight: 800; letter-spacing: -.3px;
+}
+.section-badge {
+  font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+  padding: 3px 10px; border-radius: 100px;
+  background: rgba(79,142,247,.14); color: var(--accent);
+  border: 1px solid rgba(79,142,247,.28);
+}
+.section-badge.opt {
+  background: rgba(247,178,74,.10); color: var(--warn);
+  border-color: rgba(247,178,74,.25);
+}
+.section-badge.done {
+  background: rgba(62,207,142,.14); color: var(--ok);
+  border-color: rgba(62,207,142,.28);
+}
+
+/* ─── CHECKLIST CARD ─── */
+.checklist-card {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 20px;
+  overflow: hidden;
+  transition: border-color .3s;
+}
+.checklist-card.all-done {
+  border-color: rgba(62,207,142,.25);
+  background: rgba(62,207,142,.03);
+}
+
+/* ─── CHECKLIST ITEM ─── */
+.cl-item {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  cursor: pointer;
+  transition: background .15s;
+  user-select: none;
+}
+.cl-item:last-child { border-bottom: none; }
+.cl-item:hover { background: rgba(255,255,255,.03); }
+.cl-item.checked { background: rgba(62,207,142,.04); }
+.cl-item.checked:hover { background: rgba(62,207,142,.07); }
+
+.cl-checkbox {
+  flex-shrink: 0; margin-top: 1px;
+  width: 22px; height: 22px; border-radius: 7px;
+  border: 2px solid rgba(255,255,255,.25);
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s, border-color .2s;
+}
+.cl-item.checked .cl-checkbox {
+  background: var(--ok);
+  border-color: var(--ok);
+}
+.cl-checkmark {
+  display: none; color: #fff; font-size: 13px; font-weight: 900;
+}
+.cl-item.checked .cl-checkmark { display: block; }
+
+.cl-body { flex: 1; }
+.cl-title {
+  font-size: 14px; font-weight: 600; line-height: 1.45;
+  transition: opacity .2s;
+}
+.cl-item.checked .cl-title { opacity: .5; text-decoration: line-through; }
+.cl-desc {
+  font-size: 13px; opacity: .55; line-height: 1.55; margin-top: 3px;
+}
+code {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 12px; background: rgba(255,255,255,.08);
+  padding: 1px 6px; border-radius: 5px;
+}
+
+/* ─── FOOTER ─── */
+footer {
+  background: #080c18;
+  border-top: 1px solid rgba(255,255,255,.07);
+  padding: 40px clamp(20px, 4vw, 64px) 32px;
+  display: flex; flex-direction: column; gap: 24px;
+}
+.footer-bottom {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;
+  font-size: 13px; opacity: .4;
+}
+.gh-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14);
+  border-radius: 100px; padding: 8px 18px;
+  font-size: 13px; font-weight: 600; transition: background .2s;
+}
+.gh-btn:hover { background: rgba(255,255,255,.13); }
+
+/* ─── REVEAL ─── */
+.reveal {
+  opacity: 0; transform: translateY(24px);
+  transition: opacity .6s cubic-bezier(.2,.7,.2,1), transform .6s cubic-bezier(.2,.7,.2,1);
+}
+.reveal.visible { opacity: 1; transform: none; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="topnav">
+  <a href="index.html" class="nav-brand">
+    <div class="nav-logo">
+      <svg width="22" height="22" viewBox="0 0 64 64">
+        <path d="M32 8L52 16V32C52 44 43 52 32 57C21 52 12 44 12 32V16Z" fill="#fff" fill-opacity=".95"/>
+        <path d="M23 32l6 6L42 24" stroke="#3ecf8e" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <span class="nav-name">Moderation Hub</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html#pipeline">Come funziona</a>
+    <a href="index.html#features">Features</a>
+    <a href="index.html#license">Pricing</a>
+    <a href="https://github.com/checco83casali/social-moderation-hub" target="_blank">Docs</a>
+    <a href="meta-app-setup.md" target="_blank">Setup Meta</a>
+  </div>
+  <div class="nav-cta">
+    <a href="https://github.com/checco83casali/social-moderation-hub" target="_blank" class="btn btn-outline">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.49.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0112 6.8c.85.004 1.71.11 2.51.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10.01 10.01 0 0022 12C22 6.48 17.52 2 12 2z"/></svg>
+      GitHub
+    </a>
+    <a href="https://github.com/checco83casali/social-moderation-hub#quick-start" target="_blank" class="btn btn-primary">Deploy now</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="blob" style="width:600px;height:600px;background:rgba(79,142,247,.3);top:-200px;right:-200px;"></div>
+  <div class="blob" style="width:400px;height:400px;background:rgba(62,207,142,.2);bottom:-100px;left:-100px;"></div>
+  <div class="container">
+    <div class="kicker">
+      <span class="kicker-dot"></span>
+      Deployment guide
+    </div>
+    <h1>Go-Live<br>Checklist</h1>
+    <p class="hero-sub">
+      Lista di controllo interattiva per mettere in produzione Social Moderation Hub.
+      Spunta ogni punto man mano — il progresso viene salvato nel browser.
+    </p>
+  </div>
+</section>
+
+<!-- PROGRESS BAR -->
+<div id="progress-wrap">
+  <div class="progress-inner">
+    <span class="progress-label" id="progress-label">0 / 0 completati</span>
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" id="progress-bar"></div>
+    </div>
+    <span class="progress-pct" id="progress-pct">0%</span>
+    <button class="progress-reset" onclick="resetAll()" title="Azzera tutto">↺ Reset</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main>
+<div class="container">
+
+  <!-- 1. SERVER -->
+  <div class="checklist-section reveal" id="sec-server">
+    <div class="section-header">
+      <div class="section-icon" id="icon-server">🖥️</div>
+      <div>
+        <div class="section-title">Configurazione server</div>
+      </div>
+      <span class="section-badge" id="badge-server">Richiesto</span>
+    </div>
+    <div class="checklist-card" id="card-server">
+      <div class="cl-item" data-id="s1" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">PHP 8.1+ installato</div>
+          <div class="cl-desc">Con le estensioni: <code>pdo_mysql</code>, <code>mbstring</code>, <code>openssl</code>, <code>curl</code></div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="s2" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">Document root → <code>public/</code></div>
+          <div class="cl-desc">Il webserver deve puntare alla sottocartella <code>public/</code>, non alla root del progetto</div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="s3" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">HTTPS abilitato con certificato valido</div>
+          <div class="cl-desc">Let's Encrypt è gratuito e sufficiente. Meta richiede HTTPS per i webhook.</div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="s4" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title"><code>.env</code> non accessibile via web</div>
+          <div class="cl-desc">Il file deve trovarsi fuori da <code>public/</code> — verificare che il webserver restituisca 403 o 404 su <code>/env</code></div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="s5" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">Permessi <code>.env</code> impostati a <code>600</code></div>
+          <div class="cl-desc"><code>chmod 600 .env</code> — solo il processo PHP può leggerlo e scriverlo</div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="s6" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">Cartella <code>logs/</code> scrivibile</div>
+          <div class="cl-desc">Il processo PHP deve poter scrivere nella cartella <code>logs/</code> del progetto</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. ENV -->
+  <div class="checklist-section reveal" id="sec-env">
+    <div class="section-header">
+      <div class="section-icon" id="icon-env">⚙️</div>
+      <div>
+        <div class="section-title">Configurazione <code>.env</code></div>
+      </div>
+      <span class="section-badge" id="badge-env">Richiesto</span>
+    </div>
+    <div class="checklist-card" id="card-env">
+      <div class="cl-item" data-id="e1" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title"><code>APP_URL</code> impostato correttamente</div>
+          <div class="cl-desc">Es. <code>https://moderation.sanmarinortv.sm</code> — senza slash finale</div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="e2" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title"><code>APP_SECRET</code> impostato (64 char random)</div>
+          <div class="cl-desc">Genera con: <code>php -r "echo bin2hex(random_bytes(32));"</code></div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="e3" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title"><code>APP_ENV=production</code></div>
+          <div class="cl-desc">Non lasciare <code>development</code> in produzione — disabilita i verbose error output</div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="e4" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">Credenziali DB configurate</div>
+          <div class="cl-desc"><code>DB_HOST</code>, <code>DB_DATABASE</code>, <code>DB_USERNAME</code>, <code>DB_PASSWORD</code></div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="e5" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title"><code>ANTHROPIC_API_KEY</code> impostato</div>
+          <div class="cl-desc">Oppure configurato dalla dashboard Impostazioni → Integrazione Claude AI</div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="e6" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title"><code>META_APP_ID</code> e <code>META_APP_SECRET</code> impostati</div>
+          <div class="cl-desc">Da Settings → Basic nella dashboard Meta for Developers</div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="e7" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title"><code>META_WEBHOOK_VERIFY_TOKEN</code> impostato</div>
+          <div class="cl-desc">Valore casuale scelto da te — distinto da <code>APP_SECRET</code>. Usato per la verifica webhook.</div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="e8" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title"><code>OAUTH_ALLOWED_EMAIL_DOMAINS</code> impostato</div>
+          <div class="cl-desc">Es. <code>sanmarinortv.sm</code> — fortemente raccomandato per limitare il login alle email dell'organizzazione</div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="e9" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">Almeno un provider OAuth configurato</div>
+          <div class="cl-desc">Google, Meta, o Microsoft — oppure utente locale creato via SQL</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. DB -->
+  <div class="checklist-section reveal" id="sec-db">
+    <div class="section-header">
+      <div class="section-icon" id="icon-db">🗄️</div>
+      <div>
+        <div class="section-title">Database e installer</div>
+      </div>
+      <span class="section-badge" id="badge-db">Richiesto</span>
+    </div>
+    <div class="checklist-card" id="card-db">
+      <div class="cl-item" data-id="d1" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title"><code>php install.php</code> completato senza errori</div>
+          <div class="cl-desc">Tutti i passaggi devono mostrare ✓. Controlla i log PHP se ricevi errori.</div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="d2" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">Policy attiva nel DB</div>
+          <div class="cl-desc">Verifica: <code>SELECT id, name FROM policies WHERE is_active=1;</code></div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="d3" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">Almeno un utente admin creato</div>
+          <div class="cl-desc">Primo login OAuth (auto-diventa admin) o insert diretto nella tabella <code>admin_users</code></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. META -->
+  <div class="checklist-section reveal" id="sec-meta">
+    <div class="section-header">
+      <div class="section-icon" id="icon-meta">📘</div>
+      <div>
+        <div class="section-title">Integrazione Meta</div>
+      </div>
+      <span class="section-badge" id="badge-meta">Richiesto</span>
+    </div>
+    <div class="checklist-card" id="card-meta">
+      <div class="cl-item" data-id="m1" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">App Meta creata su developers.facebook.com</div>
+          <div class="cl-desc">Tipo: <strong>Business</strong>. Guida completa: <a href="meta-app-setup.md" target="_blank" style="color:var(--accent);text-decoration:underline">meta-app-setup.md</a></div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="m2" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">Prodotto Webhooks aggiunto e verificato</div>
+          <div class="cl-desc">URL callback + verify token inseriti nel pannello Meta → verifica ha dato segno verde</div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="m3" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">Prodotto Facebook Login aggiunto</div>
+          <div class="cl-desc">URI di callback OAuth configurati: <code>/auth/meta/callback</code></div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="m4" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">Pagina Facebook connessa dalla dashboard</div>
+          <div class="cl-desc">Pagine → Connetti pagina → segui il flusso Facebook Login</div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="m5" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">Webhook verificato per la pagina</div>
+          <div class="cl-desc">Colonna <code>webhook_verified = 1</code> in <code>connected_pages</code> per la pagina connessa</div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="m6" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">App Meta in modalità Live</div>
+          <div class="cl-desc">In modalità Development solo gli utenti con ruolo nell'app possono usare i permessi</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. SICUREZZA -->
+  <div class="checklist-section reveal" id="sec-sec">
+    <div class="section-header">
+      <div class="section-icon" id="icon-sec">🔒</div>
+      <div>
+        <div class="section-title">Sicurezza rete</div>
+      </div>
+      <span class="section-badge" id="badge-sec">Richiesto</span>
+    </div>
+    <div class="checklist-card" id="card-sec">
+      <div class="cl-item" data-id="n1" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">Solo <code>/webhook/meta</code> è pubblico</div>
+          <div class="cl-desc">Tutti gli altri endpoint (dashboard, <code>/api/</code>, <code>/auth/</code>) devono essere inaccessibili dall'esterno</div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="n2" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">Dashboard accessibile solo da IP interni o VPN</div>
+          <div class="cl-desc">Via firewall server oppure <code>INTERNAL_IP_ALLOWLIST</code> nel <code>.env</code></div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="n3" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">Dev mode disattivata</div>
+          <div class="cl-desc">Impostazioni → Modalità sviluppo → OFF. In dev mode nessuna azione reale su Facebook.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. TEST -->
+  <div class="checklist-section reveal" id="sec-test">
+    <div class="section-header">
+      <div class="section-icon" id="icon-test">✅</div>
+      <div>
+        <div class="section-title">Test funzionale</div>
+      </div>
+      <span class="section-badge" id="badge-test">Richiesto</span>
+    </div>
+    <div class="checklist-card" id="card-test">
+      <div class="cl-item" data-id="t1" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">Login dashboard funziona</div>
+          <div class="cl-desc">Accedi con OAuth o con le credenziali locali create</div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="t2" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">Impostazioni si aprono correttamente</div>
+          <div class="cl-desc">Nessun errore JSON, i valori sono quelli configurati nel <code>.env</code></div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="t3" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">Commento di test arriva nella coda entro 30 secondi</div>
+          <div class="cl-desc">Pubblica un commento sulla pagina Facebook e verifica che compaia in Coda revisione</div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="t4" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">Pipeline AI processa il commento</div>
+          <div class="cl-desc">Controlla il log di moderazione — deve mostrare decisione AI con confidenza</div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="t5" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">Azione AI applicata correttamente su Facebook</div>
+          <div class="cl-desc">I commenti rimossi/nascosti devono scomparire dalla pagina pubblica</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. AUTO-DEPLOY (opzionale) -->
+  <div class="checklist-section reveal" id="sec-deploy">
+    <div class="section-header">
+      <div class="section-icon" id="icon-deploy">🚀</div>
+      <div>
+        <div class="section-title">Auto-deploy GitHub</div>
+      </div>
+      <span class="section-badge opt" id="badge-deploy">Opzionale</span>
+    </div>
+    <div class="checklist-card" id="card-deploy">
+      <div class="cl-item" data-id="g1" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title"><code>GITHUB_WEBHOOK_SECRET</code> impostato nel <code>.env</code></div>
+          <div class="cl-desc">Genera con: <code>php -r "echo bin2hex(random_bytes(24));"</code></div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="g2" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">Webhook configurato su GitHub</div>
+          <div class="cl-desc">Settings → Webhooks → URL: <code>/webhook/github</code>, stesso secret, content type: <code>application/json</code></div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="g3" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title"><code>GITHUB_WEBHOOK_BRANCH=main</code></div>
+          <div class="cl-desc">Solo i push al branch configurato attivano il git pull automatico</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. GDPR RETENTION (opzionale) -->
+  <div class="checklist-section reveal" id="sec-gdpr">
+    <div class="section-header">
+      <div class="section-icon" id="icon-gdpr">🔐</div>
+      <div>
+        <div class="section-title">Retention dati GDPR</div>
+      </div>
+      <span class="section-badge opt" id="badge-gdpr">Opzionale</span>
+    </div>
+    <div class="checklist-card" id="card-gdpr">
+      <div class="cl-item" data-id="r1" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title"><code>data_retention_days</code> configurato nelle Impostazioni</div>
+          <div class="cl-desc">Impostazioni → Retention dati. 0 = disabilitato. Es. 90 giorni.</div>
+        </div>
+      </div>
+      <div class="cl-item" data-id="r2" onclick="toggle(this)">
+        <div class="cl-checkbox"><span class="cl-checkmark">✓</span></div>
+        <div class="cl-body">
+          <div class="cl-title">Cron job configurato sul server</div>
+          <div class="cl-desc"><code>0 3 * * * php /percorso/bin/retention-purge.php</code> — ogni notte alle 3:00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-bottom">
+    <span>© 2026 <a href="https://github.com/checco83casali" target="_blank" style="opacity:1;text-decoration:underline;text-underline-offset:3px;">Francesco Casali</a> · Social Moderation Hub · MIT License</span>
+    <a href="https://github.com/checco83casali/social-moderation-hub" target="_blank" class="gh-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.49.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0112 6.8c.85.004 1.71.11 2.51.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10.01 10.01 0 0022 12C22 6.48 17.52 2 12 2z"/></svg>
+      Star on GitHub
+    </a>
+  </div>
+</footer>
+
+<script>
+const STORAGE_KEY = 'mh_checklist_v1';
+
+// Load saved state
+function loadState() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
+}
+function saveState(state) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+// Toggle a single item
+function toggle(el) {
+  const id = el.dataset.id;
+  const state = loadState();
+  const checked = !el.classList.contains('checked');
+  if (checked) {
+    el.classList.add('checked');
+    state[id] = true;
+  } else {
+    el.classList.remove('checked');
+    delete state[id];
+  }
+  saveState(state);
+  updateProgress();
+  updateSectionBadges();
+}
+
+// Reset all
+function resetAll() {
+  if (!confirm('Azzerare tutti i progressi?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  document.querySelectorAll('.cl-item').forEach(el => el.classList.remove('checked'));
+  updateProgress();
+  updateSectionBadges();
+}
+
+// Update progress bar
+function updateProgress() {
+  const all   = document.querySelectorAll('.cl-item');
+  const done  = document.querySelectorAll('.cl-item.checked');
+  const total = all.length;
+  const count = done.length;
+  const pct   = total ? Math.round(count / total * 100) : 0;
+
+  document.getElementById('progress-label').textContent = `${count} / ${total} completati`;
+  document.getElementById('progress-bar').style.width   = pct + '%';
+  document.getElementById('progress-pct').textContent   = pct + '%';
+  document.getElementById('progress-pct').style.color   = pct === 100 ? 'var(--ok)' : 'var(--accent)';
+}
+
+// Update section badges and card styles
+const sections = [
+  { id: 'server', opt: false },
+  { id: 'env',    opt: false },
+  { id: 'db',     opt: false },
+  { id: 'meta',   opt: false },
+  { id: 'sec',    opt: false },
+  { id: 'test',   opt: false },
+  { id: 'deploy', opt: true  },
+  { id: 'gdpr',   opt: true  },
+];
+
+function updateSectionBadges() {
+  sections.forEach(({ id, opt }) => {
+    const card  = document.getElementById('card-' + id);
+    const badge = document.getElementById('badge-' + id);
+    const icon  = document.getElementById('icon-' + id);
+    if (!card) return;
+    const items  = card.querySelectorAll('.cl-item');
+    const done   = card.querySelectorAll('.cl-item.checked');
+    const allDone = items.length > 0 && done.length === items.length;
+
+    card.classList.toggle('all-done', allDone);
+    icon.classList.toggle('done', allDone);
+
+    if (allDone) {
+      badge.textContent = '✓ Completato';
+      badge.className = 'section-badge done';
+    } else {
+      badge.textContent = opt ? 'Opzionale' : 'Richiesto';
+      badge.className = 'section-badge' + (opt ? ' opt' : '');
+    }
+  });
+}
+
+// Restore state on load
+(function init() {
+  const state = loadState();
+  document.querySelectorAll('.cl-item').forEach(el => {
+    if (state[el.dataset.id]) el.classList.add('checked');
+  });
+  updateProgress();
+  updateSectionBadges();
+})();
+
+// Scroll reveal
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
+  });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+// Nav on scroll
+const nav = document.getElementById('topnav');
+window.addEventListener('scroll', () => {
+  nav.style.background = window.scrollY > 40 ? 'rgba(14,18,32,.97)' : 'rgba(14,18,32,.82)';
+}, { passive: true });
+</script>
+</body>
+</html>
