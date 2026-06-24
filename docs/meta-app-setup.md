@@ -19,7 +19,7 @@ connettere Social Moderation Hub alle pagine Facebook.
 2. Clicca **Crea app**
 3. Scegli il tipo: **Business** (obbligatorio per le API delle pagine)
 4. Inserisci:
-   - **Nome app**: es. `MyBrand Moderation` (non viene mostrato agli utenti)
+   - **Nome app**: es. `Social Moderation Hub` (non viene mostrato agli utenti)
    - **Email contatto**: la tua email
    - **Business account**: collega il Business Manager se ce l'hai
 5. Clicca **Crea app**
