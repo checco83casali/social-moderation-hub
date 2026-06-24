@@ -129,6 +129,12 @@ php install.php
 > internal/trusted IPs via the server firewall (and optionally the built-in
 > `INTERNAL_IP_ALLOWLIST` / `PUBLIC_DOMAIN` safety net).
 
+**Useful guides:**
+- [docs/meta-app-setup.md](docs/meta-app-setup.md) — step-by-step guide to create and configure the Meta app
+- [docs/go-live-checklist.md](docs/go-live-checklist.md) — production go-live checklist
+- [docs/webhook-setup.md](docs/webhook-setup.md) — webhook technical reference
+- [docs/deployment-security.md](docs/deployment-security.md) — network hardening guide
+
 ### Docker (local dev)
 
 ```bash
