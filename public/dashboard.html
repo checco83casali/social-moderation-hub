@@ -257,9 +257,9 @@
         <button id="stab-btn-moderazione" onclick="switchSettingsTab('moderazione')"
           style="background:none;border:none;border-bottom:2px solid var(--accent);color:var(--text);font-size:13px;font-weight:500;padding:10px 18px;cursor:pointer;font-family:var(--font);margin-bottom:-2px">Moderazione</button>
         <button id="stab-btn-messaggi" onclick="switchSettingsTab('messaggi')"
-          style="background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:13px;font-weight:500;padding:10px 18px;cursor:pointer;font-family:var(--font);margin-bottom:-2px">Messaggi</button>
+          style="background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:13px;font-weight:500;padding:10px 18px;cursor:pointer;font-family:var(--font);margin-bottom:-2px">Messaggi <span style="font-size:10px;font-weight:500;color:var(--accent);background:rgba(99,102,241,.12);padding:1px 6px;border-radius:10px;margin-left:3px">PRO</span></button>
         <button id="stab-btn-ai" onclick="switchSettingsTab('ai')"
-          style="background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:13px;font-weight:500;padding:10px 18px;cursor:pointer;font-family:var(--font);margin-bottom:-2px">AI avanzata</button>
+          style="background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:13px;font-weight:500;padding:10px 18px;cursor:pointer;font-family:var(--font);margin-bottom:-2px">AI avanzata <span style="font-size:10px;font-weight:500;color:var(--accent);background:rgba(99,102,241,.12);padding:1px 6px;border-radius:10px;margin-left:3px">PRO</span></button>
         <button id="stab-btn-privacy" onclick="switchSettingsTab('privacy')"
           style="background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:13px;font-weight:500;padding:10px 18px;cursor:pointer;font-family:var(--font);margin-bottom:-2px">Privacy &amp; GDPR</button>
         <button id="stab-btn-sistema" onclick="switchSettingsTab('sistema')"
@@ -279,16 +279,16 @@
               <div class="form-group">
                 <label class="form-label">Soglia Haiku (prima analisi)</label>
                 <div style="display:flex;align-items:center;gap:12px">
-                  <input type="range" min="0.01" max="1" step="0.01" id="set-haiku-range" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('set-haiku-val').value=this.value">
-                  <input class="form-input" type="number" id="set-haiku-val" min="0.01" max="1" step="0.01" style="width:80px;text-align:center" oninput="document.getElementById('set-haiku-range').value=this.value">
+                  <input type="range" min="1" max="100" step="1" id="set-haiku-range" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('set-haiku-val').value=this.value">
+                  <input class="form-input" type="number" id="set-haiku-val" min="1" max="100" step="1" style="width:68px;text-align:center" oninput="document.getElementById('set-haiku-range').value=this.value"><span style="font-size:13px;color:var(--muted)">%</span>
                 </div>
                 <div style="font-size:11px;color:var(--muted);margin-top:5px">Se confidence ≥ soglia → Haiku decide autonomamente. Sotto soglia → passa a Sonnet.</div>
               </div>
               <div class="form-group">
                 <label class="form-label">Soglia Sonnet (seconda analisi)</label>
                 <div style="display:flex;align-items:center;gap:12px">
-                  <input type="range" min="0.01" max="1" step="0.01" id="set-sonnet-range" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('set-sonnet-val').value=this.value">
-                  <input class="form-input" type="number" id="set-sonnet-val" min="0.01" max="1" step="0.01" style="width:80px;text-align:center" oninput="document.getElementById('set-sonnet-range').value=this.value">
+                  <input type="range" min="1" max="100" step="1" id="set-sonnet-range" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('set-sonnet-val').value=this.value">
+                  <input class="form-input" type="number" id="set-sonnet-val" min="1" max="100" step="1" style="width:68px;text-align:center" oninput="document.getElementById('set-sonnet-range').value=this.value"><span style="font-size:13px;color:var(--muted)">%</span>
                 </div>
                 <div style="font-size:11px;color:var(--muted);margin-top:5px">Se confidence ≥ soglia → Sonnet decide autonomamente. Sotto soglia → escalation umana.</div>
               </div>
@@ -470,16 +470,16 @@
               <div class="form-group">
                 <label class="form-label">Soglia confidenza autopubblicazione</label>
                 <div style="display:flex;align-items:center;gap:12px">
-                  <input type="range" id="set-fc-range" min="0.50" max="1.00" step="0.01" value="0.90"
+                  <input type="range" id="set-fc-range" min="50" max="100" step="1" value="90"
                     style="flex:1;accent-color:var(--accent)"
-                    oninput="document.getElementById('set-fact-check-threshold').value=parseFloat(this.value).toFixed(2)">
-                  <input class="form-input" type="number" id="set-fact-check-threshold" min="0.50" max="1.00" step="0.01" value="0.90"
-                    style="width:80px;text-align:center"
-                    oninput="document.getElementById('set-fc-range').value=this.value">
+                    oninput="document.getElementById('set-fact-check-threshold').value=this.value">
+                  <input class="form-input" type="number" id="set-fact-check-threshold" min="50" max="100" step="1" value="90"
+                    style="width:68px;text-align:center"
+                    oninput="document.getElementById('set-fc-range').value=this.value"><span style="font-size:13px;color:var(--muted)">%</span>
                 </div>
                 <div style="font-size:11px;color:var(--muted);margin-top:5px">
-                  Consigliato: <strong>0.90</strong> o superiore — la risposta viene pubblicata a nome della redazione.<br>
-                  Intervallo: 0.50 – 1.00. Sotto soglia → coda umana con draft già pronto.
+                  Consigliato: <strong>90%</strong> o superiore — la risposta viene pubblicata a nome della redazione.<br>
+                  Intervallo: 50% – 100%. Sotto soglia → coda umana con draft già pronto.
                 </div>
               </div>
               <div style="margin-top:14px;padding:12px 16px;background:rgba(62,207,142,.07);border:1px solid rgba(62,207,142,.2);border-radius:var(--radius);font-size:12px;line-height:1.6">
@@ -513,16 +513,16 @@
               <div class="form-group">
                 <label class="form-label">Soglia confidenza autopubblicazione</label>
                 <div style="display:flex;align-items:center;gap:12px">
-                  <input type="range" id="set-wb-range" min="0.50" max="1.00" step="0.01" value="0.95"
+                  <input type="range" id="set-wb-range" min="50" max="100" step="1" value="95"
                     style="flex:1;accent-color:#a855f7"
-                    oninput="document.getElementById('set-whataboutism-threshold').value=parseFloat(this.value).toFixed(2)">
-                  <input class="form-input" type="number" id="set-whataboutism-threshold" min="0.50" max="1.00" step="0.01" value="0.95"
-                    style="width:80px;text-align:center"
-                    oninput="document.getElementById('set-wb-range').value=this.value">
+                    oninput="document.getElementById('set-whataboutism-threshold').value=this.value">
+                  <input class="form-input" type="number" id="set-whataboutism-threshold" min="50" max="100" step="1" value="95"
+                    style="width:68px;text-align:center"
+                    oninput="document.getElementById('set-wb-range').value=this.value"><span style="font-size:13px;color:var(--muted)">%</span>
                 </div>
                 <div style="font-size:11px;color:var(--muted);margin-top:5px">
-                  Consigliato: <strong>0.95</strong> o superiore — qui non ci sono fonti esterne come secondo gate, quindi la soglia è più alta del fact-check.<br>
-                  Intervallo: 0.50 – 1.00. Sotto soglia → coda umana con draft già pronto.
+                  Consigliato: <strong>95%</strong> o superiore — qui non ci sono fonti esterne come secondo gate, quindi la soglia è più alta del fact-check.<br>
+                  Intervallo: 50% – 100%. Sotto soglia → coda umana con draft già pronto.
                 </div>
               </div>
               <div style="margin-top:14px;padding:12px 16px;background:rgba(168,85,247,.07);border:1px solid rgba(168,85,247,.2);border-radius:var(--radius);font-size:12px;line-height:1.6">
@@ -826,7 +826,7 @@
 
               <!-- Features badges -->
               <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border)">
-                <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Funzionalità abilitate</div>
+                <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Funzionalità Pro</div>
                 <div id="lic-features"></div>
               </div>
 

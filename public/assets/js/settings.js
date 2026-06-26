@@ -15,8 +15,8 @@ function switchSettingsTab(tab) {
 async function loadSettings() {
   try {
     const d = await api('/settings');
-    const h = parseFloat(d.haiku_confidence_threshold  ?? 0.80);
-    const s = parseFloat(d.sonnet_confidence_threshold ?? 0.70);
+    const h = Math.round(parseFloat(d.haiku_confidence_threshold  ?? 0.80) * 100);
+    const s = Math.round(parseFloat(d.sonnet_confidence_threshold ?? 0.70) * 100);
     const r = parseInt(d.recidivism_comment_ban_limit  ?? 3, 10);
 
     document.getElementById('set-haiku-range').value  = h;
@@ -110,11 +110,21 @@ async function loadSettings() {
 
       // PRO: fact-check auto-publish threshold
       const fcEl = document.getElementById('set-fact-check-threshold');
-      if (fcEl) fcEl.value = parseFloat(d.fact_check_auto_publish_threshold ?? 0.90).toFixed(2);
+      if (fcEl) {
+        const fcPct = Math.round(parseFloat(d.fact_check_auto_publish_threshold ?? 0.90) * 100);
+        fcEl.value = fcPct;
+        const fcRange = document.getElementById('set-fc-range');
+        if (fcRange) fcRange.value = fcPct;
+      }
 
       // PRO: whataboutism auto-publish threshold
       const wbEl = document.getElementById('set-whataboutism-threshold');
-      if (wbEl) wbEl.value = parseFloat(d.whataboutism_auto_publish_threshold ?? 0.95).toFixed(2);
+      if (wbEl) {
+        const wbPct = Math.round(parseFloat(d.whataboutism_auto_publish_threshold ?? 0.95) * 100);
+        wbEl.value = wbPct;
+        const wbRange = document.getElementById('set-wb-range');
+        if (wbRange) wbRange.value = wbPct;
+      }
 
       // PRO: hide reply templates
       setVal('set-hide-reply-template',            d.hide_reply_template            ?? '');
@@ -157,18 +167,22 @@ function applyLicensePanel(lic) {
 
   if (featEl) {
     const featureNames = {
-      data_retention:      'Retention dati',
-      export_log:          'Export log',
-      templates:           'Template reply personalizzabili',
-      per_page_thresholds: 'Soglie AI per pagina',
+      reportable_queue:    'Coda segnalabili',
+      advanced_stats:      'Statistiche avanzate',
       fact_check:          'Fact check AI',
       whataboutism:        'Whataboutism AI',
+      templates:           'Template personalizzabili',
+      data_retention:      'Retention dati',
+      export_log:          'Export log',
+      per_page_thresholds: 'Soglie AI per pagina',
       multi_page:          'Pagine multiple',
     };
-    const feats = (lic.features ?? []).map(f => featureNames[f] ?? f);
-    featEl.innerHTML = feats.length
-      ? feats.map(f => `<span class="badge badge-pro">${esc(f)}</span>`).join(' ')
-      : '<span style="color:var(--muted);font-size:12px">Nessuna funzionalità Pro attiva</span>';
+    const active = new Set(lic.features ?? []);
+    featEl.innerHTML = Object.entries(featureNames).map(([key, label]) =>
+      active.has(key)
+        ? `<span class="badge badge-pro">${esc(label)}</span>`
+        : `<span style="font-size:11px;color:var(--muted);padding:2px 9px;border:1px solid var(--border);border-radius:10px;display:inline-block;margin:2px 2px">${esc(label)}</span>`
+    ).join(' ');
   }
 
   if (keyInput && lic.key_masked) keyInput.placeholder = lic.key_masked;
@@ -247,18 +261,20 @@ async function refreshLicense() {
 }
 
 async function saveSettings() {
-  const haiku   = parseFloat(document.getElementById('set-haiku-val').value);
-  const sonnet  = parseFloat(document.getElementById('set-sonnet-val').value);
-  const recid   = parseInt(document.getElementById('set-recid').value, 10);
-  const devMode = document.getElementById('set-dev-mode')?.checked ?? false;
+  const haikuPct  = parseInt(document.getElementById('set-haiku-val').value, 10);
+  const sonnetPct = parseInt(document.getElementById('set-sonnet-val').value, 10);
+  const haiku     = haikuPct  / 100;
+  const sonnet    = sonnetPct / 100;
+  const recid     = parseInt(document.getElementById('set-recid').value, 10);
+  const devMode   = document.getElementById('set-dev-mode')?.checked ?? false;
 
-  if (isNaN(haiku) || haiku <= 0 || haiku > 1 ||
-      isNaN(sonnet) || sonnet <= 0 || sonnet > 1 ||
+  if (isNaN(haikuPct) || haikuPct < 1 || haikuPct > 100 ||
+      isNaN(sonnetPct) || sonnetPct < 1 || sonnetPct > 100 ||
       isNaN(recid) || recid < 1) {
     toast('Valori non validi', 'err');
     return;
   }
-  if (sonnet >= haiku) {
+  if (sonnetPct >= haikuPct) {
     toast('La soglia Sonnet deve essere inferiore alla soglia Haiku', 'err');
     return;
   }
@@ -326,13 +342,13 @@ async function saveSettings() {
     if (banHideEl && !banHideEl.disabled) payload.banned_user_hide_template = banHideEl.value.trim();
     const fcThEl = document.getElementById('set-fact-check-threshold');
     if (fcThEl && !fcThEl.disabled) {
-      const fcVal = parseFloat(fcThEl.value);
-      if (!isNaN(fcVal) && fcVal >= 0.5 && fcVal <= 1.0) payload.fact_check_auto_publish_threshold = fcVal;
+      const fcPct = parseInt(fcThEl.value, 10);
+      if (!isNaN(fcPct) && fcPct >= 50 && fcPct <= 100) payload.fact_check_auto_publish_threshold = fcPct / 100;
     }
     const wbThEl = document.getElementById('set-whataboutism-threshold');
     if (wbThEl && !wbThEl.disabled) {
-      const wbVal = parseFloat(wbThEl.value);
-      if (!isNaN(wbVal) && wbVal >= 0.5 && wbVal <= 1.0) payload.whataboutism_auto_publish_threshold = wbVal;
+      const wbPct = parseInt(wbThEl.value, 10);
+      if (!isNaN(wbPct) && wbPct >= 50 && wbPct <= 100) payload.whataboutism_auto_publish_threshold = wbPct / 100;
     }
 
     // Anthropic API key — solo se l'utente ha inserito qualcosa
