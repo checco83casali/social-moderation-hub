@@ -102,6 +102,7 @@ class MetaGraphService
      * Usato dal flow di connessione diretta (System User o token manuale).
      * Ritorna null se il token non è valido o non ha accesso alla pagina.
      */
+    /** @return array{id:string,name:string}|null */
     public function getPageInfo(string $pageId, string $pageToken): ?array
     {
         try {
