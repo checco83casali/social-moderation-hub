@@ -164,6 +164,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && !$alreadyInstalled && $p
 <!DOCTYPE html>
 <html lang="it">
 <head>
+<meta name="robots" content="noindex, nofollow, noarchive">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Installazione · Moderation Hub</title>

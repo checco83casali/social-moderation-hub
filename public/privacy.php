@@ -81,6 +81,7 @@ $countryEn = trim($countries[1] ?? $orgCountry);
 <!DOCTYPE html>
 <html lang="it">
 <head>
+<meta name="robots" content="noindex, nofollow, noarchive">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Informativa sulla Privacy / Privacy Policy – Social Moderation Hub</title>
