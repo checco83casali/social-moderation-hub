@@ -121,6 +121,13 @@ $auth = fn() => new AuthMiddleware($container->get(OAuthService::class));
 
 // ── Routes ────────────────────────────────────────────────────────
 
+// Dashboard: servita tramite PHP così AccessGuardMiddleware può applicare l'IP allowlist.
+$app->get('/dashboard.html', function ($request, $response) {
+    $html = file_get_contents(__DIR__ . '/dashboard.html');
+    $response->getBody()->write($html);
+    return $response->withHeader('Content-Type', 'text/html; charset=utf-8');
+});
+
 // Root: redirect alla dashboard (SPA) — evita 404 di Slim su "/".
 $app->get('/', function ($request, $response) {
     return $response->withHeader('Location', '/dashboard.html')->withStatus(302);
