@@ -835,14 +835,9 @@
                 ⚠️ <strong>Modalità offline</strong> — il server di licenza non è raggiungibile. Le funzionalità Pro rimangono attive finché la cache locale è valida.
               </div>
 
-              <!-- External licensing disabled (LICENSE_OFFLINE_MODE=true) -->
-              <div id="lic-external-disabled-msg" style="display:none;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.3);border-radius:var(--radius);padding:12px 16px;font-size:12.5px;line-height:1.6">
-                <strong>Sistema licensing esterno disattivato.</strong><br>
-                Le funzionalità abilitate sono lette dalla variabile <code>LICENSE_OFFLINE_FEATURES</code> in <code>.env</code>.<br>
-                Per modificare le feature attive: edita <code>.env</code> e riavvia (o ricarica la pagina).
-              </div>
+              <div id="lic-external-disabled-msg" style="display:none"></div>
 
-              <!-- Activate form -->
+<!-- Activate form -->
               <div id="lic-activate-form" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:end">
                 <div class="form-group" style="margin:0">
                   <label class="form-label">Chiave di licenza</label>
