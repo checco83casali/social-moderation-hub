@@ -73,10 +73,47 @@ $app->add(new AccessGuardMiddleware());
 
 $app->addRoutingMiddleware();
 
-$app->addErrorMiddleware(
+$errorMiddleware = $app->addErrorMiddleware(
     displayErrorDetails: ($_ENV['APP_ENV'] ?? 'production') === 'development',
     logErrors:           true,
     logErrorDetails:     true,
+);
+
+$errorMiddleware->setErrorHandler(
+    \Slim\Exception\HttpNotFoundException::class,
+    function ($request, $exception) use ($app): \Psr\Http\Message\ResponseInterface {
+        $response = $app->getResponseFactory()->createResponse(404);
+        $appUrl   = rtrim($_ENV['APP_URL'] ?? '', '/');
+        $response->getBody()->write(<<<HTML
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>404 — Pagina non trovata</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',system-ui,sans-serif;background:#0e0f11;color:#e8eaf0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .card{background:#16181c;border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:48px 40px;max-width:420px;width:100%;text-align:center}
+  .code{font-size:72px;font-weight:700;color:rgba(255,255,255,.06);line-height:1;margin-bottom:8px}
+  h1{font-size:20px;font-weight:600;margin-bottom:10px}
+  p{font-size:13.5px;color:#7a7f8e;line-height:1.6;margin-bottom:28px}
+  a{display:inline-block;padding:10px 24px;background:#4f8ef7;color:#fff;border-radius:10px;font-size:13.5px;font-weight:600;text-decoration:none}
+  a:hover{background:#3a7de8}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="code">404</div>
+  <h1>Pagina non trovata</h1>
+  <p>La risorsa che cerchi non esiste o è stata spostata.</p>
+  <a href="{$appUrl}/dashboard.html">Torna al dashboard</a>
+</div>
+</body>
+</html>
+HTML);
+        return $response->withHeader('Content-Type', 'text/html; charset=utf-8');
+    }
 );
 
 // ── Auth middleware factory ────────────────────────────────────────
