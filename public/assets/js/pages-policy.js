@@ -158,10 +158,11 @@ function switchAddPagesTab(tab) {
   const isOauth = tab === 'oauth';
   document.getElementById('add-pages-tab-oauth').style.display  = isOauth ? '' : 'none';
   document.getElementById('add-pages-tab-direct').style.display = isOauth ? 'none' : '';
-  document.getElementById('tab-btn-oauth').style.background  = isOauth ? 'var(--bg-card)' : 'var(--bg-hover)';
-  document.getElementById('tab-btn-direct').style.background = isOauth ? 'var(--bg-hover)' : 'var(--bg-card)';
-  document.getElementById('tab-btn-oauth').style.color  = isOauth ? '' : 'var(--muted)';
-  document.getElementById('tab-btn-direct').style.color = isOauth ? 'var(--muted)' : '';
+  const accent = 'var(--accent)', transparent = 'transparent';
+  document.getElementById('tab-btn-oauth').style.borderBottomColor  = isOauth ? accent : transparent;
+  document.getElementById('tab-btn-direct').style.borderBottomColor = isOauth ? transparent : accent;
+  document.getElementById('tab-btn-oauth').style.color  = isOauth ? 'var(--text)' : 'var(--muted)';
+  document.getElementById('tab-btn-direct').style.color = isOauth ? 'var(--muted)' : 'var(--text)';
   document.getElementById('add-pages-error').style.display = 'none';
 }
 
