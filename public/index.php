@@ -107,7 +107,6 @@ $errorMiddleware->setErrorHandler(
   <div class="code">404</div>
   <h1>Pagina non trovata</h1>
   <p>La risorsa che cerchi non esiste o è stata spostata.</p>
-  <a href="{$appUrl}/dashboard.html">Torna al dashboard</a>
 </div>
 </body>
 </html>
