@@ -1007,25 +1007,49 @@
       <button onclick="closeModal('modal-add-pages')" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1">✕</button>
     </div>
 
-    <!-- Step 1: prima del login FB -->
-    <div id="add-pages-step-login">
-      <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.6">Accedi con Facebook per vedere le pagine che gestisci e selezionare quelle da moderare.</p>
-      <button class="btn-primary" style="background:#1877f2;width:100%;padding:11px" onclick="fbLoginAndListPages()">Accedi con Facebook</button>
+    <!-- Tab switcher -->
+    <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:20px">
+      <button id="tab-btn-oauth" onclick="switchAddPagesTab('oauth')" style="flex:1;padding:8px;font-size:12.5px;font-weight:600;border:none;background:var(--bg-card);cursor:pointer;border-right:1px solid var(--border)">Login con Facebook</button>
+      <button id="tab-btn-direct" onclick="switchAddPagesTab('direct')" style="flex:1;padding:8px;font-size:12.5px;font-weight:600;border:none;background:var(--bg-hover);cursor:pointer;color:var(--muted)">Token diretto</button>
     </div>
 
-    <!-- Step 2: lista pagine -->
-    <div id="add-pages-step-list" style="display:none">
-      <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">Seleziona le pagine da connettere. Quelle già collegate sono disabilitate.</p>
-      <div id="add-pages-list"></div>
-      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+    <!-- Tab OAuth -->
+    <div id="add-pages-tab-oauth">
+      <!-- Step 1: prima del login FB -->
+      <div id="add-pages-step-login">
+        <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.6">Accedi con Facebook per vedere le pagine che gestisci e selezionare quelle da moderare.</p>
+        <button class="btn-primary" style="background:#1877f2;width:100%;padding:11px" onclick="fbLoginAndListPages()">Accedi con Facebook</button>
+      </div>
+
+      <!-- Step 2: lista pagine -->
+      <div id="add-pages-step-list" style="display:none">
+        <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6">Seleziona le pagine da connettere. Quelle già collegate sono disabilitate.</p>
+        <div id="add-pages-list"></div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+          <button class="btn-secondary" onclick="closeModal('modal-add-pages')">Annulla</button>
+          <button class="btn-primary" id="add-pages-confirm-btn" onclick="connectSelectedPages()">Connetti selezionate</button>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div id="add-pages-loading" style="display:none;text-align:center;padding:30px;color:var(--muted);font-size:13px">Caricamento…</div>
+    </div>
+
+    <!-- Tab Token diretto -->
+    <div id="add-pages-tab-direct" style="display:none">
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.6">Usa questa opzione se la pagina è gestita tramite Business Manager (System User) o hai un page token generato dal Graph API Explorer.</p>
+      <label class="form-label">Page ID</label>
+      <input class="form-input" type="text" id="direct-page-id" placeholder="es. 123456789012345" style="margin-bottom:14px">
+      <label class="form-label">Page Token</label>
+      <input class="form-input" type="text" id="direct-page-token" placeholder="EAABsb..." style="margin-bottom:6px;font-family:monospace;font-size:12px">
+      <p style="font-size:11px;color:var(--muted);margin-bottom:20px">Token generato dal System User o dal Graph API Explorer con i permessi <code>pages_manage_metadata</code>, <code>pages_moderate</code>, <code>pages_read_engagement</code>.</p>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
         <button class="btn-secondary" onclick="closeModal('modal-add-pages')">Annulla</button>
-        <button class="btn-primary" id="add-pages-confirm-btn" onclick="connectSelectedPages()">Connetti selezionate</button>
+        <button class="btn-primary" id="direct-connect-btn" onclick="connectDirectToken()">Connetti</button>
       </div>
     </div>
 
-    <!-- Loading -->
-    <div id="add-pages-loading" style="display:none;text-align:center;padding:30px;color:var(--muted);font-size:13px">Caricamento…</div>
-    <div id="add-pages-error" style="display:none;font-size:12.5px;color:var(--danger);margin-top:10px"></div>
+    <div id="add-pages-error" style="display:none;font-size:12.5px;color:var(--danger);margin-top:12px"></div>
   </div>
 </div>
 

@@ -153,6 +153,48 @@ async function savePageSettings() {
 }
 
 // ── Add Facebook pages (modal flow) ───────────────────────────────
+
+function switchAddPagesTab(tab) {
+  const isOauth = tab === 'oauth';
+  document.getElementById('add-pages-tab-oauth').style.display  = isOauth ? '' : 'none';
+  document.getElementById('add-pages-tab-direct').style.display = isOauth ? 'none' : '';
+  document.getElementById('tab-btn-oauth').style.background  = isOauth ? 'var(--bg-card)' : 'var(--bg-hover)';
+  document.getElementById('tab-btn-direct').style.background = isOauth ? 'var(--bg-hover)' : 'var(--bg-card)';
+  document.getElementById('tab-btn-oauth').style.color  = isOauth ? '' : 'var(--muted)';
+  document.getElementById('tab-btn-direct').style.color = isOauth ? 'var(--muted)' : '';
+  document.getElementById('add-pages-error').style.display = 'none';
+}
+
+async function connectDirectToken() {
+  const pageId    = document.getElementById('direct-page-id').value.trim();
+  const pageToken = document.getElementById('direct-page-token').value.trim();
+  const errEl     = document.getElementById('add-pages-error');
+  const btn       = document.getElementById('direct-connect-btn');
+
+  errEl.style.display = 'none';
+  if (!pageId || !pageToken) {
+    errEl.textContent = 'Page ID e Page Token sono obbligatori.';
+    errEl.style.display = '';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Connessione…';
+  try {
+    const r = await api('/pages/connect-direct', 'POST', { page_id: pageId, page_token: pageToken });
+    toast(`Pagina "${r.page_name}" connessa${r.webhook_active ? ' e webhook attivo' : ' (webhook da verificare)'}`, r.webhook_active ? 'ok' : 'warn');
+    closeModal('modal-add-pages');
+    loadPages();
+  } catch (e) {
+    errEl.textContent = e.message || 'Errore nella connessione.';
+    errEl.style.display = '';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Connetti';
+  }
+}
+
+
 let _fbSdkReady = null;          // Promise<void>, resolves once FB SDK + init done
 let _fbAvailablePages = [];      // last fetched list (rendered as checkboxes)
 let _fbUserToken = null;
