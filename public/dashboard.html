@@ -237,12 +237,12 @@
       <div style="margin-top:20px">
         <div class="panel">
           <div class="panel-head"><div class="panel-title">Nuova policy</div></div>
-          <div class="policy-form">
+          <div class="policy-form" style="max-width:none">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
               <div class="form-group" style="margin:0"><label class="form-label">Nome</label><input class="form-input" id="pname" type="text" placeholder="es. Policy Italiana 2025" style="width:100%;box-sizing:border-box"></div>
               <div class="form-group" style="margin:0"><label class="form-label">Descrizione</label><input class="form-input" id="pdesc" type="text" placeholder="Breve descrizione" style="width:100%;box-sizing:border-box"></div>
             </div>
-            <div class="form-group" style="margin-top:16px"><label class="form-label">System Prompt per Claude</label><textarea class="form-textarea" id="pprompt" placeholder="Sei un moderatore AI…" style="min-height:120px"></textarea></div>
+            <div class="form-group" style="margin-top:16px"><label class="form-label">System Prompt per Claude</label><textarea class="form-textarea" id="pprompt" placeholder="Sei un moderatore AI…" style="width:100%;box-sizing:border-box;min-height:180px"></textarea></div>
             <button class="btn-primary" onclick="createPolicy()">Crea versione</button>
           </div>
         </div>
