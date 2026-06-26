@@ -66,7 +66,7 @@ class AccessGuardMiddleware implements MiddlewareInterface
         if ($allowlist !== [] && !$isPublic) {
             $clientIp = $this->clientIp($request);
             if ($clientIp === null || !$this->ipAllowed($clientIp, $allowlist)) {
-                return $this->deny(403, 'Forbidden');
+                return $this->deny(403, 'Forbidden', $clientIp);
             }
         }
 
@@ -153,12 +153,15 @@ class AccessGuardMiddleware implements MiddlewareInterface
         return array_values(array_filter(array_map('trim', explode(',', $value)), fn($v) => $v !== ''));
     }
 
-    private function deny(int $status, string $message): Response
+    private function deny(int $status, string $message, ?string $clientIp = null): Response
     {
         $label = $status === 403 ? 'Accesso negato' : 'Non trovato';
         $sub   = $status === 403
             ? 'Non sei autorizzato ad accedere a questa risorsa.'
             : 'La risorsa che cerchi non esiste o è stata spostata.';
+        $ipLine = ($status === 403 && $clientIp !== null)
+            ? "<p style=\"margin-top:12px;font-size:11.5px;color:#4a4f5e;font-family:monospace\">{$clientIp}</p>"
+            : '';
 
         $html = <<<HTML
 <!DOCTYPE html>
@@ -168,6 +171,7 @@ class AccessGuardMiddleware implements MiddlewareInterface
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow, noarchive">
 <title>{$status} — {$label}</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'DM Sans',system-ui,sans-serif;background:#0e0f11;color:#e8eaf0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
@@ -182,6 +186,7 @@ class AccessGuardMiddleware implements MiddlewareInterface
   <div class="code">{$status}</div>
   <h1>{$label}</h1>
   <p>{$sub}</p>
+  {$ipLine}
 </div>
 </body>
 </html>
