@@ -166,23 +166,14 @@ function applyLicensePanel(lic) {
   if (offlineEl) offlineEl.style.display = lic.offline_mode ? 'block' : 'none';
 
   if (featEl) {
-    const featureNames = {
-      reportable_queue:    'Coda segnalabili',
-      advanced_stats:      'Statistiche avanzate',
-      fact_check:          'Fact check AI',
-      whataboutism:        'Whataboutism AI',
-      templates:           'Template personalizzabili',
-      data_retention:      'Retention dati',
-      export_log:          'Export log',
-      per_page_thresholds: 'Soglie AI per pagina',
-      multi_page:          'Pagine multiple',
-    };
-    const active = new Set(lic.features ?? []);
-    featEl.innerHTML = Object.entries(featureNames).map(([key, label]) =>
-      active.has(key)
-        ? `<span class="badge badge-pro">${esc(label)}</span>`
-        : `<span style="font-size:11px;color:var(--muted);padding:2px 9px;border:1px solid var(--border);border-radius:10px;display:inline-block;margin:2px 2px">${esc(label)}</span>`
-    ).join(' ');
+    const display = lic.features_display ?? [];
+    featEl.innerHTML = display.length
+      ? display.map(f =>
+          f.active
+            ? `<span class="badge badge-pro">${esc(f.label)}</span>`
+            : `<span style="font-size:11px;color:var(--muted);padding:2px 9px;border:1px solid var(--border);border-radius:10px;display:inline-block;margin:2px 2px">${esc(f.label)}</span>`
+        ).join(' ')
+      : '<span style="color:var(--muted);font-size:12px">Nessuna funzionalità Pro attiva</span>';
   }
 
   if (keyInput && lic.key_masked) keyInput.placeholder = lic.key_masked;

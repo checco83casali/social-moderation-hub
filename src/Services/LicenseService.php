@@ -93,6 +93,19 @@ class LicenseService
         'advanced_stats',
     ];
 
+    /** Human-readable labels for display in the license panel (server-side only). */
+    private const FEATURE_LABELS = [
+        'reportable_queue'    => 'Coda segnalabili',
+        'advanced_stats'      => 'Statistiche avanzate',
+        'fact_check'          => 'Fact check AI',
+        'whataboutism'        => 'Whataboutism AI',
+        'templates'           => 'Template personalizzabili',
+        'data_retention'      => 'Retention dati',
+        'export_log'          => 'Export log',
+        'per_page_thresholds' => 'Soglie AI per pagina',
+        'multi_page'          => 'Pagine multiple',
+    ];
+
     // ── State ────────────────────────────────────────────────────────
 
     /** In-process cache: resolved once per request, avoids redundant DB hits. */
@@ -174,6 +187,7 @@ class LicenseService
             'status'            => $state['status'],   // valid | invalid | expired | unreachable | free
             'plan'              => $state['plan'],
             'features'          => $state['features'],
+            'features_display'  => $this->getFeaturesDisplay($state['features']),
             'is_pro'            => $state['is_pro'],
             'expires_at'        => $state['expires_at'],
             'domain'            => $state['domain'],
@@ -181,6 +195,23 @@ class LicenseService
             'offline_mode'      => $state['offline_mode'],
             'external_disabled' => $state['external_disabled'] ?? false,
         ];
+    }
+
+    /**
+     * Returns all known features as display-ready objects (label + active flag).
+     * Order matches FEATURE_LABELS definition.
+     *
+     * @param  list<string> $activeFeatures  Currently unlocked feature keys.
+     * @return list<array{label: string, active: bool}>
+     */
+    public function getFeaturesDisplay(array $activeFeatures): array
+    {
+        $active = array_flip($activeFeatures);
+        return array_map(
+            fn(string $key, string $label) => ['label' => $label, 'active' => isset($active[$key])],
+            array_keys(self::FEATURE_LABELS),
+            self::FEATURE_LABELS,
+        );
     }
 
     /**

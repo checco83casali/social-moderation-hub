@@ -1241,12 +1241,14 @@ class ModerationController
         return $this->json($response, array_merge($merged, [
             'role'    => 'admin',
             'license' => [
-                'is_pro'       => $licenseStatus['is_pro'],
-                'status'       => $licenseStatus['status'],
-                'plan'         => $licenseStatus['plan'],
-                'features'     => $licenseStatus['features'],
-                'expires_at'   => $licenseStatus['expires_at'],
-                'offline_mode' => $licenseStatus['offline_mode'],
+                'is_pro'            => $licenseStatus['is_pro'],
+                'status'            => $licenseStatus['status'],
+                'plan'              => $licenseStatus['plan'],
+                'features'          => $licenseStatus['features'],
+                'features_display'  => $licenseStatus['features_display'],
+                'expires_at'        => $licenseStatus['expires_at'],
+                'offline_mode'      => $licenseStatus['offline_mode'],
+                'external_disabled' => $licenseStatus['external_disabled'] ?? false,
             ],
         ]));
     }
