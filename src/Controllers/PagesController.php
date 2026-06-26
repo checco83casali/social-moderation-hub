@@ -191,6 +191,90 @@ class PagesController
         ], 201);
     }
 
+    // ── POST /api/pages/connect-direct  ─────────────────────────────
+    /**
+     * Connette una pagina tramite page token diretto (System User o token generato
+     * dal Graph API Explorer). Non richiede il flow OAuth utente.
+     * Body: { page_id, page_token }
+     */
+    public function connectDirect(ServerRequestInterface $request, Response $response): ResponseInterface
+    {
+        $auth = $request->getAttribute('auth_user');
+        $body = (array) $request->getParsedBody();
+
+        $pageId    = trim((string) ($body['page_id']    ?? ''));
+        $pageToken = trim((string) ($body['page_token'] ?? ''));
+
+        if ($pageId === '' || $pageToken === '') {
+            return $this->json($response, ['error' => 'page_id e page_token sono obbligatori'], 422);
+        }
+
+        // Verifica il token contro Meta e recupera il nome della pagina
+        $pageInfo = $this->meta->getPageInfo($pageId, $pageToken);
+        if ($pageInfo === null) {
+            return $this->json($response, ['error' => 'Token non valido o pagina non accessibile con questo token'], 422);
+        }
+
+        $pageName = $pageInfo['name'];
+
+        $existing = DB::table('connected_pages')
+            ->where('page_id', $pageId)
+            ->first();
+
+        if ($existing && $existing->disconnected_at === null) {
+            return $this->json($response, ['error' => 'Pagina già connessa'], 409);
+        }
+
+        if (!$this->license->hasFeature('multi_page')
+            && DB::table('connected_pages')->whereNull('disconnected_at')->count() >= 1) {
+            return $this->json($response, [
+                'error'   => 'Il piano gratuito consente una sola pagina. Passa a Pro per collegarne altre.',
+                'feature' => 'multi_page',
+            ], 403);
+        }
+
+        $webhookOk = false;
+        try {
+            $webhookOk = $this->meta->subscribePageWebhook($pageId, $pageToken);
+        } catch (\Throwable) {}
+
+        $now = date('Y-m-d H:i:s');
+        if ($existing) {
+            DB::table('connected_pages')->where('id', $existing->id)->update([
+                'page_name'         => $pageName,
+                'page_access_token' => $pageToken,
+                'admin_user_id'     => $auth->sub,
+                'page_owner_fb_id'  => null,
+                'is_active'         => 1,
+                'webhook_verified'  => $webhookOk ? 1 : 0,
+                'disconnected_at'   => null,
+                'updated_at'        => $now,
+            ]);
+            $id = $existing->id;
+        } else {
+            $id = DB::table('connected_pages')->insertGetId([
+                'page_id'           => $pageId,
+                'page_name'         => $pageName,
+                'page_access_token' => $pageToken,
+                'admin_user_id'     => $auth->sub,
+                'page_owner_fb_id'  => null,
+                'is_active'         => 1,
+                'webhook_verified'  => $webhookOk ? 1 : 0,
+                'connected_at'      => $now,
+                'updated_at'        => $now,
+            ]);
+        }
+
+        return $this->json($response, [
+            'id'             => $id,
+            'page_name'      => $pageName,
+            'webhook_active' => $webhookOk,
+            'message'        => $webhookOk
+                ? 'Pagina connessa e webhook attivo'
+                : 'Pagina connessa ma webhook non sottoscritto — riprova dalle impostazioni',
+        ], 201);
+    }
+
     // ── POST /api/pages/connect-batch  ───────────────────────────────
     /**
      * Connect multiple pages in a single call.

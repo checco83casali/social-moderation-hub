@@ -170,6 +170,7 @@ $app->group('/api', function ($group) {
     $group->get('/pages/login-config',         [PagesController::class, 'loginConfig']);
     $group->post('/pages/available',           [PagesController::class, 'available']);
     $group->post('/pages/connect',             [PagesController::class, 'connect']);
+    $group->post('/pages/connect-direct',      [PagesController::class, 'connectDirect']);
     $group->post('/pages/connect-batch',       [PagesController::class, 'connectBatch']);
     $group->post('/pages/{id}/webhook/retry',  [PagesController::class, 'retryWebhook']);
     $group->put('/pages/{id}/toggle',          [PagesController::class, 'toggle']);

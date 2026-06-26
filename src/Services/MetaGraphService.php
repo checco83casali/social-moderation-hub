@@ -97,6 +97,31 @@ class MetaGraphService
         }
     }
 
+    /**
+     * Verifica un page token e recupera id + name della pagina.
+     * Usato dal flow di connessione diretta (System User o token manuale).
+     * Ritorna null se il token non è valido o non ha accesso alla pagina.
+     */
+    public function getPageInfo(string $pageId, string $pageToken): ?array
+    {
+        try {
+            $response = $this->http->get($pageId, [
+                'query' => [
+                    'access_token' => $pageToken,
+                    'fields'       => 'id,name',
+                ],
+            ]);
+            $data = json_decode((string) $response->getBody(), true);
+            return (isset($data['id']) && isset($data['name'])) ? $data : null;
+        } catch (GuzzleException $e) {
+            $body = ($e instanceof \GuzzleHttp\Exception\RequestException && $e->getResponse())
+                ? (string) $e->getResponse()->getBody()
+                : $e->getMessage();
+            error_log("[MetaGraph] getPageInfo failed for {$pageId}: " . $this->redact($body));
+            return null;
+        }
+    }
+
     // ──────────────────────────────────────────────────────────────────
     // Webhook management
     // ──────────────────────────────────────────────────────────────────

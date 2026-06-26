@@ -144,6 +144,46 @@ if (isset($_GET['code'])) {
     exit;
 }
 
+// ── Step 1b: connessione diretta tramite page token ────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['direct_page_id'])) {
+    $jwtToken  = $_POST['jwt_token']      ?? '';
+    $pageId    = trim($_POST['direct_page_id']    ?? '');
+    $pageToken = trim($_POST['direct_page_token'] ?? '');
+
+    if ($pageId === '' || $pageToken === '' || $jwtToken === '') {
+        $directError = 'Tutti i campi sono obbligatori.';
+    } else {
+        $ch = curl_init($apiBase . '/pages/connect-direct');
+        curl_setopt_array($ch, [
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => json_encode(['page_id' => $pageId, 'page_token' => $pageToken]),
+            CURLOPT_HTTPHEADER     => [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $jwtToken,
+            ],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_SSL_VERIFYPEER => true,
+        ]);
+        $result = json_decode(curl_exec($ch), true);
+        curl_close($ch);
+
+        echo '<!DOCTYPE html><html><head><meta charset="UTF-8">
+        <style>body{font-family:sans-serif;max-width:600px;margin:40px auto;padding:20px}
+        .ok{background:#f0fdf4;border:1px solid #bbf7d0;padding:16px;border-radius:8px;color:#166534}
+        .err{background:#fef2f2;border:1px solid #fecaca;padding:16px;border-radius:8px;color:#991b1b}
+        a{color:#4f8ef7}</style></head><body>';
+        if (isset($result['id'])) {
+            echo '<div class="ok">✅ Pagina <strong>' . htmlspecialchars($result['page_name'] ?? $pageId) . '</strong> connessa con successo!</div>';
+            echo '<p><a href="/dashboard.html">→ Vai al dashboard</a></p>';
+        } else {
+            echo '<div class="err">❌ Errore: ' . htmlspecialchars($result['error'] ?? 'Errore sconosciuto') . '</div>';
+            echo '<p><a href="/connect_page.php">← Riprova</a></p>';
+        }
+        echo '</body></html>';
+        exit;
+    }
+}
+
 // ── Step 1: redirect a Facebook Login ─────────────────────────────
 // Facebook Login for Business uses `config_id` (referring to a saved
 // configuration in the Meta app dashboard) instead of the traditional
@@ -175,5 +215,38 @@ $loginUrl = "https://www.facebook.com/v19.0/dialog/oauth?"
 <a href="<?= htmlspecialchars($loginUrl) ?>" class="btn">
   Accedi con Facebook
 </a>
+
+<hr style="margin:40px 0;border:none;border-top:1px solid #e2e8f0">
+
+<h3 style="font-size:15px;margin-bottom:6px">Connessione tramite token diretto</h3>
+<p style="font-size:13px;color:#64748b;margin-bottom:16px">
+  Usa questa opzione se la pagina è gestita tramite Business Manager o hai già un page token
+  generato dal <a href="https://developers.facebook.com/tools/explorer" target="_blank" rel="noopener">Graph API Explorer</a>.
+</p>
+
+<?php if (!empty($directError)): ?>
+<div style="background:#fef2f2;border:1px solid #fecaca;padding:12px;border-radius:8px;color:#991b1b;margin-bottom:16px;font-size:13px">
+  <?= htmlspecialchars($directError) ?>
+</div>
+<?php endif; ?>
+
+<form method="POST" style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:12px">
+  <input type="hidden" name="direct_page_id" value="placeholder">
+  <div>
+    <label style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px">JWT Token (dal dashboard)</label>
+    <input name="jwt_token" type="text" placeholder="Incolla il token JWT..." style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;font-family:monospace;box-sizing:border-box">
+    <p style="font-size:11px;color:#94a3b8;margin:4px 0 0">Dashboard → console browser (F12) → <code>localStorage.getItem('mh_token')</code></p>
+  </div>
+  <div>
+    <label style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px">Page ID</label>
+    <input name="direct_page_id" type="text" placeholder="es. 123456789012345" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;box-sizing:border-box">
+  </div>
+  <div>
+    <label style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px">Page Token</label>
+    <input name="direct_page_token" type="text" placeholder="EAABsb..." style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;font-family:monospace;box-sizing:border-box">
+    <p style="font-size:11px;color:#94a3b8;margin:4px 0 0">Graph API Explorer → scegli la pagina → Genera token con <code>pages_manage_metadata, pages_moderate, pages_read_engagement</code></p>
+  </div>
+  <button type="submit" style="padding:10px 20px;background:#1877f2;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;align-self:flex-start">Connetti con token</button>
+</form>
 </body>
 </html>
