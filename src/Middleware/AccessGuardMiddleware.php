@@ -155,8 +155,40 @@ class AccessGuardMiddleware implements MiddlewareInterface
 
     private function deny(int $status, string $message): Response
     {
+        $label = $status === 403 ? 'Accesso negato' : 'Non trovato';
+        $sub   = $status === 403
+            ? 'Non sei autorizzato ad accedere a questa risorsa.'
+            : 'La risorsa che cerchi non esiste o è stata spostata.';
+
+        $html = <<<HTML
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>{$status} — {$label}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',system-ui,sans-serif;background:#0e0f11;color:#e8eaf0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .card{background:#16181c;border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:48px 40px;max-width:420px;width:100%;text-align:center}
+  .code{font-size:72px;font-weight:700;color:rgba(255,255,255,.06);line-height:1;margin-bottom:8px}
+  h1{font-size:20px;font-weight:600;margin-bottom:10px}
+  p{font-size:13.5px;color:#7a7f8e;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="code">{$status}</div>
+  <h1>{$label}</h1>
+  <p>{$sub}</p>
+</div>
+</body>
+</html>
+HTML;
+
         $response = new Response();
-        $response->getBody()->write(json_encode(['error' => $message]));
-        return $response->withHeader('Content-Type', 'application/json')->withStatus($status);
+        $response->getBody()->write($html);
+        return $response->withHeader('Content-Type', 'text/html; charset=utf-8')->withStatus($status);
     }
 }
