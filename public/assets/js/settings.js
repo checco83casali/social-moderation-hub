@@ -121,8 +121,9 @@ async function loadSettings() {
       setVal('set-hide-reportable-reply-template', d.hide_reportable_reply_template ?? '');
 
       // PRO: ban notification templates
-      setVal('set-ban-warning-template',      d.ban_warning_template      ?? '');
-      setVal('set-ban-notification-template', d.ban_notification_template ?? '');
+      setVal('set-ban-warning-template',       d.ban_warning_template       ?? '');
+      setVal('set-ban-notification-template',  d.ban_notification_template  ?? '');
+      setVal('set-banned-user-hide-template',  d.banned_user_hide_template  ?? '');
     }
 
   } catch (e) { toast('Errore caricamento impostazioni', 'err'); }
@@ -321,6 +322,8 @@ async function saveSettings() {
     if (banWarnEl && !banWarnEl.disabled) payload.ban_warning_template = banWarnEl.value.trim();
     const banNotifEl = document.getElementById('set-ban-notification-template');
     if (banNotifEl && !banNotifEl.disabled) payload.ban_notification_template = banNotifEl.value.trim();
+    const banHideEl = document.getElementById('set-banned-user-hide-template');
+    if (banHideEl && !banHideEl.disabled) payload.banned_user_hide_template = banHideEl.value.trim();
     const fcThEl = document.getElementById('set-fact-check-threshold');
     if (fcThEl && !fcThEl.disabled) {
       const fcVal = parseFloat(fcThEl.value);

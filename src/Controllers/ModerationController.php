@@ -1191,8 +1191,9 @@ class ModerationController
             // Hide reply templates (PRO)
             'hide_reply_template'            => 'Ciao {nome}, il tuo commento è stato temporaneamente nascosto perché {reason}.\n\nSe ritieni che ci sia un errore, puoi richiedere una revisione: {appeal_url}',
             'hide_reportable_reply_template' => 'Ciao {nome}, il tuo commento è stato temporaneamente nascosto perché {reason}.\n\n⚠️ Il contenuto è stato segnalato per valutazione legale da parte della redazione.\n\nSe ritieni che ci sia un errore, puoi richiedere una revisione: {appeal_url}',
-            'ban_warning_template'           => "Ciao {nome}, il tuo commento è stato rimosso perché non rispetta le nostre linee guida.\n\n⚠️ Ti informiamo che ulteriori violazioni comporteranno un ban temporaneo dalla pagina.",
-            'ban_notification_template'      => "Ciao {nome}, il tuo commento è stato rimosso e il tuo account è stato temporaneamente sospeso dalla pagina per {durata}.\n\nPotrai tornare a commentare il {scadenza}.",
+            'ban_warning_template'           => "Ciao {nome}, ti informiamo che ulteriori violazioni comporteranno una sospensione temporanea dalla pagina.",
+            'ban_notification_template'      => "Ciao {nome}, il tuo account è stato temporaneamente sospeso dalla pagina per {durata}.\n\nPotrai tornare a commentare il {scadenza}.",
+            'banned_user_hide_template'      => "Ciao {nome}, questo commento è stato nascosto perché il tuo account è attualmente sospeso dalla pagina.\n\nPotrai tornare a commentare il {scadenza}.",
             // Data retention (PRO — 0 = disabled)
             'data_retention_days'          => '0',
             // Ban escalation levels
@@ -1300,6 +1301,7 @@ class ModerationController
             'hide_reportable_reply_template'     => fn($v) => substr(trim((string) $v), 0, 1024),
             'ban_warning_template'               => fn($v) => substr(trim((string) $v), 0, 1024),
             'ban_notification_template'          => fn($v) => substr(trim((string) $v), 0, 1024),
+            'banned_user_hide_template'          => fn($v) => substr(trim((string) $v), 0, 1024),
             // feature: data_retention
             'data_retention_days'                => fn($v) => (string) max(0, (int) $v),
             // feature: fact_check

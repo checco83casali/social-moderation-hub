@@ -408,25 +408,31 @@
               <div style="font-size:12px;color:var(--muted)">Attiva una licenza Pro per personalizzare i template</div>
             </div>
             <div class="policy-form">
-              <p style="font-size:12.5px;color:var(--muted);margin-bottom:10px;line-height:1.6">
-                Messaggi inviati su Facebook <strong>in sequenza alla notifica di rimozione del commento</strong>, solo nei casi in cui la rimozione fa scattare un ban (o un avviso di ban imminente).<br>
-                Flusso: <strong>① notifica rimozione</strong> (motivazione + link appello, dal template sopra) → <strong>② questo messaggio</strong> (riguarda il ban, non il singolo commento, <em>senza</em> link di appello).
+              <p style="font-size:12.5px;color:var(--muted);margin-bottom:12px;line-height:1.6">
+                Il contatore di violazioni dell'utente sale a ogni commento nascosto e scende quando un commento viene ripristinato (appello accolto). Al variare del contatore, <strong>in aggiunta alla notifica di rimozione</strong> (motivazione + appello), vengono inviati questi messaggi relativi al ban — <strong>senza link di appello</strong>, perché riguardano la sospensione e non il singolo commento.
               </p>
-              <div style="margin-bottom:16px;padding:10px 14px;background:rgba(247,178,68,.07);border:1px solid rgba(247,178,68,.2);border-radius:var(--radius);font-size:12px;color:var(--muted);line-height:1.5">
-                ⚠️ Questi messaggi <strong>non includono un link di appello</strong> — il ban non è contestabile direttamente. L'utente può però presentare ricorso tramite il link nell'eventuale commento rimosso che ha causato il ban.
+              <div style="margin-bottom:16px;padding:12px 16px;background:rgba(79,142,247,.06);border:1px solid rgba(79,142,247,.2);border-radius:var(--radius);font-size:12px;color:var(--muted);line-height:1.6">
+                <strong style="color:var(--accent)">Sequenza</strong> (con «Violazioni prima del ban» = N, vedi tab Moderazione → Ban):<br>
+                violazioni <strong>&#60; N</strong> → solo notifica rimozione ·
+                violazione <strong>= N</strong> → rimozione + <strong>① avviso</strong> ·
+                violazione <strong>N+1</strong> → rimozione + <strong>② ban</strong> (1° livello) ·
+                ogni recidiva successiva → ban di livello crescente (1° → 2° → 3°, poi il 3° si ripete) ·
+                durante il ban ogni nuovo commento → auto-nascosto + <strong>③ avviso sospensione</strong>.
               </div>
               <div class="form-group">
-                <label class="form-label">① Avviso ban imminente <span style="color:var(--muted);font-weight:400">(inviato dopo la notifica di rimozione, quando si raggiunge il limite violazioni)</span></label>
+                <label class="form-label">① Avviso ban imminente <span style="color:var(--muted);font-weight:400">(violazione = soglia: ancora nessun ban, ma il prossimo lo fa scattare)</span></label>
                 <textarea class="form-textarea" id="set-ban-warning-template" rows="3" style="width:100%;box-sizing:border-box;font-family:var(--mono);font-size:12px;resize:vertical"></textarea>
-                <div style="font-size:11px;color:var(--muted);margin-top:5px">Segnaposti disponibili: <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{nome}</code></div>
+                <div style="font-size:11px;color:var(--muted);margin-top:5px">Segnaposto disponibile: <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{nome}</code></div>
               </div>
               <div class="form-group" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
-                <label class="form-label">② Notifica ban attivo <span style="color:var(--muted);font-weight:400">(inviato quando scatta il ban, o quando un utente già bannato tenta di postare)</span></label>
+                <label class="form-label">② Notifica ban attivato <span style="color:var(--muted);font-weight:400">(quando il ban scatta — inviato con la notifica di rimozione del commento che lo ha causato)</span></label>
                 <textarea class="form-textarea" id="set-ban-notification-template" rows="4" style="width:100%;box-sizing:border-box;font-family:var(--mono);font-size:12px;resize:vertical"></textarea>
                 <div style="font-size:11px;color:var(--muted);margin-top:5px">Segnaposti disponibili: <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{nome}</code> <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{durata}</code> <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{scadenza}</code></div>
               </div>
-              <div style="margin-top:14px;font-size:11.5px;color:var(--muted);line-height:1.5">
-                Segnaposti disponibili per tutti i template: <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{nome}</code> <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{durata}</code> <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{scadenza}</code>
+              <div class="form-group" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+                <label class="form-label">③ Commento nascosto durante la sospensione <span style="color:var(--muted);font-weight:400">(motivazione per i commenti auto-nascosti mentre l'utente è già bannato)</span></label>
+                <textarea class="form-textarea" id="set-banned-user-hide-template" rows="3" style="width:100%;box-sizing:border-box;font-family:var(--mono);font-size:12px;resize:vertical"></textarea>
+                <div style="font-size:11px;color:var(--muted);margin-top:5px">Segnaposti disponibili: <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{nome}</code> <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{durata}</code> <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{scadenza}</code></div>
               </div>
             </div>
           </div>

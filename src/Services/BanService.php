@@ -209,6 +209,69 @@ class BanService
         return $affected > 0;
     }
 
+    /**
+     * Revoca il ban innescato da un commento che è appena stato ripristinato
+     * (appello accolto / unhide manuale / re-analisi dopo modifica).
+     *
+     * Si applica SOLO se il ban innescato da quel commento è ancora attivo:
+     *   - lo disattiva (is_active=0) e lo marca come 'comment_removed', così
+     *     NON conta più nell'escalation (countUserBans lo esclude). In questo
+     *     modo, alla prossima recidiva, riparte dallo STESSO livello di ban
+     *     della volta precedente invece di salire al successivo.
+     *   - resetta ban_status dell'utente se non restano altri ban attivi.
+     *
+     * Se il ban è già scaduto/non attivo non revoca nulla (resta nello storico
+     * e continua a contare per l'escalation), come da specifica.
+     *
+     * @return bool true se un ban attivo è stato revocato.
+     */
+    public function revokeBanForRestoredComment(int $socialUserId, int $commentId): bool
+    {
+        $now = date('Y-m-d H:i:s');
+
+        $ban = DB::table('ban_records')
+            ->where('social_user_id', $socialUserId)
+            ->where('ban_scope', 'user')
+            ->where('trigger_comment_id', $commentId)
+            ->where('is_active', 1)
+            ->where(function ($q) use ($now) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', $now);
+            })
+            ->orderByDesc('created_at')
+            ->first();
+
+        if (!$ban) {
+            return false;
+        }
+
+        DB::table('ban_records')->where('id', $ban->id)->update([
+            'is_active' => 0,
+            'ban_type'  => 'comment_removed', // escluso da countUserBans → escalation indietro
+            'reason'    => 'Ban revocato: commento innescante ripristinato',
+        ]);
+
+        // Reset ban_status solo se non restano altri ban attivi non scaduti.
+        $stillBanned = DB::table('ban_records')
+            ->where('social_user_id', $socialUserId)
+            ->where('ban_scope', 'user')
+            ->where('ban_type', '!=', 'comment_removed')
+            ->where('is_active', 1)
+            ->where(function ($q) use ($now) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', $now);
+            })
+            ->exists();
+
+        if (!$stillBanned) {
+            DB::table('social_users')->where('id', $socialUserId)->update([
+                'ban_status'     => 'clean',
+                'ban_expires_at' => null,
+                'updated_at'     => $now,
+            ]);
+        }
+
+        return true;
+    }
+
     // ──────────────────────────────────────────────────────────────────
     // Learning data export
     // ──────────────────────────────────────────────────────────────────

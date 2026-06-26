@@ -35,8 +35,82 @@ class ModerationService
     // ──────────────────────────────────────────────────────────────────
 
     /**
+     * Effetti collaterali del ripristino di un commento (appello accolto,
+     * unhide manuale, re-analisi dopo modifica): il contatore violazioni
+     * scala di 1 (minimo 0) e, se quel commento aveva fatto scattare un ban
+     * ancora attivo, il ban viene revocato (vedi BanService).
+     */
+    private function applyRestoreSideEffects(int $commentId, int $socialUserId): void
+    {
+        $current = (int) (DB::table('social_users')->where('id', $socialUserId)->value('violation_count') ?? 0);
+        DB::table('social_users')->where('id', $socialUserId)->update([
+            'violation_count' => max(0, $current - 1),
+            'updated_at'      => date('Y-m-d H:i:s'),
+        ]);
+
+        $revoked = $this->ban->revokeBanForRestoredComment($socialUserId, $commentId);
+        if ($revoked) {
+            $this->logger?->info("Ban revocato per ripristino commento #{$commentId} (utente {$socialUserId})");
+        }
+    }
+
+    /**
+     * Avviso "ban imminente": inviato quando l'utente RAGGIUNGE la soglia di
+     * violazioni (set-recid) — il commento è nascosto ma il ban non è ancora
+     * scattato. Va in aggiunta alla notifica di rimozione (con appello).
+     */
+    private function postBanWarningReply(string $platformCommentId, string $displayName, string $pageToken): void
+    {
+        try {
+            $default = "Ciao {nome}, ti informiamo che ulteriori violazioni comporteranno una sospensione temporanea dalla pagina.";
+            $template = DB::table('app_settings')
+                ->where('key', 'ban_warning_template')
+                ->value('value') ?? $default;
+
+            $message = str_replace('{nome}', $displayName ?: 'utente', $template);
+            $this->meta->replyToComment($platformCommentId, $message, $pageToken);
+        } catch (\Throwable $e) {
+            $this->logger?->warning('[BanWarning] Could not post warning reply: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Motivazione per i commenti auto-nascosti mentre l'utente è GIÀ sospeso.
+     * Template dedicato (senza appello): il commento non è stato analizzato,
+     * è nascosto come effetto del ban in corso.
+     */
+    private function postBannedUserHideReply(
+        string  $platformCommentId,
+        string  $displayName,
+        string  $duration,
+        ?string $expiresAt,
+        string  $pageToken,
+    ): void {
+        try {
+            $default = "Ciao {nome}, questo commento è stato nascosto perché il tuo account è attualmente sospeso dalla pagina. Potrai tornare a commentare il {scadenza}.";
+            $template = DB::table('app_settings')
+                ->where('key', 'banned_user_hide_template')
+                ->value('value') ?? $default;
+
+            $expiresFormatted = $expiresAt
+                ? (new \DateTime($expiresAt))->format('d/m/Y \a\l\l\e H:i')
+                : 'data da definire';
+
+            $message = str_replace(
+                ['{nome}', '{durata}', '{scadenza}'],
+                [$displayName ?: 'utente', $duration, $expiresFormatted],
+                $template,
+            );
+
+            $this->meta->replyToComment($platformCommentId, $message, $pageToken);
+        } catch (\Throwable $e) {
+            $this->logger?->warning('[BannedUserHide] Could not post reply: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Posta una risposta di notifica ban attivo sul commento rimosso.
-     * Chiamato quando scatta il ban oppure quando un utente bannato tenta di postare.
+     * Chiamato quando scatta il ban (in aggiunta alla notifica di rimozione).
      */
     private function postBanNotificationReply(
         string  $platformCommentId,
@@ -152,14 +226,14 @@ class ModerationService
         if ($this->ban->isUserBanned($socialUser['id'])) {
             $platformCommentId = $webhookComment['id'];
 
-            // Notifica l'utente che non può postare e quando scade il ban
+            // Motivazione auto-nascondimento durante la sospensione (template dedicato, senza appello)
             if (!$this->isDevMode() && !empty($page['page_access_token'])) {
                 $banStatus = $this->ban->getUserBanStatus($socialUser['id']);
                 $cfg       = $this->ban->getConfig();
                 $banLevel  = $this->ban->countUserBans($socialUser['id']);
                 $duration  = $this->formatBanDuration($banLevel, $cfg);
 
-                $this->postBanNotificationReply(
+                $this->postBannedUserHideReply(
                     platformCommentId: $platformCommentId,
                     displayName:       $socialUser['display_name'] ?? '',
                     duration:          $duration,
@@ -421,6 +495,8 @@ class ModerationService
                 'status'       => 'approved',
                 'processed_at' => date('Y-m-d H:i:s'),
             ]);
+            // Ripristino: contatore -1 e revoca eventuale ban innescato da questo commento
+            $this->applyRestoreSideEffects($commentId, (int) $comment->social_user_id);
             // Log appeal accepted
             DB::table('moderation_log')->insertGetId([
                 'comment_id'       => $commentId,
@@ -989,9 +1065,14 @@ class ModerationService
             if ($dbVal !== null) $recidivismLimit = max(1, (int) $dbVal);
         } catch (\Throwable) {}
 
-        // Ban triggers AFTER the threshold is crossed, not on reaching it.
-        // e.g. threshold=3: violations 1,2,3 → hide only; violation 4+ → hide + ban
-        $banAction = null;
+        // Sequenza ban (parallela alla moderazione), in aggiunta alla notifica
+        // di rimozione (con appello) già inviata sopra:
+        //   violazioni < soglia            → solo nascondi
+        //   violazioni == soglia (set-recid) → nascondi + AVVISO ban imminente
+        //   violazioni  > soglia            → nascondi + BAN + notifica ban
+        // es. soglia=3: viol. 1,2 → nascondi; viol. 3 → avviso; viol. 4+ → ban.
+        $banAction   = null;
+        $canNotify   = !$silent && $platformId && !empty($page['page_access_token']);
         if ($newCount > $recidivismLimit) {
             $banAction = $this->ban->applyUserBan(
                 socialUserId: $socialUser['id'],
@@ -1003,6 +1084,26 @@ class ModerationService
                 reason:       "Recidivista: {$newCount} violazioni",
                 categories:   $result->categories,
             );
+
+            // Notifica ban (senza appello) — solo se il ban è stato realmente applicato
+            if ($canNotify && $banAction === 'user_temp_banned') {
+                $cfg       = $this->ban->getConfig();
+                $banLevel  = $this->ban->countUserBans($socialUser['id']); // include il ban appena inserito = livello applicato
+                $duration  = $this->formatBanDuration($banLevel, $cfg);
+                $banStatus = $this->ban->getUserBanStatus($socialUser['id']);
+                $this->postBanNotificationReply(
+                    platformCommentId: $platformId,
+                    displayName:       $displayName,
+                    duration:          $duration,
+                    expiresAt:         $banStatus['expires_at'] ?? null,
+                    pageToken:         $page['page_access_token'],
+                );
+            }
+        } elseif ($newCount === $recidivismLimit) {
+            // Soglia raggiunta: avvisa che la prossima violazione farà scattare il ban
+            if ($canNotify) {
+                $this->postBanWarningReply($platformId, $displayName, $page['page_access_token']);
+            }
         }
 
         $this->logger?->info("Comment #{$commentId} hidden" . ($reportable ? ' [REPORTABLE]' : '') . ($banAction ? " + ban: {$banAction}" : ''));
@@ -1261,6 +1362,8 @@ class ModerationService
                 'status'       => 'approved',
                 'processed_at' => date('Y-m-d H:i:s'),
             ]);
+            // Ripristino dopo modifica: contatore -1 e revoca eventuale ban innescato
+            $this->applyRestoreSideEffects((int) $existing->id, (int) $existing->social_user_id);
             DB::table('moderation_log')->where('id', $reAnalysisLogId)->update(['final_action' => 'approved']);
             $this->logger?->info("Comment #{$existing->id} unhidden after user edit — re-analysis passed");
             return ['action' => 'edit_unhidden', 'comment_id' => $existing->id];
