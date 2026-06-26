@@ -199,24 +199,12 @@
 
     <!-- Policy -->
     <div class="screen" id="screen-policy">
-      <div style="display:grid; grid-template-columns:1fr 360px; gap:20px; align-items:start">
+      <!-- Row 1: policy list (1/6) + active prompt viewer (5/6) -->
+      <div style="display:grid; grid-template-columns:1fr 5fr; gap:20px; align-items:start">
         <div class="panel">
           <div class="panel-head"><div class="panel-title">Policy attive</div></div>
           <div id="policy-list-wrap"><div class="loading">Caricamento…</div></div>
         </div>
-        <div class="panel">
-          <div class="panel-head"><div class="panel-title">Nuova policy</div></div>
-          <div class="policy-form">
-            <div class="form-group"><label class="form-label">Nome</label><input class="form-input" id="pname" type="text" placeholder="es. Policy Italiana 2025"></div>
-            <div class="form-group"><label class="form-label">Descrizione</label><input class="form-input" id="pdesc" type="text" placeholder="Breve descrizione"></div>
-            <div class="form-group"><label class="form-label">System Prompt per Claude</label><textarea class="form-textarea" id="pprompt" placeholder="Sei un moderatore AI…"></textarea></div>
-            <button class="btn-primary" onclick="createPolicy()">Crea versione</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Prompt viewer (read-only) -->
-      <div style="margin-top:20px">
         <div class="panel">
           <div class="panel-head">
             <div class="panel-title" id="active-prompt-header">System Prompt attivo (sola lettura)</div>
@@ -237,10 +225,25 @@
               color:var(--text);
               white-space:pre-wrap;
               word-break:break-word;
-              max-height:480px;
+              max-height:520px;
               overflow-y:auto;
               margin:0;
             ">Caricamento…</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: nuova policy (full width) -->
+      <div style="margin-top:20px">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Nuova policy</div></div>
+          <div class="policy-form">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <div class="form-group" style="margin:0"><label class="form-label">Nome</label><input class="form-input" id="pname" type="text" placeholder="es. Policy Italiana 2025" style="width:100%;box-sizing:border-box"></div>
+              <div class="form-group" style="margin:0"><label class="form-label">Descrizione</label><input class="form-input" id="pdesc" type="text" placeholder="Breve descrizione" style="width:100%;box-sizing:border-box"></div>
+            </div>
+            <div class="form-group" style="margin-top:16px"><label class="form-label">System Prompt per Claude</label><textarea class="form-textarea" id="pprompt" placeholder="Sei un moderatore AI…" style="min-height:120px"></textarea></div>
+            <button class="btn-primary" onclick="createPolicy()">Crea versione</button>
           </div>
         </div>
       </div>
@@ -405,21 +408,25 @@
               <div style="font-size:12px;color:var(--muted)">Attiva una licenza Pro per personalizzare i template</div>
             </div>
             <div class="policy-form">
-              <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.6">
-                Messaggi inviati automaticamente su Facebook quando un utente si avvicina al limite di violazioni o viene bannato.<br>
-                Segnaposto disponibili: <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{nome}</code>
-                <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{durata}</code>
-                <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{scadenza}</code>
+              <p style="font-size:12.5px;color:var(--muted);margin-bottom:10px;line-height:1.6">
+                Messaggi inviati su Facebook <strong>in sequenza alla notifica di rimozione del commento</strong>, solo nei casi in cui la rimozione fa scattare un ban (o un avviso di ban imminente).<br>
+                Flusso: <strong>① notifica rimozione</strong> (motivazione + link appello, dal template sopra) → <strong>② questo messaggio</strong> (riguarda il ban, non il singolo commento, <em>senza</em> link di appello).
               </p>
+              <div style="margin-bottom:16px;padding:10px 14px;background:rgba(247,178,68,.07);border:1px solid rgba(247,178,68,.2);border-radius:var(--radius);font-size:12px;color:var(--muted);line-height:1.5">
+                ⚠️ Questi messaggi <strong>non includono un link di appello</strong> — il ban non è contestabile direttamente. L'utente può però presentare ricorso tramite il link nell'eventuale commento rimosso che ha causato il ban.
+              </div>
               <div class="form-group">
-                <label class="form-label">Avviso ban imminente <span style="color:var(--muted);font-weight:400">(al raggiungimento del limite violazioni)</span></label>
+                <label class="form-label">① Avviso ban imminente <span style="color:var(--muted);font-weight:400">(inviato dopo la notifica di rimozione, quando si raggiunge il limite violazioni)</span></label>
                 <textarea class="form-textarea" id="set-ban-warning-template" rows="3" style="width:100%;box-sizing:border-box;font-family:var(--mono);font-size:12px;resize:vertical"></textarea>
                 <div style="font-size:11px;color:var(--muted);margin-top:5px">Segnaposti disponibili: <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{nome}</code></div>
               </div>
               <div class="form-group" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
-                <label class="form-label">Notifica ban attivo <span style="color:var(--muted);font-weight:400">(quando scatta il ban o utente bannato tenta di postare)</span></label>
+                <label class="form-label">② Notifica ban attivo <span style="color:var(--muted);font-weight:400">(inviato quando scatta il ban, o quando un utente già bannato tenta di postare)</span></label>
                 <textarea class="form-textarea" id="set-ban-notification-template" rows="4" style="width:100%;box-sizing:border-box;font-family:var(--mono);font-size:12px;resize:vertical"></textarea>
                 <div style="font-size:11px;color:var(--muted);margin-top:5px">Segnaposti disponibili: <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{nome}</code> <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{durata}</code> <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{scadenza}</code></div>
+              </div>
+              <div style="margin-top:14px;font-size:11.5px;color:var(--muted);line-height:1.5">
+                Segnaposti disponibili per tutti i template: <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{nome}</code> <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{durata}</code> <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{scadenza}</code>
               </div>
             </div>
           </div>

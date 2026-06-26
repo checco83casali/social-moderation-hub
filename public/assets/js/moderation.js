@@ -60,18 +60,18 @@ async function loadStatsScreen() {
     if (subEl) {
       const total = (subCalls.fact_check || 0) + (subCalls.whataboutism || 0);
       subEl.innerHTML = total === 0
-        ? '<div style="padding:14px;text-align:center;font-size:12px;color:var(--muted)">Nessuna sub-call Sonnet negli ultimi 30 giorni</div>'
+        ? '<div style="padding:14px 20px;font-size:12px;color:var(--muted)">Nessuna sub-call Sonnet negli ultimi 30 giorni</div>'
         : `
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div style="padding:10px 14px;background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.18);border-radius:var(--radius)">
-            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">🔍 Fact-check</div>
-            <div style="font-size:20px;font-weight:600;color:var(--accent)">${subCalls.fact_check ?? 0}</div>
-            <div style="font-size:11px;color:var(--muted)">call Sonnet (assess + grounding)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr">
+          <div style="padding:16px 20px;border-right:1px solid var(--border)">
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">🔍 Fact-check</div>
+            <div style="font-size:24px;font-weight:600;color:var(--accent)">${subCalls.fact_check ?? 0}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px">call Sonnet (assess + grounding)</div>
           </div>
-          <div style="padding:10px 14px;background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.2);border-radius:var(--radius)">
-            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">↩️ Whataboutism</div>
-            <div style="font-size:20px;font-weight:600;color:#a855f7">${subCalls.whataboutism ?? 0}</div>
-            <div style="font-size:11px;color:var(--muted)">call Sonnet (assess + verify)</div>
+          <div style="padding:16px 20px">
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">↩️ Whataboutism</div>
+            <div style="font-size:24px;font-weight:600;color:#a855f7">${subCalls.whataboutism ?? 0}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px">call Sonnet (assess + verify)</div>
           </div>
         </div>`;
     }
