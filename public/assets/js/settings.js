@@ -1,6 +1,6 @@
 // ── Settings tab switcher ─────────────────────────────────────────
 function switchSettingsTab(tab) {
-  ['moderazione','ai','privacy','sistema','licenza'].forEach(t => {
+  ['moderazione','messaggi','ai','privacy','sistema','licenza'].forEach(t => {
     const panel = document.getElementById('stab-' + t);
     const btn   = document.getElementById('stab-btn-' + t);
     if (panel) panel.style.display = t === tab ? '' : 'none';
