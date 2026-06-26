@@ -248,85 +248,100 @@
 
     <!-- Settings -->
     <div class="screen" id="screen-settings">
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; max-width:900px">
-        <div class="panel">
-          <div class="panel-head"><div class="panel-title">Soglie di confidenza AI</div></div>
-          <div class="policy-form">
-            <p style="font-size:12.5px;color:var(--muted);margin-bottom:20px;line-height:1.6">Determina quando ogni modello AI ritiene il proprio giudizio abbastanza certo da agire autonomamente.<br>Valori più alti → più escalation umane. Valori più bassi → più decisioni automatiche.</p>
-            <div class="form-group">
-              <label class="form-label">Soglia Haiku (prima analisi)</label>
-              <div style="display:flex;align-items:center;gap:12px">
-                <input type="range" min="0.01" max="1" step="0.01" id="set-haiku-range" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('set-haiku-val').value=this.value">
-                <input class="form-input" type="number" id="set-haiku-val" min="0.01" max="1" step="0.01" style="width:80px;text-align:center" oninput="document.getElementById('set-haiku-range').value=this.value">
-              </div>
-              <div style="font-size:11px;color:var(--muted);margin-top:5px">Se confidence ≥ soglia → Haiku decide autonomamente. Sotto soglia → passa a Sonnet.</div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Soglia Sonnet (seconda analisi)</label>
-              <div style="display:flex;align-items:center;gap:12px">
-                <input type="range" min="0.01" max="1" step="0.01" id="set-sonnet-range" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('set-sonnet-val').value=this.value">
-                <input class="form-input" type="number" id="set-sonnet-val" min="0.01" max="1" step="0.01" style="width:80px;text-align:center" oninput="document.getElementById('set-sonnet-range').value=this.value">
-              </div>
-              <div style="font-size:11px;color:var(--muted);margin-top:5px">Se confidence ≥ soglia → Sonnet decide autonomamente. Sotto soglia → escalation umana.</div>
-            </div>
-          </div>
-        </div>
-        <div class="panel">
-          <div class="panel-head"><div class="panel-title">Ban per recidività</div></div>
-          <div class="policy-form">
-            <p style="font-size:12.5px;color:var(--muted);margin-bottom:20px;line-height:1.6">Numero di commenti nascosti necessari prima che scatti il ban temporaneo automatico dell'utente.</p>
-            <div class="form-group">
-              <label class="form-label">Violazioni prima del ban utente</label>
-              <input class="form-input" type="number" id="set-recid" min="1" max="50" step="1" style="width:120px;text-align:center">
-              <div style="font-size:11px;color:var(--muted);margin-top:5px">Quando un utente raggiunge questa soglia scatta il 1° ban temporaneo. Ogni ban successivo scala di durata secondo l'escalation configurata sotto.</div>
-            </div>
-            <div class="form-group" style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border)">
-              <label class="form-label">Lunghezza massima motivazione AI (parole)</label>
-              <input class="form-input" type="number" id="set-reason-max-words" min="10" max="200" step="5" style="width:120px;text-align:center">
-              <div style="font-size:11px;color:var(--muted);margin-top:5px">Limite parole per il campo motivazione interna dell'AI. La motivazione pubblica all'utente è sempre concisa e generata separatamente.</div>
-            </div>
-          </div>
-        </div>
+
+      <!-- ── Tab bar ──────────────────────────────────────────────────── -->
+      <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:24px;max-width:900px">
+        <button id="stab-btn-moderazione" onclick="switchSettingsTab('moderazione')"
+          style="background:none;border:none;border-bottom:2px solid var(--accent);color:var(--text);font-size:13px;font-weight:500;padding:10px 18px;cursor:pointer;font-family:var(--font);margin-bottom:-2px">Moderazione</button>
+        <button id="stab-btn-ai" onclick="switchSettingsTab('ai')"
+          style="background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:13px;font-weight:500;padding:10px 18px;cursor:pointer;font-family:var(--font);margin-bottom:-2px">AI avanzata</button>
+        <button id="stab-btn-privacy" onclick="switchSettingsTab('privacy')"
+          style="background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:13px;font-weight:500;padding:10px 18px;cursor:pointer;font-family:var(--font);margin-bottom:-2px">Privacy &amp; GDPR</button>
+        <button id="stab-btn-sistema" onclick="switchSettingsTab('sistema')"
+          style="background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:13px;font-weight:500;padding:10px 18px;cursor:pointer;font-family:var(--font);margin-bottom:-2px">Sistema</button>
+        <button id="stab-btn-licenza" onclick="switchSettingsTab('licenza')"
+          style="background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:13px;font-weight:500;padding:10px 18px;cursor:pointer;font-family:var(--font);margin-bottom:-2px">Licenza</button>
       </div>
 
-      <!-- Escalation ban temporanei (larghezza piena) -->
-      <div style="max-width:900px;margin-top:20px">
-        <div class="panel">
-          <div class="panel-head"><div class="panel-title">Escalation ban temporanei</div></div>
-          <div class="policy-form">
-            <p style="font-size:12.5px;color:var(--muted);margin-bottom:20px;line-height:1.6">
-              Durata progressiva dei ban temporanei per utenti recidivi.<br>
-              Dal 4° ban in poi la durata del 3° livello si reitera indefinitamente.
-            </p>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
-              <div class="form-group" style="margin:0">
-                <label class="form-label">1° ban — durata in ore</label>
-                <input class="form-input" type="number" id="set-ban-l1-hours" min="1" max="168" step="1" style="width:120px;text-align:center">
-                <div style="font-size:11px;color:var(--muted);margin-top:4px">Primo ban temporaneo (es. 1 ora)</div>
+      <!-- ══ TAB: Moderazione ══════════════════════════════════════════ -->
+      <div id="stab-moderazione">
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; max-width:900px">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Soglie di confidenza AI</div></div>
+            <div class="policy-form">
+              <p style="font-size:12.5px;color:var(--muted);margin-bottom:20px;line-height:1.6">Determina quando ogni modello AI ritiene il proprio giudizio abbastanza certo da agire autonomamente.<br>Valori più alti → più escalation umane. Valori più bassi → più decisioni automatiche.</p>
+              <div class="form-group">
+                <label class="form-label">Soglia Haiku (prima analisi)</label>
+                <div style="display:flex;align-items:center;gap:12px">
+                  <input type="range" min="0.01" max="1" step="0.01" id="set-haiku-range" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('set-haiku-val').value=this.value">
+                  <input class="form-input" type="number" id="set-haiku-val" min="0.01" max="1" step="0.01" style="width:80px;text-align:center" oninput="document.getElementById('set-haiku-range').value=this.value">
+                </div>
+                <div style="font-size:11px;color:var(--muted);margin-top:5px">Se confidence ≥ soglia → Haiku decide autonomamente. Sotto soglia → passa a Sonnet.</div>
               </div>
-              <div class="form-group" style="margin:0">
-                <label class="form-label">2° ban — durata in giorni</label>
-                <input class="form-input" type="number" id="set-ban-l2-days" min="1" max="365" step="1" style="width:120px;text-align:center">
-                <div style="font-size:11px;color:var(--muted);margin-top:4px">Secondo ban temporaneo (es. 7 giorni)</div>
-              </div>
-              <div class="form-group" style="margin:0">
-                <label class="form-label">3° ban — durata in giorni</label>
-                <input class="form-input" type="number" id="set-ban-l3-days" min="1" max="365" step="1" style="width:120px;text-align:center">
-                <div style="font-size:11px;color:var(--muted);margin-top:4px">Terzo ban in poi (es. 30 giorni)</div>
+              <div class="form-group">
+                <label class="form-label">Soglia Sonnet (seconda analisi)</label>
+                <div style="display:flex;align-items:center;gap:12px">
+                  <input type="range" min="0.01" max="1" step="0.01" id="set-sonnet-range" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('set-sonnet-val').value=this.value">
+                  <input class="form-input" type="number" id="set-sonnet-val" min="0.01" max="1" step="0.01" style="width:80px;text-align:center" oninput="document.getElementById('set-sonnet-range').value=this.value">
+                </div>
+                <div style="font-size:11px;color:var(--muted);margin-top:5px">Se confidence ≥ soglia → Sonnet decide autonomamente. Sotto soglia → escalation umana.</div>
               </div>
             </div>
-            <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);font-size:12px;color:var(--muted);line-height:1.6">
-              ℹ Il sistema non applica mai ban permanenti in automatico — tutti i ban sono temporanei per conformità GDPR (Art. 22).
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Ban per recidività</div></div>
+            <div class="policy-form">
+              <p style="font-size:12.5px;color:var(--muted);margin-bottom:20px;line-height:1.6">Numero di commenti nascosti necessari prima che scatti il ban temporaneo automatico dell'utente.</p>
+              <div class="form-group">
+                <label class="form-label">Violazioni prima del ban utente</label>
+                <input class="form-input" type="number" id="set-recid" min="1" max="50" step="1" style="width:120px;text-align:center">
+                <div style="font-size:11px;color:var(--muted);margin-top:5px">Quando un utente raggiunge questa soglia scatta il 1° ban temporaneo. Ogni ban successivo scala di durata secondo l'escalation configurata sotto.</div>
+              </div>
+              <div class="form-group" style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border)">
+                <label class="form-label">Lunghezza massima motivazione AI (parole)</label>
+                <input class="form-input" type="number" id="set-reason-max-words" min="10" max="200" step="5" style="width:120px;text-align:center">
+                <div style="font-size:11px;color:var(--muted);margin-top:5px">Limite parole per il campo motivazione interna dell'AI. La motivazione pubblica all'utente è sempre concisa e generata separatamente.</div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Notifica automatica + Fuso orario (1/2 + 1/2) -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;max-width:900px;margin-top:20px">
+        <!-- Escalation ban temporanei (larghezza piena) -->
+        <div style="max-width:900px;margin-top:20px">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Escalation ban temporanei</div></div>
+            <div class="policy-form">
+              <p style="font-size:12.5px;color:var(--muted);margin-bottom:20px;line-height:1.6">
+                Durata progressiva dei ban temporanei per utenti recidivi.<br>
+                Dal 4° ban in poi la durata del 3° livello si reitera indefinitamente.
+              </p>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">1° ban — durata in ore</label>
+                  <input class="form-input" type="number" id="set-ban-l1-hours" min="1" max="168" step="1" style="width:120px;text-align:center">
+                  <div style="font-size:11px;color:var(--muted);margin-top:4px">Primo ban temporaneo (es. 1 ora)</div>
+                </div>
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">2° ban — durata in giorni</label>
+                  <input class="form-input" type="number" id="set-ban-l2-days" min="1" max="365" step="1" style="width:120px;text-align:center">
+                  <div style="font-size:11px;color:var(--muted);margin-top:4px">Secondo ban temporaneo (es. 7 giorni)</div>
+                </div>
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">3° ban — durata in giorni</label>
+                  <input class="form-input" type="number" id="set-ban-l3-days" min="1" max="365" step="1" style="width:120px;text-align:center">
+                  <div style="font-size:11px;color:var(--muted);margin-top:4px">Terzo ban in poi (es. 30 giorni)</div>
+                </div>
+              </div>
+              <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);font-size:12px;color:var(--muted);line-height:1.6">
+                ℹ Il sistema non applica mai ban permanenti in automatico — tutti i ban sono temporanei per conformità GDPR (Art. 22).
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- Notifica automatica (admin only) -->
-        <div id="reply-settings-panel" style="display:none">
+        <div id="reply-settings-panel" style="display:none;margin-top:20px;max-width:900px">
           <div class="panel">
             <div class="panel-head"><div class="panel-title">Notifica automatica all'utente</div></div>
             <div class="policy-form">
@@ -345,470 +360,493 @@
           </div>
         </div>
 
-        <!-- Fuso orario -->
-        <div class="panel">
-          <div class="panel-head"><div class="panel-title">Fuso orario</div></div>
-          <div class="policy-form">
-            <p style="font-size:12.5px;color:var(--muted);margin-bottom:20px;line-height:1.6">
-              Fuso orario usato dal server per date e orari. Deve corrispondere alla posizione geografica dell'installazione.
-            </p>
-            <div class="form-group">
-              <label class="form-label">Timezone</label>
-              <select class="form-input" id="set-timezone" style="width:100%">
-                <optgroup label="Europa">
-                  <option value="Europe/Rome">Europe/Rome (Italia / San Marino)</option>
-                  <option value="Europe/London">Europe/London (UK)</option>
-                  <option value="Europe/Paris">Europe/Paris (Francia)</option>
-                  <option value="Europe/Berlin">Europe/Berlin (Germania)</option>
-                  <option value="Europe/Madrid">Europe/Madrid (Spagna)</option>
-                  <option value="Europe/Zurich">Europe/Zurich (Svizzera)</option>
-                  <option value="Europe/Amsterdam">Europe/Amsterdam (Olanda)</option>
-                  <option value="Europe/Brussels">Europe/Brussels (Belgio)</option>
-                  <option value="Europe/Lisbon">Europe/Lisbon (Portogallo)</option>
-                  <option value="Europe/Vienna">Europe/Vienna (Austria)</option>
-                  <option value="Europe/Warsaw">Europe/Warsaw (Polonia)</option>
-                  <option value="Europe/Athens">Europe/Athens (Grecia)</option>
-                  <option value="Europe/Helsinki">Europe/Helsinki (Finlandia)</option>
-                  <option value="Europe/Stockholm">Europe/Stockholm (Svezia)</option>
-                  <option value="Europe/Oslo">Europe/Oslo (Norvegia)</option>
-                  <option value="Europe/Copenhagen">Europe/Copenhagen (Danimarca)</option>
-                  <option value="Europe/Moscow">Europe/Moscow (Russia)</option>
-                </optgroup>
-                <optgroup label="America">
-                  <option value="America/New_York">America/New_York (EST)</option>
-                  <option value="America/Chicago">America/Chicago (CST)</option>
-                  <option value="America/Denver">America/Denver (MST)</option>
-                  <option value="America/Los_Angeles">America/Los_Angeles (PST)</option>
-                  <option value="America/Sao_Paulo">America/Sao_Paulo (Brasile)</option>
-                </optgroup>
-                <optgroup label="Asia / Pacifico">
-                  <option value="Asia/Dubai">Asia/Dubai</option>
-                  <option value="Asia/Singapore">Asia/Singapore</option>
-                  <option value="Asia/Tokyo">Asia/Tokyo</option>
-                  <option value="Asia/Shanghai">Asia/Shanghai</option>
-                  <option value="Australia/Sydney">Australia/Sydney</option>
-                </optgroup>
-                <optgroup label="UTC">
-                  <option value="UTC">UTC</option>
-                </optgroup>
-              </select>
-              <div style="font-size:11px;color:var(--muted);margin-top:6px">L'ora legale (CEST/CET) viene gestita automaticamente.</div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Claude AI API key (admin only) -->
-      <div id="claude-key-panel" style="display:none;margin-top:20px;max-width:900px">
-        <div class="panel">
-          <div class="panel-head">
-            <div class="panel-title">🤖 Integrazione Claude AI</div>
-          </div>
-          <div class="policy-form">
-            <p style="font-size:12.5px;color:var(--muted);margin-bottom:16px;line-height:1.6">
-              Chiave API Anthropic usata per la moderazione AI. Viene salvata nel file <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">.env</code> sul server.<br>
-              La chiave attuale è mostrata mascherata. Lascia il campo vuoto per non modificarla.
-            </p>
-            <div style="max-width:520px">
-              <input class="form-input" type="password" id="set-anthropic-key"
-                placeholder="Chiave attuale: —"
-                autocomplete="new-password"
-                style="width:100%;font-family:var(--mono);font-size:13px">
-            </div>
-            <p style="font-size:11px;color:var(--muted);margin-top:8px">La chiave deve iniziare con <code style="font-family:var(--mono)">sk-ant-</code>. Salvala con il pulsante "Salva impostazioni" qui sotto.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Dev mode panel (admin only) -->
-      <div id="dev-mode-panel" style="display:none;margin-top:20px;max-width:900px">
-        <div class="panel" style="border-color:rgba(247,178,68,.3)">
-          <div class="panel-head" style="background:rgba(247,178,68,.06)">
-            <div class="panel-title" style="color:var(--warn)">⚠ Modalità sviluppo</div>
-          </div>
-          <div class="policy-form">
-            <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.6">
-              In modalità sviluppo il pipeline AI gira normalmente e le decisioni vengono registrate, ma <strong style="color:var(--warn)">nessuna azione reale</strong> viene eseguita:<br>
-              nessuna cancellazione su Facebook, nessun incremento violazioni, nessun ban utente.<br>
-              I commenti che sarebbero rimossi vengono taggati come <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">dev_flagged</code>.
-            </p>
-            <label style="display:flex;align-items:center;gap:14px;cursor:pointer;user-select:none">
-              <input type="checkbox" id="set-dev-mode" style="width:18px;height:18px;accent-color:var(--warn);cursor:pointer" onchange="onDevModeChange(this.checked)">
-              <span style="font-size:13px;font-weight:500" id="dev-mode-label">Modalità sviluppo disattiva</span>
-            </label>
-            <p style="font-size:11px;color:var(--muted);margin-top:12px">Ricordati di disattivarla prima di andare in produzione.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Privacy Policy — dati organizzazione (admin only) -->
-      <div id="privacy-settings-panel" style="display:none;margin-top:20px;max-width:900px">
-        <div class="panel">
-          <div class="panel-head">
-            <div class="panel-title">🔒 Privacy Policy — dati organizzazione</div>
-          </div>
-          <div class="policy-form">
-            <p style="font-size:12.5px;color:var(--muted);margin-bottom:20px;line-height:1.6">
-              Questi dati vengono mostrati nella pagina pubblica <strong>Privacy Policy</strong> (<code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">/privacy</code>) e sostituiscono i placeholder del template.<br>
-              Compila tutti i campi con i dati reali del titolare del trattamento prima di rendere l'installazione pubblica.
-            </p>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-              <div class="form-group" style="margin:0">
-                <label class="form-label">URL installazione</label>
-                <input class="form-input" type="url" id="set-app-url" placeholder="https://moderation.esempio.it" style="width:100%;box-sizing:border-box">
-                <div style="font-size:11px;color:var(--muted);margin-top:5px">Usato nei link interni (appello, policy pubblica). Senza trailing slash.</div>
-              </div>
-              <div class="form-group" style="margin:0">
-                <label class="form-label">Nome organizzazione (Titolare)</label>
-                <input class="form-input" type="text" id="set-privacy-org-name" placeholder="Acme S.r.l." style="width:100%;box-sizing:border-box">
-                <div style="font-size:11px;color:var(--muted);margin-top:5px">Ragione sociale o nome completo del titolare del trattamento.</div>
-              </div>
-              <div class="form-group" style="margin:0">
-                <label class="form-label">Indirizzo sede legale</label>
-                <input class="form-input" type="text" id="set-privacy-org-address" placeholder="Via Roma 1, 20100 Milano" style="width:100%;box-sizing:border-box">
-              </div>
-              <div class="form-group" style="margin:0">
-                <label class="form-label">Email contatto privacy / DPO</label>
-                <input class="form-input" type="email" id="set-privacy-org-email" placeholder="privacy@esempio.it" style="width:100%;box-sizing:border-box">
-                <div style="font-size:11px;color:var(--muted);margin-top:5px">Usata in tutti i link mailto della privacy policy.</div>
-              </div>
-              <div class="form-group" style="margin:0">
-                <label class="form-label">Paese / giurisdizione</label>
-                <input class="form-input" type="text" id="set-privacy-org-country" placeholder="Italia / Italy" style="width:100%;box-sizing:border-box">
-                <div style="font-size:11px;color:var(--muted);margin-top:5px">Formato suggerito: «Italia / Italy» (IT / EN separati da /).</div>
-              </div>
-              <div class="form-group" style="margin:0">
-                <label class="form-label">Data di efficacia</label>
-                <input class="form-input" type="text" id="set-privacy-policy-date" placeholder="1 maggio 2026 / 1 May 2026" style="width:100%;box-sizing:border-box">
-                <div style="font-size:11px;color:var(--muted);margin-top:5px">Formato suggerito: «GG mese AAAA / DD Month YYYY» (IT / EN separati da /).</div>
-              </div>
-            </div>
-            <div class="form-group" style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border)">
-              <label class="form-label">Autorità di controllo competente</label>
-              <input class="form-input" type="text" id="set-privacy-supervisory" placeholder="Garante per la Protezione dei Dati Personali – garanteprivacy.it" style="width:100%;box-sizing:border-box">
-              <div style="font-size:11px;color:var(--muted);margin-top:5px">Nome e riferimento dell'autorità Garante competente per il tuo paese.</div>
-            </div>
-            <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-              <a id="privacy-preview-link" href="/privacy" target="_blank" rel="noopener"
-                 style="font-size:12.5px;color:var(--accent);text-decoration:none;display:flex;align-items:center;gap:5px">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                Anteprima privacy policy
-              </a>
-              <a id="public-policy-link" href="/public/policy" target="_blank" rel="noopener"
-                 style="font-size:12.5px;color:var(--accent);text-decoration:none;display:flex;align-items:center;gap:5px">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                System prompt pubblico
-              </a>
-              <button onclick="openRegistro()"
-                 style="font-size:12.5px;color:var(--muted);background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:5px;padding:0;font-family:var(--font)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                Registro trattamenti (art. 30 GDPR)
-              </button>
-              <button onclick="openDpia()"
-                 style="font-size:12.5px;color:var(--muted);background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:5px;padding:0;font-family:var(--font)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                DPIA — Valutazione d'impatto (art. 35 GDPR)
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── PRO: Licenza ──────────────────────────────────────────────── -->
-      <div id="license-panel" style="display:none;margin-top:20px;max-width:900px">
-        <div class="panel" style="border-color:rgba(99,102,241,.3)">
-          <div class="panel-head" style="background:rgba(99,102,241,.06)">
-            <div class="panel-title" style="color:var(--accent)">🔑 Licenza Pro</div>
-          </div>
-          <div class="policy-form">
-
-            <!-- Status row -->
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:20px">
-              <div>
-                <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Stato</div>
-                <div style="font-size:14px;font-weight:600" id="lic-status">—</div>
-              </div>
-              <div>
-                <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Piano</div>
-                <div style="font-size:14px;font-weight:600" id="lic-plan">—</div>
-              </div>
-              <div>
-                <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Scadenza</div>
-                <div style="font-size:14px;font-weight:600" id="lic-expires">—</div>
-              </div>
-            </div>
-
-            <!-- Features badges -->
-            <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border)">
-              <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Funzionalità abilitate</div>
-              <div id="lic-features"></div>
-            </div>
-
-            <!-- Offline warning -->
-            <div id="lic-offline-warn" style="display:none;background:rgba(247,178,68,.1);border:1px solid rgba(247,178,68,.35);border-radius:var(--radius);padding:10px 14px;font-size:12.5px;margin-bottom:18px;line-height:1.5">
-              ⚠️ <strong>Modalità offline</strong> — il server di licenza non è raggiungibile. Le funzionalità Pro rimangono attive finché la cache locale è valida.
-            </div>
-
-            <!-- External licensing disabled (LICENSE_OFFLINE_MODE=true) -->
-            <div id="lic-external-disabled-msg" style="display:none;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.3);border-radius:var(--radius);padding:12px 16px;font-size:12.5px;line-height:1.6">
-              <strong>Sistema licensing esterno disattivato.</strong><br>
-              Le funzionalità abilitate sono lette dalla variabile <code>LICENSE_OFFLINE_FEATURES</code> in <code>.env</code>.<br>
-              Per modificare le feature attive: edita <code>.env</code> e riavvia (o ricarica la pagina).
-            </div>
-
-            <!-- Activate form -->
-            <div id="lic-activate-form" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:end">
-              <div class="form-group" style="margin:0">
-                <label class="form-label">Chiave di licenza</label>
-                <input class="form-input" type="text" id="lic-key-input" placeholder="XXXX-XXXX-XXXX-XXXX" style="width:100%;box-sizing:border-box;font-family:var(--mono);letter-spacing:.05em">
-              </div>
-              <div class="form-group" style="margin:0">
-                <label class="form-label">Dominio (opzionale)</label>
-                <input class="form-input" type="text" id="lic-domain-input" placeholder="moderation.esempio.it" style="width:100%;box-sizing:border-box">
-                <div style="font-size:11px;color:var(--muted);margin-top:4px">Lascia vuoto per rilevarlo automaticamente dall'URL installazione.</div>
-              </div>
-            </div>
-            <div id="lic-activate-buttons" style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
-              <button class="btn-primary" onclick="activateLicense()">Attiva licenza</button>
-              <button class="btn-secondary" onclick="refreshLicense()" style="font-size:12px">↺ Verifica ora</button>
-              <button id="lic-deactivate-btn" class="pro-lock-ignore" onclick="deactivateLicense()" style="display:none;background:none;border:1px solid var(--danger);color:var(--danger);font-size:12px;padding:6px 14px;border-radius:var(--radius);cursor:pointer;font-family:var(--font)">Disattiva</button>
-            </div>
-
-          </div>
-        </div>
-      </div>
-
-      <!-- ── PRO: Template risposte hide ──────────────────────────────── -->
-      <div data-pro-feature="templates" style="margin-top:20px;max-width:900px;position:relative">
-        <div class="panel" style="border-color:rgba(99,102,241,.2)">
-          <div class="panel-head">
-            <div class="panel-title">💬 Template risposta automatica — Nascondi <span style="font-size:11px;font-weight:400;color:var(--accent);background:rgba(99,102,241,.1);padding:2px 8px;border-radius:20px;margin-left:6px">PRO</span></div>
-          </div>
-          <!-- Lock overlay -->
-          <div class="pro-lock-overlay" style="position:absolute;inset:0;background:rgba(var(--bg-card-rgb),.85);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;gap:10px;backdrop-filter:blur(2px)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:32px;height:32px;color:var(--muted)"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <div style="font-size:13px;font-weight:500;color:var(--muted)">Funzionalità Pro</div>
-            <div style="font-size:12px;color:var(--muted)">Attiva una licenza Pro per personalizzare i template</div>
-          </div>
-          <div class="policy-form">
-            <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.6">
-              Testo del messaggio inviato automaticamente all'utente quando un commento viene <strong>nascosto</strong>.<br>
-              Segnaposto disponibili: <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{nome}</code>
-              <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{reason}</code>
-              <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{appeal_url}</code>
-            </p>
-            <div class="form-group">
-              <label class="form-label">Template standard (nascondi)</label>
-              <textarea class="form-textarea" id="set-hide-reply-template" rows="3" style="width:100%;box-sizing:border-box;font-family:var(--mono);font-size:12px;resize:vertical"></textarea>
-            </div>
-            <div class="form-group" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
-              <label class="form-label">Template segnalabile (contenuto illecito)</label>
-              <textarea class="form-textarea" id="set-hide-reportable-reply-template" rows="4" style="width:100%;box-sizing:border-box;font-family:var(--mono);font-size:12px;resize:vertical"></textarea>
-              <div style="font-size:11px;color:var(--muted);margin-top:5px">Usato quando il commento viene nascosto con segnalazione legale attiva.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── PRO: Template notifiche ban ──────────────────────────────── -->
-      <div data-pro-feature="templates" style="margin-top:20px;max-width:900px;position:relative">
-        <div class="panel" style="border-color:rgba(99,102,241,.2)">
-          <div class="panel-head">
-            <div class="panel-title">🚫 Template notifiche ban <span style="font-size:11px;font-weight:400;color:var(--accent);background:rgba(99,102,241,.1);padding:2px 8px;border-radius:20px;margin-left:6px">PRO</span></div>
-          </div>
-          <!-- Lock overlay -->
-          <div class="pro-lock-overlay" style="position:absolute;inset:0;background:rgba(var(--bg-card-rgb),.85);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;gap:10px;backdrop-filter:blur(1px)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:32px;height:32px;color:var(--muted)"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <div style="font-size:13px;font-weight:500;color:var(--muted)">Funzionalità Pro</div>
-            <div style="font-size:12px;color:var(--muted)">Attiva una licenza Pro per personalizzare i template</div>
-          </div>
-          <div class="policy-form">
-            <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.6">
-              Messaggi inviati automaticamente su Facebook quando un utente si avvicina al limite di violazioni o viene bannato.<br>
-              Segnaposto disponibili: <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{nome}</code>
-              <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{durata}</code>
-              <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{scadenza}</code>
-            </p>
-            <div class="form-group">
-              <label class="form-label">Avviso ban imminente <span style="color:var(--muted);font-weight:400">(al raggiungimento del limite violazioni)</span></label>
-              <textarea class="form-textarea" id="set-ban-warning-template" rows="3" style="width:100%;box-sizing:border-box;font-family:var(--mono);font-size:12px;resize:vertical"></textarea>
-              <div style="font-size:11px;color:var(--muted);margin-top:5px">Segnaposti disponibili: <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{nome}</code></div>
-            </div>
-            <div class="form-group" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
-              <label class="form-label">Notifica ban attivo <span style="color:var(--muted);font-weight:400">(quando scatta il ban o utente bannato tenta di postare)</span></label>
-              <textarea class="form-textarea" id="set-ban-notification-template" rows="4" style="width:100%;box-sizing:border-box;font-family:var(--mono);font-size:12px;resize:vertical"></textarea>
-              <div style="font-size:11px;color:var(--muted);margin-top:5px">Segnaposti disponibili: <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{nome}</code> <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{durata}</code> <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{scadenza}</code></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── PRO: Retention dati + Export log ─────────────────────────── -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;max-width:900px;margin-top:20px">
-
-      <!-- ── PRO: Fact-check auto-publish threshold ───────────────────── -->
-      <div data-pro-feature="fact_check" style="max-width:900px;margin-top:20px;position:relative">
-        <div class="panel" style="border-color:rgba(99,102,241,.2)">
-          <div class="panel-head">
-            <div class="panel-title">🤖 Fact-check — Pubblicazione automatica <span style="font-size:11px;font-weight:400;color:var(--accent);background:rgba(99,102,241,.1);padding:2px 8px;border-radius:20px;margin-left:6px">PRO</span></div>
-          </div>
-          <!-- Lock overlay -->
-          <div class="pro-lock-overlay" style="position:absolute;inset:0;background:rgba(var(--bg-card-rgb),.85);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;gap:8px;backdrop-filter:blur(1px)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;color:var(--muted)"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <div style="font-size:12px;font-weight:500;color:var(--muted)">Funzionalità Pro</div>
-          </div>
-          <div class="policy-form">
-            <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.6">
-              Quando Haiku approva un commento ma segnala un'affermazione verificabile, Sonnet produce una risposta editoriale.<br>
-              Se la <strong>confidenza del fact-check</strong> supera questa soglia, la risposta viene pubblicata automaticamente su Facebook senza intervento umano.
-              Sotto soglia il draft viene messo in coda per revisione.
-            </p>
-            <div class="form-group">
-              <label class="form-label">Soglia confidenza autopubblicazione</label>
-              <div style="display:flex;align-items:center;gap:12px">
-                <input type="range" id="set-fc-range" min="0.50" max="1.00" step="0.01" value="0.90"
-                  style="flex:1;accent-color:var(--accent)"
-                  oninput="document.getElementById('set-fact-check-threshold').value=parseFloat(this.value).toFixed(2)">
-                <input class="form-input" type="number" id="set-fact-check-threshold" min="0.50" max="1.00" step="0.01" value="0.90"
-                  style="width:80px;text-align:center"
-                  oninput="document.getElementById('set-fc-range').value=this.value">
-              </div>
-              <div style="font-size:11px;color:var(--muted);margin-top:5px">
-                Consigliato: <strong>0.90</strong> o superiore — la risposta viene pubblicata a nome della redazione.<br>
-                Intervallo: 0.50 – 1.00. Sotto soglia → coda umana con draft già pronto.
-              </div>
-            </div>
-            <div style="margin-top:14px;padding:12px 16px;background:rgba(62,207,142,.07);border:1px solid rgba(62,207,142,.2);border-radius:var(--radius);font-size:12px;line-height:1.6">
-              <strong style="color:var(--success)">Flusso</strong><br>
-              Haiku approva → segnala fact-check →
-              Sonnet verifica + produce draft →
-              <span style="color:var(--success)">≥ soglia → pubblica automaticamente</span> /
-              <span style="color:var(--warn)">&#60; soglia → coda umana con draft</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── PRO: Whataboutism auto-publish threshold ─────────────────── -->
-      <div data-pro-feature="whataboutism" style="max-width:900px;margin-top:20px;position:relative">
-        <div class="panel" style="border-color:rgba(168,85,247,.2)">
-          <div class="panel-head">
-            <div class="panel-title">↩️ Whataboutism — Pubblicazione automatica <span style="font-size:11px;font-weight:400;color:#a855f7;background:rgba(168,85,247,.1);padding:2px 8px;border-radius:20px;margin-left:6px">PRO</span></div>
-          </div>
-          <!-- Lock overlay -->
-          <div class="pro-lock-overlay" style="position:absolute;inset:0;background:rgba(var(--bg-card-rgb),.85);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;gap:8px;backdrop-filter:blur(1px)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;color:var(--muted)"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <div style="font-size:12px;font-weight:500;color:var(--muted)">Funzionalità Pro</div>
-          </div>
-          <div class="policy-form">
-            <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.6">
-              Quando l'AI rileva una <strong>deflessione retorica</strong> ("e allora le foibe?", "ma X ha fatto peggio?"), Sonnet produce una breve risposta editoriale che riporta la discussione in-topic.<br>
-              Se la <strong>confidenza</strong> supera questa soglia e una seconda call Sonnet di verifica conferma, la risposta viene pubblicata automaticamente.
-              Sotto soglia o senza conferma → coda umana con draft pronto.
-            </p>
-            <div class="form-group">
-              <label class="form-label">Soglia confidenza autopubblicazione</label>
-              <div style="display:flex;align-items:center;gap:12px">
-                <input type="range" id="set-wb-range" min="0.50" max="1.00" step="0.01" value="0.95"
-                  style="flex:1;accent-color:#a855f7"
-                  oninput="document.getElementById('set-whataboutism-threshold').value=parseFloat(this.value).toFixed(2)">
-                <input class="form-input" type="number" id="set-whataboutism-threshold" min="0.50" max="1.00" step="0.01" value="0.95"
-                  style="width:80px;text-align:center"
-                  oninput="document.getElementById('set-wb-range').value=this.value">
-              </div>
-              <div style="font-size:11px;color:var(--muted);margin-top:5px">
-                Consigliato: <strong>0.95</strong> o superiore — qui non ci sono fonti esterne come secondo gate, quindi la soglia è più alta del fact-check.<br>
-                Intervallo: 0.50 – 1.00. Sotto soglia → coda umana con draft già pronto.
-              </div>
-            </div>
-            <div style="margin-top:14px;padding:12px 16px;background:rgba(168,85,247,.07);border:1px solid rgba(168,85,247,.2);border-radius:var(--radius);font-size:12px;line-height:1.6">
-              <strong style="color:#a855f7">Flusso</strong><br>
-              Haiku rileva whataboutism →
-              Sonnet produce draft + confidenza →
-              <span style="color:#a855f7">≥ soglia + verifica Sonnet conferma → pubblica automaticamente</span> /
-              <span style="color:var(--warn)">&#60; soglia o verifica nega → coda umana con draft</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-        <!-- Retention -->
-        <div data-pro-feature="data_retention" style="position:relative">          <div class="panel" style="border-color:rgba(99,102,241,.2)">
-            <div class="panel-head">
-              <div class="panel-title">🗑 Retention dati <span style="font-size:11px;font-weight:400;color:var(--accent);background:rgba(99,102,241,.1);padding:2px 8px;border-radius:20px;margin-left:6px">PRO</span></div>
-            </div>
-            <!-- Lock overlay -->
-            <div class="pro-lock-overlay" style="position:absolute;inset:0;background:rgba(var(--bg-card-rgb),.85);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;gap:8px;backdrop-filter:blur(2px)">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;color:var(--muted)"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              <div style="font-size:12px;font-weight:500;color:var(--muted)">Funzionalità Pro</div>
-            </div>
-            <div class="policy-form">
-              <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.6">
-                Anonimizza automaticamente i commenti, gli utenti social, i payload webhook e i campi testuali dei log più vecchi della soglia configurata.<br>
-                I dati statistici (decisione AI, categoria, severity, timestamp) restano per metriche e audit. Conforme GDPR art. 17 / 5(1)(e).
-              </p>
-              <div class="form-group">
-                <label class="form-label">Anonimizza dopo (giorni)</label>
-                <input class="form-input" type="number" id="set-data-retention-days" min="0" max="3650" step="1" style="width:120px;text-align:center">
-                <div style="font-size:11px;color:var(--muted);margin-top:5px"><strong>0</strong> = disabilitato (conserva tutto).</div>
-              </div>
-
-              <!-- Retention cron status (populated by loadRetentionStatus()) -->
-              <div id="retention-status-info" style="margin-top:18px;font-size:12.5px;color:var(--muted);line-height:1.5"></div>
-
-              <details style="margin-top:16px;font-size:12px;color:var(--muted)">
-                <summary style="cursor:pointer;font-weight:500">Configurazione cron (una volta sola)</summary>
-                <p style="margin-top:8px;line-height:1.6">Aggiungi al crontab del server per eseguire ogni notte alle 3:</p>
-                <pre style="background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;font-family:var(--mono);font-size:11.5px;overflow-x:auto;margin:8px 0">0 3 * * * /usr/bin/php /path/to/social-moderation-hub/bin/retention-purge.php &gt;&gt; /path/to/social-moderation-hub/logs/retention.log 2&gt;&amp;1</pre>
-                <p style="margin-top:4px">Puoi anche lanciarlo a mano: <code>php bin/retention-purge.php</code></p>
-              </details>
-            </div>
-          </div>
-        </div>
-
-        <!-- Export log -->
-        <div data-pro-feature="export_log" style="position:relative">
+        <!-- ── PRO: Template risposte hide ──────────────────────────────── -->
+        <div data-pro-feature="templates" style="margin-top:20px;max-width:900px;position:relative">
           <div class="panel" style="border-color:rgba(99,102,241,.2)">
             <div class="panel-head">
-              <div class="panel-title">📥 Export log moderazione <span style="font-size:11px;font-weight:400;color:var(--accent);background:rgba(99,102,241,.1);padding:2px 8px;border-radius:20px;margin-left:6px">PRO</span></div>
+              <div class="panel-title">💬 Template risposta automatica — Nascondi <span style="font-size:11px;font-weight:400;color:var(--accent);background:rgba(99,102,241,.1);padding:2px 8px;border-radius:20px;margin-left:6px">PRO</span></div>
             </div>
             <!-- Lock overlay -->
-            <div class="pro-lock-overlay" style="position:absolute;inset:0;background:rgba(var(--bg-card-rgb),.85);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;gap:8px;backdrop-filter:blur(2px)">
+            <div class="pro-lock-overlay" style="position:absolute;inset:0;background:rgba(var(--bg-card-rgb),.85);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;gap:10px;backdrop-filter:blur(2px)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:32px;height:32px;color:var(--muted)"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <div style="font-size:13px;font-weight:500;color:var(--muted)">Funzionalità Pro</div>
+              <div style="font-size:12px;color:var(--muted)">Attiva una licenza Pro per personalizzare i template</div>
+            </div>
+            <div class="policy-form">
+              <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.6">
+                Testo del messaggio inviato automaticamente all'utente quando un commento viene <strong>nascosto</strong>.<br>
+                Segnaposto disponibili: <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{nome}</code>
+                <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{reason}</code>
+                <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{appeal_url}</code>
+              </p>
+              <div class="form-group">
+                <label class="form-label">Template standard (nascondi)</label>
+                <textarea class="form-textarea" id="set-hide-reply-template" rows="3" style="width:100%;box-sizing:border-box;font-family:var(--mono);font-size:12px;resize:vertical"></textarea>
+              </div>
+              <div class="form-group" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+                <label class="form-label">Template segnalabile (contenuto illecito)</label>
+                <textarea class="form-textarea" id="set-hide-reportable-reply-template" rows="4" style="width:100%;box-sizing:border-box;font-family:var(--mono);font-size:12px;resize:vertical"></textarea>
+                <div style="font-size:11px;color:var(--muted);margin-top:5px">Usato quando il commento viene nascosto con segnalazione legale attiva.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── PRO: Template notifiche ban ──────────────────────────────── -->
+        <div data-pro-feature="templates" style="margin-top:20px;max-width:900px;position:relative">
+          <div class="panel" style="border-color:rgba(99,102,241,.2)">
+            <div class="panel-head">
+              <div class="panel-title">🚫 Template notifiche ban <span style="font-size:11px;font-weight:400;color:var(--accent);background:rgba(99,102,241,.1);padding:2px 8px;border-radius:20px;margin-left:6px">PRO</span></div>
+            </div>
+            <!-- Lock overlay -->
+            <div class="pro-lock-overlay" style="position:absolute;inset:0;background:rgba(var(--bg-card-rgb),.85);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;gap:10px;backdrop-filter:blur(1px)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:32px;height:32px;color:var(--muted)"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <div style="font-size:13px;font-weight:500;color:var(--muted)">Funzionalità Pro</div>
+              <div style="font-size:12px;color:var(--muted)">Attiva una licenza Pro per personalizzare i template</div>
+            </div>
+            <div class="policy-form">
+              <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.6">
+                Messaggi inviati automaticamente su Facebook quando un utente si avvicina al limite di violazioni o viene bannato.<br>
+                Segnaposto disponibili: <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{nome}</code>
+                <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{durata}</code>
+                <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{scadenza}</code>
+              </p>
+              <div class="form-group">
+                <label class="form-label">Avviso ban imminente <span style="color:var(--muted);font-weight:400">(al raggiungimento del limite violazioni)</span></label>
+                <textarea class="form-textarea" id="set-ban-warning-template" rows="3" style="width:100%;box-sizing:border-box;font-family:var(--mono);font-size:12px;resize:vertical"></textarea>
+                <div style="font-size:11px;color:var(--muted);margin-top:5px">Segnaposti disponibili: <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{nome}</code></div>
+              </div>
+              <div class="form-group" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+                <label class="form-label">Notifica ban attivo <span style="color:var(--muted);font-weight:400">(quando scatta il ban o utente bannato tenta di postare)</span></label>
+                <textarea class="form-textarea" id="set-ban-notification-template" rows="4" style="width:100%;box-sizing:border-box;font-family:var(--mono);font-size:12px;resize:vertical"></textarea>
+                <div style="font-size:11px;color:var(--muted);margin-top:5px">Segnaposti disponibili: <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{nome}</code> <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{durata}</code> <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">{scadenza}</code></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /stab-moderazione -->
+
+      <!-- ══ TAB: AI avanzata ══════════════════════════════════════════ -->
+      <div id="stab-ai" style="display:none">
+
+        <!-- ── PRO: Fact-check auto-publish threshold ───────────────────── -->
+        <div data-pro-feature="fact_check" style="max-width:900px;position:relative">
+          <div class="panel" style="border-color:rgba(99,102,241,.2)">
+            <div class="panel-head">
+              <div class="panel-title">🤖 Fact-check — Pubblicazione automatica <span style="font-size:11px;font-weight:400;color:var(--accent);background:rgba(99,102,241,.1);padding:2px 8px;border-radius:20px;margin-left:6px">PRO</span></div>
+            </div>
+            <!-- Lock overlay -->
+            <div class="pro-lock-overlay" style="position:absolute;inset:0;background:rgba(var(--bg-card-rgb),.85);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;gap:8px;backdrop-filter:blur(1px)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;color:var(--muted)"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               <div style="font-size:12px;font-weight:500;color:var(--muted)">Funzionalità Pro</div>
             </div>
             <div class="policy-form">
               <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.6">
-                Scarica il log completo delle decisioni di moderazione in formato CSV o JSON per analisi esterne, audit o backup.
+                Quando Haiku approva un commento ma segnala un'affermazione verificabile, Sonnet produce una risposta editoriale.<br>
+                Se la <strong>confidenza del fact-check</strong> supera questa soglia, la risposta viene pubblicata automaticamente su Facebook senza intervento umano.
+                Sotto soglia il draft viene messo in coda per revisione.
               </p>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-                <div class="form-group" style="margin:0">
-                  <label class="form-label">Da (data)</label>
-                  <input class="form-input" type="date" id="export-from" style="width:100%;box-sizing:border-box">
+              <div class="form-group">
+                <label class="form-label">Soglia confidenza autopubblicazione</label>
+                <div style="display:flex;align-items:center;gap:12px">
+                  <input type="range" id="set-fc-range" min="0.50" max="1.00" step="0.01" value="0.90"
+                    style="flex:1;accent-color:var(--accent)"
+                    oninput="document.getElementById('set-fact-check-threshold').value=parseFloat(this.value).toFixed(2)">
+                  <input class="form-input" type="number" id="set-fact-check-threshold" min="0.50" max="1.00" step="0.01" value="0.90"
+                    style="width:80px;text-align:center"
+                    oninput="document.getElementById('set-fc-range').value=this.value">
                 </div>
-                <div class="form-group" style="margin:0">
-                  <label class="form-label">A (data)</label>
-                  <input class="form-input" type="date" id="export-to" style="width:100%;box-sizing:border-box">
+                <div style="font-size:11px;color:var(--muted);margin-top:5px">
+                  Consigliato: <strong>0.90</strong> o superiore — la risposta viene pubblicata a nome della redazione.<br>
+                  Intervallo: 0.50 – 1.00. Sotto soglia → coda umana con draft già pronto.
                 </div>
               </div>
-              <div style="display:flex;gap:10px;flex-wrap:wrap">
-                <button class="btn-secondary" onclick="exportLog('csv')" style="font-size:12px;display:flex;align-items:center;gap:6px">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  Scarica CSV
+              <div style="margin-top:14px;padding:12px 16px;background:rgba(62,207,142,.07);border:1px solid rgba(62,207,142,.2);border-radius:var(--radius);font-size:12px;line-height:1.6">
+                <strong style="color:var(--success)">Flusso</strong><br>
+                Haiku approva → segnala fact-check →
+                Sonnet verifica + produce draft →
+                <span style="color:var(--success)">≥ soglia → pubblica automaticamente</span> /
+                <span style="color:var(--warn)">&#60; soglia → coda umana con draft</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── PRO: Whataboutism auto-publish threshold ─────────────────── -->
+        <div data-pro-feature="whataboutism" style="max-width:900px;margin-top:20px;position:relative">
+          <div class="panel" style="border-color:rgba(168,85,247,.2)">
+            <div class="panel-head">
+              <div class="panel-title">↩️ Whataboutism — Pubblicazione automatica <span style="font-size:11px;font-weight:400;color:#a855f7;background:rgba(168,85,247,.1);padding:2px 8px;border-radius:20px;margin-left:6px">PRO</span></div>
+            </div>
+            <!-- Lock overlay -->
+            <div class="pro-lock-overlay" style="position:absolute;inset:0;background:rgba(var(--bg-card-rgb),.85);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;gap:8px;backdrop-filter:blur(1px)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;color:var(--muted)"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <div style="font-size:12px;font-weight:500;color:var(--muted)">Funzionalità Pro</div>
+            </div>
+            <div class="policy-form">
+              <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.6">
+                Quando l'AI rileva una <strong>deflessione retorica</strong> ("e allora le foibe?", "ma X ha fatto peggio?"), Sonnet produce una breve risposta editoriale che riporta la discussione in-topic.<br>
+                Se la <strong>confidenza</strong> supera questa soglia e una seconda call Sonnet di verifica conferma, la risposta viene pubblicata automaticamente.
+                Sotto soglia o senza conferma → coda umana con draft pronto.
+              </p>
+              <div class="form-group">
+                <label class="form-label">Soglia confidenza autopubblicazione</label>
+                <div style="display:flex;align-items:center;gap:12px">
+                  <input type="range" id="set-wb-range" min="0.50" max="1.00" step="0.01" value="0.95"
+                    style="flex:1;accent-color:#a855f7"
+                    oninput="document.getElementById('set-whataboutism-threshold').value=parseFloat(this.value).toFixed(2)">
+                  <input class="form-input" type="number" id="set-whataboutism-threshold" min="0.50" max="1.00" step="0.01" value="0.95"
+                    style="width:80px;text-align:center"
+                    oninput="document.getElementById('set-wb-range').value=this.value">
+                </div>
+                <div style="font-size:11px;color:var(--muted);margin-top:5px">
+                  Consigliato: <strong>0.95</strong> o superiore — qui non ci sono fonti esterne come secondo gate, quindi la soglia è più alta del fact-check.<br>
+                  Intervallo: 0.50 – 1.00. Sotto soglia → coda umana con draft già pronto.
+                </div>
+              </div>
+              <div style="margin-top:14px;padding:12px 16px;background:rgba(168,85,247,.07);border:1px solid rgba(168,85,247,.2);border-radius:var(--radius);font-size:12px;line-height:1.6">
+                <strong style="color:#a855f7">Flusso</strong><br>
+                Haiku rileva whataboutism →
+                Sonnet produce draft + confidenza →
+                <span style="color:#a855f7">≥ soglia + verifica Sonnet conferma → pubblica automaticamente</span> /
+                <span style="color:var(--warn)">&#60; soglia o verifica nega → coda umana con draft</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /stab-ai -->
+
+      <!-- ══ TAB: Privacy & GDPR ═══════════════════════════════════════ -->
+      <div id="stab-privacy" style="display:none">
+
+        <!-- Privacy Policy — dati organizzazione (admin only) -->
+        <div id="privacy-settings-panel" style="display:none;max-width:900px">
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title">🔒 Privacy Policy — dati organizzazione</div>
+            </div>
+            <div class="policy-form">
+              <p style="font-size:12.5px;color:var(--muted);margin-bottom:20px;line-height:1.6">
+                Questi dati vengono mostrati nella pagina pubblica <strong>Privacy Policy</strong> (<code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">/privacy</code>) e sostituiscono i placeholder del template.<br>
+                Compila tutti i campi con i dati reali del titolare del trattamento prima di rendere l'installazione pubblica.
+              </p>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">URL installazione</label>
+                  <input class="form-input" type="url" id="set-app-url" placeholder="https://moderation.esempio.it" style="width:100%;box-sizing:border-box">
+                  <div style="font-size:11px;color:var(--muted);margin-top:5px">Usato nei link interni (appello, policy pubblica). Senza trailing slash.</div>
+                </div>
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">Nome organizzazione (Titolare)</label>
+                  <input class="form-input" type="text" id="set-privacy-org-name" placeholder="Acme S.r.l." style="width:100%;box-sizing:border-box">
+                  <div style="font-size:11px;color:var(--muted);margin-top:5px">Ragione sociale o nome completo del titolare del trattamento.</div>
+                </div>
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">Indirizzo sede legale</label>
+                  <input class="form-input" type="text" id="set-privacy-org-address" placeholder="Via Roma 1, 20100 Milano" style="width:100%;box-sizing:border-box">
+                </div>
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">Email contatto privacy / DPO</label>
+                  <input class="form-input" type="email" id="set-privacy-org-email" placeholder="privacy@esempio.it" style="width:100%;box-sizing:border-box">
+                  <div style="font-size:11px;color:var(--muted);margin-top:5px">Usata in tutti i link mailto della privacy policy.</div>
+                </div>
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">Paese / giurisdizione</label>
+                  <input class="form-input" type="text" id="set-privacy-org-country" placeholder="Italia / Italy" style="width:100%;box-sizing:border-box">
+                  <div style="font-size:11px;color:var(--muted);margin-top:5px">Formato suggerito: «Italia / Italy» (IT / EN separati da /).</div>
+                </div>
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">Data di efficacia</label>
+                  <input class="form-input" type="text" id="set-privacy-policy-date" placeholder="1 maggio 2026 / 1 May 2026" style="width:100%;box-sizing:border-box">
+                  <div style="font-size:11px;color:var(--muted);margin-top:5px">Formato suggerito: «GG mese AAAA / DD Month YYYY» (IT / EN separati da /).</div>
+                </div>
+              </div>
+              <div class="form-group" style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border)">
+                <label class="form-label">Autorità di controllo competente</label>
+                <input class="form-input" type="text" id="set-privacy-supervisory" placeholder="Garante per la Protezione dei Dati Personali – garanteprivacy.it" style="width:100%;box-sizing:border-box">
+                <div style="font-size:11px;color:var(--muted);margin-top:5px">Nome e riferimento dell'autorità Garante competente per il tuo paese.</div>
+              </div>
+              <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                <a id="privacy-preview-link" href="/privacy" target="_blank" rel="noopener"
+                   style="font-size:12.5px;color:var(--accent);text-decoration:none;display:flex;align-items:center;gap:5px">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  Anteprima privacy policy
+                </a>
+                <a id="public-policy-link" href="/public/policy" target="_blank" rel="noopener"
+                   style="font-size:12.5px;color:var(--accent);text-decoration:none;display:flex;align-items:center;gap:5px">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  System prompt pubblico
+                </a>
+                <button onclick="openRegistro()"
+                   style="font-size:12.5px;color:var(--muted);background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:5px;padding:0;font-family:var(--font)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                  Registro trattamenti (art. 30 GDPR)
                 </button>
-                <button class="btn-secondary" onclick="exportLog('json')" style="font-size:12px;display:flex;align-items:center;gap:6px">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  Scarica JSON
+                <button onclick="openDpia()"
+                   style="font-size:12.5px;color:var(--muted);background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:5px;padding:0;font-family:var(--font)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  DPIA — Valutazione d'impatto (art. 35 GDPR)
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-      </div>
+        <!-- ── PRO: Retention dati + Export log ─────────────────────────── -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;max-width:900px;margin-top:20px">
 
-      <!-- Save bar (full width, always last) -->
+          <!-- Retention -->
+          <div data-pro-feature="data_retention" style="position:relative">
+            <div class="panel" style="border-color:rgba(99,102,241,.2)">
+              <div class="panel-head">
+                <div class="panel-title">🗑 Retention dati <span style="font-size:11px;font-weight:400;color:var(--accent);background:rgba(99,102,241,.1);padding:2px 8px;border-radius:20px;margin-left:6px">PRO</span></div>
+              </div>
+              <!-- Lock overlay -->
+              <div class="pro-lock-overlay" style="position:absolute;inset:0;background:rgba(var(--bg-card-rgb),.85);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;gap:8px;backdrop-filter:blur(2px)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;color:var(--muted)"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <div style="font-size:12px;font-weight:500;color:var(--muted)">Funzionalità Pro</div>
+              </div>
+              <div class="policy-form">
+                <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.6">
+                  Anonimizza automaticamente i commenti, gli utenti social, i payload webhook e i campi testuali dei log più vecchi della soglia configurata.<br>
+                  I dati statistici (decisione AI, categoria, severity, timestamp) restano per metriche e audit. Conforme GDPR art. 17 / 5(1)(e).
+                </p>
+                <div class="form-group">
+                  <label class="form-label">Anonimizza dopo (giorni)</label>
+                  <input class="form-input" type="number" id="set-data-retention-days" min="0" max="3650" step="1" style="width:120px;text-align:center">
+                  <div style="font-size:11px;color:var(--muted);margin-top:5px"><strong>0</strong> = disabilitato (conserva tutto).</div>
+                </div>
+
+                <!-- Retention cron status (populated by loadRetentionStatus()) -->
+                <div id="retention-status-info" style="margin-top:18px;font-size:12.5px;color:var(--muted);line-height:1.5"></div>
+
+                <details style="margin-top:16px;font-size:12px;color:var(--muted)">
+                  <summary style="cursor:pointer;font-weight:500">Configurazione cron (una volta sola)</summary>
+                  <p style="margin-top:8px;line-height:1.6">Aggiungi al crontab del server per eseguire ogni notte alle 3:</p>
+                  <pre style="background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;font-family:var(--mono);font-size:11.5px;overflow-x:auto;margin:8px 0">0 3 * * * /usr/bin/php /path/to/social-moderation-hub/bin/retention-purge.php &gt;&gt; /path/to/social-moderation-hub/logs/retention.log 2&gt;&amp;1</pre>
+                  <p style="margin-top:4px">Puoi anche lanciarlo a mano: <code>php bin/retention-purge.php</code></p>
+                </details>
+              </div>
+            </div>
+          </div>
+
+          <!-- Export log -->
+          <div data-pro-feature="export_log" style="position:relative">
+            <div class="panel" style="border-color:rgba(99,102,241,.2)">
+              <div class="panel-head">
+                <div class="panel-title">📥 Export log moderazione <span style="font-size:11px;font-weight:400;color:var(--accent);background:rgba(99,102,241,.1);padding:2px 8px;border-radius:20px;margin-left:6px">PRO</span></div>
+              </div>
+              <!-- Lock overlay -->
+              <div class="pro-lock-overlay" style="position:absolute;inset:0;background:rgba(var(--bg-card-rgb),.85);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;gap:8px;backdrop-filter:blur(2px)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;color:var(--muted)"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <div style="font-size:12px;font-weight:500;color:var(--muted)">Funzionalità Pro</div>
+              </div>
+              <div class="policy-form">
+                <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.6">
+                  Scarica il log completo delle decisioni di moderazione in formato CSV o JSON per analisi esterne, audit o backup.
+                </p>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+                  <div class="form-group" style="margin:0">
+                    <label class="form-label">Da (data)</label>
+                    <input class="form-input" type="date" id="export-from" style="width:100%;box-sizing:border-box">
+                  </div>
+                  <div class="form-group" style="margin:0">
+                    <label class="form-label">A (data)</label>
+                    <input class="form-input" type="date" id="export-to" style="width:100%;box-sizing:border-box">
+                  </div>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                  <button class="btn-secondary" onclick="exportLog('csv')" style="font-size:12px;display:flex;align-items:center;gap:6px">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Scarica CSV
+                  </button>
+                  <button class="btn-secondary" onclick="exportLog('json')" style="font-size:12px;display:flex;align-items:center;gap:6px">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Scarica JSON
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div><!-- /stab-privacy -->
+
+      <!-- ══ TAB: Sistema ══════════════════════════════════════════════ -->
+      <div id="stab-sistema" style="display:none">
+
+        <!-- Fuso orario -->
+        <div style="max-width:900px">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Fuso orario</div></div>
+            <div class="policy-form">
+              <p style="font-size:12.5px;color:var(--muted);margin-bottom:20px;line-height:1.6">
+                Fuso orario usato dal server per date e orari. Deve corrispondere alla posizione geografica dell'installazione.
+              </p>
+              <div class="form-group">
+                <label class="form-label">Timezone</label>
+                <select class="form-input" id="set-timezone" style="width:100%">
+                  <optgroup label="Europa">
+                    <option value="Europe/Rome">Europe/Rome (Italia / San Marino)</option>
+                    <option value="Europe/London">Europe/London (UK)</option>
+                    <option value="Europe/Paris">Europe/Paris (Francia)</option>
+                    <option value="Europe/Berlin">Europe/Berlin (Germania)</option>
+                    <option value="Europe/Madrid">Europe/Madrid (Spagna)</option>
+                    <option value="Europe/Zurich">Europe/Zurich (Svizzera)</option>
+                    <option value="Europe/Amsterdam">Europe/Amsterdam (Olanda)</option>
+                    <option value="Europe/Brussels">Europe/Brussels (Belgio)</option>
+                    <option value="Europe/Lisbon">Europe/Lisbon (Portogallo)</option>
+                    <option value="Europe/Vienna">Europe/Vienna (Austria)</option>
+                    <option value="Europe/Warsaw">Europe/Warsaw (Polonia)</option>
+                    <option value="Europe/Athens">Europe/Athens (Grecia)</option>
+                    <option value="Europe/Helsinki">Europe/Helsinki (Finlandia)</option>
+                    <option value="Europe/Stockholm">Europe/Stockholm (Svezia)</option>
+                    <option value="Europe/Oslo">Europe/Oslo (Norvegia)</option>
+                    <option value="Europe/Copenhagen">Europe/Copenhagen (Danimarca)</option>
+                    <option value="Europe/Moscow">Europe/Moscow (Russia)</option>
+                  </optgroup>
+                  <optgroup label="America">
+                    <option value="America/New_York">America/New_York (EST)</option>
+                    <option value="America/Chicago">America/Chicago (CST)</option>
+                    <option value="America/Denver">America/Denver (MST)</option>
+                    <option value="America/Los_Angeles">America/Los_Angeles (PST)</option>
+                    <option value="America/Sao_Paulo">America/Sao_Paulo (Brasile)</option>
+                  </optgroup>
+                  <optgroup label="Asia / Pacifico">
+                    <option value="Asia/Dubai">Asia/Dubai</option>
+                    <option value="Asia/Singapore">Asia/Singapore</option>
+                    <option value="Asia/Tokyo">Asia/Tokyo</option>
+                    <option value="Asia/Shanghai">Asia/Shanghai</option>
+                    <option value="Australia/Sydney">Australia/Sydney</option>
+                  </optgroup>
+                  <optgroup label="UTC">
+                    <option value="UTC">UTC</option>
+                  </optgroup>
+                </select>
+                <div style="font-size:11px;color:var(--muted);margin-top:6px">L'ora legale (CEST/CET) viene gestita automaticamente.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Claude AI API key (admin only) -->
+        <div id="claude-key-panel" style="display:none;margin-top:20px;max-width:900px">
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title">🤖 Integrazione Claude AI</div>
+            </div>
+            <div class="policy-form">
+              <p style="font-size:12.5px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+                Chiave API Anthropic usata per la moderazione AI. Viene salvata nel file <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">.env</code> sul server.<br>
+                La chiave attuale è mostrata mascherata. Lascia il campo vuoto per non modificarla.
+              </p>
+              <div style="max-width:520px">
+                <input class="form-input" type="password" id="set-anthropic-key"
+                  placeholder="Chiave attuale: —"
+                  autocomplete="new-password"
+                  style="width:100%;font-family:var(--mono);font-size:13px">
+              </div>
+              <p style="font-size:11px;color:var(--muted);margin-top:8px">La chiave deve iniziare con <code style="font-family:var(--mono)">sk-ant-</code>. Salvala con il pulsante "Salva impostazioni" qui sotto.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dev mode panel (admin only) -->
+        <div id="dev-mode-panel" style="display:none;margin-top:20px;max-width:900px">
+          <div class="panel" style="border-color:rgba(247,178,68,.3)">
+            <div class="panel-head" style="background:rgba(247,178,68,.06)">
+              <div class="panel-title" style="color:var(--warn)">⚠ Modalità sviluppo</div>
+            </div>
+            <div class="policy-form">
+              <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.6">
+                In modalità sviluppo il pipeline AI gira normalmente e le decisioni vengono registrate, ma <strong style="color:var(--warn)">nessuna azione reale</strong> viene eseguita:<br>
+                nessuna cancellazione su Facebook, nessun incremento violazioni, nessun ban utente.<br>
+                I commenti che sarebbero rimossi vengono taggati come <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">dev_flagged</code>.
+              </p>
+              <label style="display:flex;align-items:center;gap:14px;cursor:pointer;user-select:none">
+                <input type="checkbox" id="set-dev-mode" style="width:18px;height:18px;accent-color:var(--warn);cursor:pointer" onchange="onDevModeChange(this.checked)">
+                <span style="font-size:13px;font-weight:500" id="dev-mode-label">Modalità sviluppo disattiva</span>
+              </label>
+              <p style="font-size:11px;color:var(--muted);margin-top:12px">Ricordati di disattivarla prima di andare in produzione.</p>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /stab-sistema -->
+
+      <!-- ══ TAB: Licenza ══════════════════════════════════════════════ -->
+      <div id="stab-licenza" style="display:none">
+
+        <!-- Licenza Pro (admin only) -->
+        <div id="license-panel" style="display:none;max-width:900px">
+          <div class="panel" style="border-color:rgba(99,102,241,.3)">
+            <div class="panel-head" style="background:rgba(99,102,241,.06)">
+              <div class="panel-title" style="color:var(--accent)">🔑 Licenza Pro</div>
+            </div>
+            <div class="policy-form">
+
+              <!-- Status row -->
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:20px">
+                <div>
+                  <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Stato</div>
+                  <div style="font-size:14px;font-weight:600" id="lic-status">—</div>
+                </div>
+                <div>
+                  <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Piano</div>
+                  <div style="font-size:14px;font-weight:600" id="lic-plan">—</div>
+                </div>
+                <div>
+                  <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Scadenza</div>
+                  <div style="font-size:14px;font-weight:600" id="lic-expires">—</div>
+                </div>
+              </div>
+
+              <!-- Features badges -->
+              <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border)">
+                <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Funzionalità abilitate</div>
+                <div id="lic-features"></div>
+              </div>
+
+              <!-- Offline warning -->
+              <div id="lic-offline-warn" style="display:none;background:rgba(247,178,68,.1);border:1px solid rgba(247,178,68,.35);border-radius:var(--radius);padding:10px 14px;font-size:12.5px;margin-bottom:18px;line-height:1.5">
+                ⚠️ <strong>Modalità offline</strong> — il server di licenza non è raggiungibile. Le funzionalità Pro rimangono attive finché la cache locale è valida.
+              </div>
+
+              <!-- External licensing disabled (LICENSE_OFFLINE_MODE=true) -->
+              <div id="lic-external-disabled-msg" style="display:none;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.3);border-radius:var(--radius);padding:12px 16px;font-size:12.5px;line-height:1.6">
+                <strong>Sistema licensing esterno disattivato.</strong><br>
+                Le funzionalità abilitate sono lette dalla variabile <code>LICENSE_OFFLINE_FEATURES</code> in <code>.env</code>.<br>
+                Per modificare le feature attive: edita <code>.env</code> e riavvia (o ricarica la pagina).
+              </div>
+
+              <!-- Activate form -->
+              <div id="lic-activate-form" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:end">
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">Chiave di licenza</label>
+                  <input class="form-input" type="text" id="lic-key-input" placeholder="XXXX-XXXX-XXXX-XXXX" style="width:100%;box-sizing:border-box;font-family:var(--mono);letter-spacing:.05em">
+                </div>
+                <div class="form-group" style="margin:0">
+                  <label class="form-label">Dominio (opzionale)</label>
+                  <input class="form-input" type="text" id="lic-domain-input" placeholder="moderation.esempio.it" style="width:100%;box-sizing:border-box">
+                  <div style="font-size:11px;color:var(--muted);margin-top:4px">Lascia vuoto per rilevarlo automaticamente dall'URL installazione.</div>
+                </div>
+              </div>
+              <div id="lic-activate-buttons" style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+                <button class="btn-primary" onclick="activateLicense()">Attiva licenza</button>
+                <button class="btn-secondary" onclick="refreshLicense()" style="font-size:12px">↺ Verifica ora</button>
+                <button id="lic-deactivate-btn" class="pro-lock-ignore" onclick="deactivateLicense()" style="display:none;background:none;border:1px solid var(--danger);color:var(--danger);font-size:12px;padding:6px 14px;border-radius:var(--radius);cursor:pointer;font-family:var(--font)">Disattiva</button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /stab-licenza -->
+
+      <!-- Save bar (full width, always visible) -->
       <div style="margin-top:20px;max-width:900px">
         <div class="panel">
           <div class="policy-form" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">

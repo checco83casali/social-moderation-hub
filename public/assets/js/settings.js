@@ -1,3 +1,16 @@
+// ── Settings tab switcher ─────────────────────────────────────────
+function switchSettingsTab(tab) {
+  ['moderazione','ai','privacy','sistema','licenza'].forEach(t => {
+    const panel = document.getElementById('stab-' + t);
+    const btn   = document.getElementById('stab-btn-' + t);
+    if (panel) panel.style.display = t === tab ? '' : 'none';
+    if (btn) {
+      btn.style.color        = t === tab ? 'var(--text)' : 'var(--muted)';
+      btn.style.borderBottom = t === tab ? '2px solid var(--accent)' : '2px solid transparent';
+    }
+  });
+}
+
 // ── Settings ──────────────────────────────────────────────────────
 async function loadSettings() {
   try {
