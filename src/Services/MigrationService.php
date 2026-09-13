@@ -11,22 +11,21 @@ use Illuminate\Database\Capsule\Manager as DB;
  * chiamato da DeployController::pull() dopo ogni `git pull` riuscito.
  *
  * Traccia le migrazioni applicate in `schema_migrations` (auto-creata al
- * primo uso). 001_initial_schema.sql è idempotente (solo CREATE TABLE IF NOT
- * EXISTS) e viene sempre eseguita senza rischio. 002 e 003 sono invece ALTER
- * TABLE non idempotenti pensate per essere lanciate a mano una sola volta su
- * installazioni pre-esistenti: se il runner parte su un database che ha già
- * le tabelle applicative (installazione precedente all'introduzione di questo
- * runner) ma non ha ancora `schema_migrations`, verifica la presenza delle
- * colonne che quei file introducono e le marca come già applicate invece di
- * ri-eseguirle (altrimenti l'ALTER fallirebbe su colonna duplicata).
+ * primo uso). 001_initial_schema.sql è idempotente (CREATE TABLE IF NOT
+ * EXISTS + ON DUPLICATE KEY UPDATE / INSERT IGNORE sui seed) e viene sempre
+ * eseguita senza rischio, anche se già applicata in precedenza. 002 e 003
+ * sono invece ALTER TABLE non idempotenti: prima di eseguirle, il runner
+ * verifica se la colonna che introducono esiste già (perché applicata a mano
+ * in passato, o perché 001 la include ormai di serie) e in tal caso le marca
+ * come applicate senza ri-eseguirle — altrimenti l'ALTER fallirebbe su
+ * colonna duplicata.
  *
  * Da 004 in poi ogni nuovo file .sql viene eseguito automaticamente una sola
  * volta, in ordine alfabetico, alla prima occasione utile.
  *
- * Parsing SQL minimale: rimuove le righe di commento (`-- ...`) e splitta il
- * resto su ';'. Sufficiente per le migrazioni di questo progetto (DDL/DML
- * semplice, nessun literal contenente ';'). Una migrazione che necessitasse
- * di un ';' dentro una stringa va applicata a mano e marcata con markApplied().
+ * Il parser (splitStatements) rispetta i literal di stringa: un ';' o una
+ * riga '-- ...' dentro un valore stringa (es. il system prompt seminato in
+ * 001_initial_schema.sql) non viene scambiato per fine statement o commento.
  */
 class MigrationService
 {
@@ -58,17 +57,13 @@ class MigrationService
 
         $alreadyApplied = DB::table('schema_migrations')->pluck('migration')->all();
 
-        // Bootstrap: schema_migrations è appena stata creata (era vuota) ma le
-        // tabelle applicative esistono già → installazione pre-esistente al runner.
-        $isPreexisting = empty($alreadyApplied) && $this->tableExists('admin_users');
-
         foreach ($files as $file) {
             $name = basename($file);
             if (in_array($name, $alreadyApplied, true)) {
                 continue;
             }
 
-            if ($isPreexisting && isset(self::HISTORICAL_MARKERS[$name])
+            if (isset(self::HISTORICAL_MARKERS[$name])
                 && $this->columnExists(...self::HISTORICAL_MARKERS[$name])
             ) {
                 $this->markApplied($name);
@@ -102,33 +97,88 @@ class MigrationService
             throw new \RuntimeException("Impossibile leggere {$path}");
         }
 
-        $lines = array_filter(
-            explode("\n", $sql),
-            fn(string $l): bool => !str_starts_with(trim($l), '--'),
-        );
-        $clean = implode("\n", $lines);
-
-        foreach (explode(';', $clean) as $statement) {
-            $statement = trim($statement);
-            if ($statement === '') continue;
+        foreach ($this->splitStatements($sql) as $statement) {
             DB::statement($statement);
         }
     }
 
     /**
-     * Verifica esistenza tabella/colonna via information_schema invece di
-     * "SHOW ... LIKE ?": i comandi SHOW non ammettono in modo affidabile un
-     * placeholder bindato in una prepared statement su tutte le versioni di
-     * MariaDB/MySQL, information_schema sì.
+     * Divide un file .sql in singole statement, rispettando i literal di
+     * stringa: un ';' o una riga '-- ...' dentro un valore stringa (es. il
+     * system prompt seminato in 001_initial_schema.sql, che contiene sia
+     * punti e virgola sia righe che iniziano per '--' come testo) NON deve
+     * essere trattato come fine statement o commento. Un semplice split su
+     * ';' o strip di righe '--' romperebbe quel file a metà stringa.
+     *
+     * @return string[]
      */
-    private function tableExists(string $table): bool
+    private function splitStatements(string $sql): array
     {
-        return !empty(DB::select(
-            'SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ? LIMIT 1',
-            [$table],
+        $statements = [];
+        $current    = '';
+        $len        = strlen($sql);
+        $inString   = false;
+        $quoteChar  = '';
+
+        for ($i = 0; $i < $len; $i++) {
+            $ch = $sql[$i];
+
+            if ($inString) {
+                $current .= $ch;
+                if ($ch === '\\' && $i + 1 < $len) {
+                    // Escape MySQL: il carattere successivo è letterale.
+                    $current .= $sql[++$i];
+                    continue;
+                }
+                if ($ch === $quoteChar) {
+                    if (($sql[$i + 1] ?? '') === $quoteChar) {
+                        // Quote raddoppiata ('' dentro '...') = quote letterale.
+                        $current .= $sql[++$i];
+                        continue;
+                    }
+                    $inString = false;
+                }
+                continue;
+            }
+
+            if ($ch === "'" || $ch === '"') {
+                $inString  = true;
+                $quoteChar = $ch;
+                $current  .= $ch;
+                continue;
+            }
+
+            if ($ch === '-' && ($sql[$i + 1] ?? '') === '-') {
+                $nl = strpos($sql, "\n", $i);
+                $i  = $nl === false ? $len : $nl; // il for() farà $i++ portandolo dopo il \n
+                continue;
+            }
+
+            if ($ch === ';') {
+                $statements[] = $current;
+                $current      = '';
+                continue;
+            }
+
+            $current .= $ch;
+        }
+
+        if (trim($current) !== '') {
+            $statements[] = $current;
+        }
+
+        return array_values(array_filter(
+            array_map('trim', $statements),
+            fn(string $s): bool => $s !== '',
         ));
     }
 
+    /**
+     * Verifica esistenza colonna via information_schema invece di
+     * "SHOW COLUMNS ... LIKE ?": i comandi SHOW non ammettono in modo
+     * affidabile un placeholder bindato in una prepared statement su tutte
+     * le versioni di MariaDB/MySQL, information_schema sì.
+     */
     private function columnExists(string $table, string $column): bool
     {
         return !empty(DB::select(
