@@ -9,6 +9,33 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Diritti dell'interessato — accesso/export/anonimizzazione (artt. 15/17/20 GDPR)** —
+  nuovo pannello admin in Impostazioni → Privacy: ricerca utente per ID Facebook, ID
+  interno o token di appello; export JSON completo dei dati collegati; anonimizzazione
+  irreversibile con doppia conferma e motivazione obbligatoria (mai una DELETE fisica,
+  stesso schema di anonimizzazione di `RetentionService`). Ogni azione è tracciata in
+  `gdpr_audit_log` (accountability art. 5.2). Endpoint `GET/POST /api/gdpr/*`,
+  `GdprService`/`GdprController`, admin-only.
+
+- **LIA — Legitimate Interest Assessment (art. 6.1.f GDPR)** — documento di
+  bilanciamento degli interessi generato dinamicamente come la DPIA, con i tre test
+  standard EDPB/WP29 (purpose/necessity/balancing) e le statistiche reali
+  dell'installazione (soglia recidiva, durate ban, tasso di accoglimento appelli).
+  Include il bilanciamento sui minori ex Recital 38. Endpoint `GET /api/lia`,
+  `ModerationController::exportLia()`, template `public/lia.php`, admin-only.
+
+- **Migrazioni SQL automatiche al deploy** — il webhook di auto-deploy
+  (`/webhook/github`) applica ora da solo le `.sql` pendenti in
+  `database/migrations/` dopo ogni `git pull`, tracciandole in una nuova tabella
+  `schema_migrations`. Le migrazioni storiche non idempotenti (002, 003) vengono
+  riconosciute via controllo diretto della colonna che introducono, invece di essere
+  ri-eseguite su installazioni che le hanno già. Uso manuale: `php bin/migrate.php`.
+
+- **Canali di release `main` (test) / `stable` (clienti)** — `main` resta il canale di
+  sviluppo/test con auto-deploy verso l'installazione di staging; nuovo branch
+  `stable` per le installazioni clienti, promosso a mano con un merge fast-forward
+  quando `main` è verificato. Documentato in `docs/deployment-security.md` §9.
+
 - **Coda di revisione anonimizzata** — i moderatori umani vedono solo uno pseudonimo interno
   (`Utente #ID`) nella coda di revisione, mai il nome reale Facebook. Il `display_name` è escluso
   dal SELECT delle API `/api/queue` e `/api/queue/reportable` (mai trasmesso al client in contesto
@@ -31,11 +58,31 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   art. 33 → notifica interessati art. 34 → recovery → registro interno incidenti).
 
 ### Fixed
+- **Privacy policy — §5.4 ban automatico** — non parlava più di "ban definitivo con
+  revisione umana preventiva" (concetto inesistente nel codice: `BanService` non
+  applica mai ban permanenti, e il ban alla soglia di recidiva è completamente
+  automatico). Riformulato: ban sempre temporaneo, contestabile ex-post via appello.
+
+- **Privacy policy — §11 minori** — non negava più una presenza prevedibile
+  ("non destinata a raccogliere dati di minori... cancellazione immediata se
+  scoperti") su una pagina Facebook pubblica dove l'età non è verificabile.
+  Riformulato per riconoscere la prevedibilità e motivare le tutele già esistenti
+  (blind review, nessun ban alla prima violazione, appello sempre disponibile) come
+  risposta proporzionata, ex Recital 38 GDPR.
+
 - **Privacy policy pubblica e registro trattamenti** — rimossi tutti i riferimenti a
   "rimozione/removal" dei commenti; la terminologia corretta è "nascondimento temporaneo".
   Aggiornati: `public/privacy.php` (sezioni IT ed EN §5, §7), `public/registro.php` (T1
   conservazione), `public/dpia.php` (fail-safe). In linea con la policy editoriale del sistema:
   l'azione preferita è il nascondimento con possibilità di appello, non la cancellazione.
+
+### Security
+- **Accesso diretto ai documenti di compliance** — `public/.htaccess` instradava a
+  `index.php` solo se il file richiesto non esisteva già su disco. `dpia.php`,
+  `registro.php` e `lia.php` esistono come file reali, quindi una richiesta diretta
+  li serviva bypassando del tutto l'autenticazione JWT applicata alle route
+  `/api/dpia`, `/api/registro-trattamenti`, `/api/lia`. Forzati anch'essi attraverso
+  `index.php`, come già avveniva per `dashboard.html`.
 
 ### Planned (Community edition)
 - Slack / email notifications when human queue exceeds threshold
