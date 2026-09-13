@@ -10,6 +10,14 @@ RewriteRule ^(.*)$ $1 [R=200,L]
 # Force dashboard through PHP so AccessGuardMiddleware can gate it by IP
 RewriteRule ^dashboard\.html$ index.php [L]
 
+# Compliance documents (DPIA/registro trattamenti/LIA) must be served only
+# through the authenticated Slim routes (/api/dpia, /api/registro-trattamenti,
+# /api/lia). These files exist on disk and are otherwise excluded from the
+# catch-all rewrite below (see its "!-f" condition), so a direct request would
+# bypass Slim's auth entirely. Route them through index.php too — Slim has no
+# route at this literal path, so it 404s instead of rendering the template.
+RewriteRule ^(dpia|registro|lia)\.php$ index.php [L]
+
 # Route everything else to index.php (except existing files/dirs)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
