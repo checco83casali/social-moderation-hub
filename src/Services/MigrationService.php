@@ -32,10 +32,10 @@ class MigrationService
 {
     private const DIR = __DIR__ . '/../../database/migrations';
 
-    /** Migrazioni storiche precedenti al runner + colonna/marcatore che ne prova l'esito. */
+    /** Migrazioni storiche precedenti al runner + [tabella, colonna] che ne prova l'esito. */
     private const HISTORICAL_MARKERS = [
-        '002_whataboutism.sql'  => "SHOW COLUMNS FROM `moderation_log` LIKE 'ai_whataboutism_suggested'",
-        '003_temp_password.sql' => "SHOW COLUMNS FROM `admin_users` LIKE 'must_change_password'",
+        '002_whataboutism.sql'  => ['moderation_log', 'ai_whataboutism_suggested'],
+        '003_temp_password.sql' => ['admin_users', 'must_change_password'],
     ];
 
     /**
@@ -69,7 +69,7 @@ class MigrationService
             }
 
             if ($isPreexisting && isset(self::HISTORICAL_MARKERS[$name])
-                && $this->markerSatisfied(self::HISTORICAL_MARKERS[$name])
+                && $this->columnExists(...self::HISTORICAL_MARKERS[$name])
             ) {
                 $this->markApplied($name);
                 $skippedHistorical[] = $name;
@@ -115,14 +115,26 @@ class MigrationService
         }
     }
 
-    private function markerSatisfied(string $checkSql): bool
-    {
-        return !empty(DB::select($checkSql));
-    }
-
+    /**
+     * Verifica esistenza tabella/colonna via information_schema invece di
+     * "SHOW ... LIKE ?": i comandi SHOW non ammettono in modo affidabile un
+     * placeholder bindato in una prepared statement su tutte le versioni di
+     * MariaDB/MySQL, information_schema sì.
+     */
     private function tableExists(string $table): bool
     {
-        return !empty(DB::select('SHOW TABLES LIKE ?', [$table]));
+        return !empty(DB::select(
+            'SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ? LIMIT 1',
+            [$table],
+        ));
+    }
+
+    private function columnExists(string $table, string $column): bool
+    {
+        return !empty(DB::select(
+            'SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ? LIMIT 1',
+            [$table, $column],
+        ));
     }
 
     private function ensureMigrationsTable(): void
