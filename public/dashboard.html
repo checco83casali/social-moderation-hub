@@ -609,7 +609,59 @@
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                   DPIA — Valutazione d'impatto (art. 35 GDPR)
                 </button>
+                <button onclick="openLia()"
+                   style="font-size:12.5px;color:var(--muted);background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:5px;padding:0;font-family:var(--font)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
+                  LIA — Bilanciamento interessi (art. 6.1.f GDPR)
+                </button>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Diritti dell'interessato — accesso/export/cancellazione (admin only) -->
+        <div id="gdpr-dsar-panel" style="display:none;max-width:900px;margin-top:20px">
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title">🔍 Diritti dell'interessato — accesso, portabilità, cancellazione (artt. 15/17/20 GDPR)</div>
+            </div>
+            <div class="policy-form">
+              <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.6">
+                Cerca un utente per evadere una richiesta ricevuta dal Titolare: ID Facebook, ID interno del commentatore, o token di appello ricevuto in una notifica di rimozione. L'export scarica un bundle JSON completo (art. 15/20); l'anonimizzazione è <strong>irreversibile</strong> e va usata solo dopo aver verificato l'identità del richiedente (art. 17).
+              </p>
+
+              <div style="display:flex;gap:10px;margin-bottom:16px">
+                <input class="form-input" type="text" id="gdpr-search-q" placeholder="ID Facebook, ID interno o token di appello" style="flex:1">
+                <button class="btn btn-primary" onclick="gdprSearch()">Cerca</button>
+              </div>
+
+              <div id="gdpr-result" style="display:none">
+                <div id="gdpr-result-summary" style="background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;font-size:12.5px;line-height:1.7;margin-bottom:14px"></div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+                  <button class="btn btn-secondary" onclick="gdprExport()">📥 Esporta JSON (art. 15/20)</button>
+                  <button class="btn btn-danger" id="gdpr-anonymise-btn" onclick="gdprShowAnonymiseConfirm()">🗑 Anonimizza dati utente (art. 17)</button>
+                </div>
+
+                <div id="gdpr-anonymise-confirm" style="display:none;border:1px solid var(--warn,#e0a030);border-radius:var(--radius);padding:14px 16px;background:rgba(224,160,48,.08);margin-bottom:14px">
+                  <p style="font-size:12.5px;font-weight:600;margin-bottom:10px">⚠️ Conferma anonimizzazione — operazione irreversibile</p>
+                  <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Sostituisce in modo permanente nome, ID piattaforma e testo dei commenti con placeholder. Ban e conteggi statistici restano in forma anonima. Non è possibile annullare da qui: solo un ripristino da backup del database può farlo.</p>
+                  <div class="form-group" style="margin-bottom:10px">
+                    <label class="form-label">Motivazione della richiesta (obbligatoria)</label>
+                    <input class="form-input" type="text" id="gdpr-anonymise-reason" placeholder="Es: richiesta art. 17 ricevuta via email il ..." style="width:100%;box-sizing:border-box">
+                  </div>
+                  <div style="display:flex;gap:10px">
+                    <button class="btn btn-danger" onclick="gdprConfirmAnonymise()">Anonimizza definitivamente</button>
+                    <button class="btn btn-secondary" onclick="document.getElementById('gdpr-anonymise-confirm').style.display='none'">Annulla</button>
+                  </div>
+                </div>
+              </div>
+
+              <div id="gdpr-not-found" style="display:none;font-size:12.5px;color:var(--muted);padding:14px 0">Nessun utente trovato con questo identificativo.</div>
+
+              <details style="margin-top:16px;font-size:12px;color:var(--muted)">
+                <summary style="cursor:pointer;font-weight:500">Registro richieste evase (accountability art. 5.2 GDPR)</summary>
+                <div id="gdpr-audit-log" style="margin-top:10px;font-size:12px;line-height:1.6"></div>
+              </details>
             </div>
           </div>
         </div>
@@ -1225,6 +1277,7 @@
 <script src="assets/js/moderation.js"></script>
 <script src="assets/js/pages-policy.js"></script>
 <script src="assets/js/settings.js"></script>
+<script src="assets/js/gdpr.js"></script>
 <script src="assets/js/app.js"></script>
 
 </body>

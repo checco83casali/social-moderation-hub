@@ -10,6 +10,7 @@ use ModerationHub\Controllers\PagesController;
 use ModerationHub\Controllers\PolicyController;
 use ModerationHub\Controllers\WebhookController;
 use ModerationHub\Controllers\DeployController;
+use ModerationHub\Controllers\GdprController;
 use ModerationHub\Middleware\AuthMiddleware;
 use ModerationHub\Middleware\AccessGuardMiddleware;
 use ModerationHub\Services\OAuthService;
@@ -243,6 +244,15 @@ $app->group('/api', function ($group) {
 
     // DPIA art. 35 GDPR (admin/supervisor)
     $group->get('/dpia',                       [ModerationController::class, 'exportDpia']);
+
+    // LIA — Legitimate Interest Assessment, art. 6.1.f GDPR (admin/supervisor)
+    $group->get('/lia',                        [ModerationController::class, 'exportLia']);
+
+    // Diritti dell'interessato — accesso, export, anonimizzazione (admin only)
+    $group->get('/gdpr/search',                [GdprController::class, 'search']);
+    $group->get('/gdpr/export/{id}',           [GdprController::class, 'export']);
+    $group->post('/gdpr/anonymise/{id}',       [GdprController::class, 'anonymise']);
+    $group->get('/gdpr/audit',                 [GdprController::class, 'auditLog']);
 
     // Approved comments
     $group->get('/comments/approved',          [ModerationController::class, 'approvedComments']);

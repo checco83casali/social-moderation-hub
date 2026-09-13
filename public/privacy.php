@@ -335,7 +335,7 @@ amministrate per conto di terzi. La presente informativa è rivolta a:</p>
   <li>Le decisioni ad alta confidenza sono revisionate a campione dagli amministratori.</li>
   <li><strong>Revisione cieca (blind review):</strong> quando un commento è escalato alla revisione umana, il moderatore vede esclusivamente uno pseudonimo interno (es. «Utente #4821»), mai il nome reale Facebook. Il nome reale non viene mai trasmesso al client durante il processo di revisione.</li>
   <li>Qualsiasi decisione di nascondimento può essere contestata tramite la <strong>procedura di appello</strong> (vedi §8).</li>
-  <li>Le decisioni di ban definitivo sono sempre soggette a revisione umana preventiva.</li>
+  <li>I ban vengono applicati automaticamente al superamento della soglia di recidiva definita dalle policy della Pagina. Non esiste un "ban definitivo": ogni ban è <strong>temporaneo</strong> e ha una scadenza. Un ban applicato automaticamente non è soggetto a revisione umana preventiva, ma può sempre essere <strong>contestato ex-post</strong> tramite la procedura di appello (vedi §8), che dà diritto a una revisione umana della decisione.</li>
   <li>I feedback dei moderatori umani retroalimentano il sistema per ridurre errori futuri.</li>
 </ul>
 <p><strong>Diritto di non essere soggetto a decisione automatizzata:</strong> l'interessato ha il diritto di richiedere l'intervento di un moderatore umano per qualsiasi decisione che lo riguardi, di esprimere la propria opinione e di contestare la decisione, scrivendo a <a href="mailto:<?= $orgEmail ?>"><?= $orgEmail ?></a> o utilizzando il link di appello ricevuto.</p>
@@ -614,7 +614,7 @@ DPO contact: <a href="mailto:<?= $orgEmail ?>"><?= $orgEmail ?></a></p>
   <li>High-confidence automated decisions are subject to sample review by administrators.</li>
   <li><strong>Blind review:</strong> when a comment is escalated to human review, the moderator sees only an internal pseudonym (e.g. «User #4821»), never the real Facebook name. The real name is never transmitted to the client during the review process.</li>
   <li>Any hiding decision can be contested via the <strong>appeal procedure</strong> (see §8).</li>
-  <li>Permanent ban decisions are always subject to prior human review.</li>
+  <li>Bans are applied automatically once the recidivism threshold defined in the Page's policies is exceeded. There is no "permanent ban": every ban is <strong>temporary</strong> and has an expiry date. An automatically applied ban is not subject to prior human review, but it can always be <strong>contested after the fact</strong> via the appeal procedure (see §8), which entitles the data subject to a human review of the decision.</li>
   <li>Human moderator feedback is used to improve the system and reduce future errors.</li>
 </ul>
 <p><strong>Right not to be subject to automated decision-making:</strong> the data subject has the right to request human moderator intervention for any decision concerning them, to express their view, and to contest the decision, by writing to <a href="mailto:<?= $orgEmail ?>"><?= $orgEmail ?></a> or using the appeal link received.</p>

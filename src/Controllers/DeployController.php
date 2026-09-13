@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ModerationHub\Controllers;
 
+use ModerationHub\Services\MigrationService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Psr7\Response;
@@ -12,7 +13,9 @@ use Slim\Psr7\Response;
  * GitHub auto-deploy webhook.
  *
  * Listens at POST /webhook/github. When the configured branch receives a push,
- * pulls the new commits with a fast-forward-only `git pull` in the project root.
+ * pulls the new commits with a fast-forward-only `git pull` in the project root,
+ * then applies any pending SQL migration in database/migrations/ (see
+ * MigrationService — safe/idempotent by design, never destructive on data).
  * The handler is **fail-closed**: without GITHUB_WEBHOOK_SECRET set in .env it
  * returns 503 and does nothing.
  */
@@ -76,7 +79,45 @@ class DeployController
             // Don't leak the raw git output to the caller — keep it in the log.
             return $this->reply($response, 500, ['error' => 'pull failed', 'rc' => $rc]);
         }
-        return $this->reply($response, 200, ['ok' => true, 'branch' => $branch]);
+
+        $migrations = $this->runMigrations($root);
+
+        return $this->reply($response, 200, [
+            'ok'         => true,
+            'branch'     => $branch,
+            'migrations' => $migrations,
+        ]);
+    }
+
+    /**
+     * Applica le migrazioni pendenti dopo il pull. Non fa fallire il deploy
+     * se una migrazione ha un problema: il codice è già aggiornato, l'errore
+     * viene loggato per intervento manuale invece di rispondere 500 a GitHub.
+     *
+     * @return array<string,mixed>
+     */
+    private function runMigrations(string $root): array
+    {
+        try {
+            $result = (new MigrationService)->applyPending();
+        } catch (\Throwable $e) {
+            $result = ['applied' => [], 'skipped_historical' => [], 'errors' => ['bootstrap' => $e->getMessage()]];
+        }
+
+        if (!empty($result['applied']) || !empty($result['skipped_historical']) || !empty($result['errors'])) {
+            @file_put_contents(
+                $root . '/logs/deploy.log',
+                sprintf("[%s] migrations applied=%s skipped_historical=%s errors=%s\n",
+                    date('c'),
+                    implode(',', $result['applied']),
+                    implode(',', $result['skipped_historical']),
+                    json_encode($result['errors'], JSON_UNESCAPED_UNICODE),
+                ),
+                FILE_APPEND,
+            );
+        }
+
+        return $result;
     }
 
     /** @param array<string,mixed> $data */

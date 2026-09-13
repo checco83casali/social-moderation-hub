@@ -71,13 +71,16 @@ async function loadSettings() {
     document.getElementById('settings-save-btn').disabled = !isAdmin;
     document.getElementById('settings-admin-note').style.display = isAdmin ? 'none' : 'block';
 
-    // Privacy panel e Dev mode panel: solo admin
+    // Privacy panel, Dev mode panel e diritti dell'interessato: solo admin
     const privPanel  = document.getElementById('privacy-settings-panel');
     const devPanel   = document.getElementById('dev-mode-panel');
     const replyPanel = document.getElementById('reply-settings-panel');
+    const gdprPanel  = document.getElementById('gdpr-dsar-panel');
     if (privPanel)  privPanel.style.display  = isAdmin ? 'block' : 'none';
     if (devPanel)   devPanel.style.display   = isAdmin ? 'block' : 'none';
     if (replyPanel) replyPanel.style.display = isAdmin ? 'block' : 'none';
+    if (gdprPanel)  gdprPanel.style.display  = isAdmin ? 'block' : 'none';
+    if (gdprPanel && isAdmin) loadGdprAuditLog();
 
     if (!isAdmin) {
       document.getElementById('settings-save-btn').style.opacity = '.4';
@@ -425,6 +428,20 @@ async function openDpia() {
     window.open(url, '_blank');
     setTimeout(() => URL.revokeObjectURL(url), 60000);
   } catch (e) { toast('Errore apertura DPIA', 'err'); }
+}
+async function openLia() {
+  try {
+    const token = localStorage.getItem('mh_token');
+    const res   = await fetch('/api/lia', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) { toast('Errore apertura LIA', 'err'); return; }
+    const html = await res.text();
+    const blob = new Blob([html], { type: 'text/html' });
+    const url  = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (e) { toast('Errore apertura LIA', 'err'); }
 }
 function onDevModeChange(checked) {
   const label = document.getElementById('dev-mode-label');

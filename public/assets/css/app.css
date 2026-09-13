@@ -348,6 +348,14 @@ nav { flex: 1; padding: 12px 10px; }
   cursor: pointer; border: 1px solid var(--border); transition: all .15s;
 }
 .btn-secondary:hover { background: var(--bg-hover); color: var(--text); }
+.btn-danger {
+  padding: 10px 20px; border-radius: var(--radius);
+  background: var(--danger, #f75252); color: #fff;
+  font-family: var(--font); font-size: 13.5px; font-weight: 600;
+  cursor: pointer; border: none; transition: opacity .15s;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-danger:hover { opacity: .85; }
 
 .policy-row { display: flex; align-items: center; gap: 14px; padding: 14px 20px; border-bottom: 1px solid var(--border); }
 .policy-row:last-child { border-bottom: none; }

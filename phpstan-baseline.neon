@@ -79,6 +79,78 @@ parameters:
 			path: public/dpia.php
 
 		-
+			message: '#^Variable \$appealsAccept might not be defined\.$#'
+			identifier: variable.undefined
+			count: 2
+			path: public/lia.php
+
+		-
+			message: '#^Variable \$appUrl might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: public/lia.php
+
+		-
+			message: '#^Variable \$appVersion might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: public/lia.php
+
+		-
+			message: '#^Variable \$banCfg might not be defined\.$#'
+			identifier: variable.undefined
+			count: 3
+			path: public/lia.php
+
+		-
+			message: '#^Variable \$orgAddress might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: public/lia.php
+
+		-
+			message: '#^Variable \$orgCountry might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: public/lia.php
+
+		-
+			message: '#^Variable \$orgEmail might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: public/lia.php
+
+		-
+			message: '#^Variable \$orgName might not be defined\.$#'
+			identifier: variable.undefined
+			count: 3
+			path: public/lia.php
+
+		-
+			message: '#^Variable \$recidivismLimit might not be defined\.$#'
+			identifier: variable.undefined
+			count: 2
+			path: public/lia.php
+
+		-
+			message: '#^Variable \$today might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: public/lia.php
+
+		-
+			message: '#^Variable \$totAppeals might not be defined\.$#'
+			identifier: variable.undefined
+			count: 2
+			path: public/lia.php
+
+		-
+			message: '#^Variable \$totBans might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: public/lia.php
+
+		-
 			message: '#^Offset ''skipped'' on array\{skipped\: bool, reason\?\: string, retention_days\?\: int, cutoff\?\: string, anonymised\?\: array\<string, int\>, started_at\?\: string, finished_at\?\: string, duration_ms\?\: int\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 1

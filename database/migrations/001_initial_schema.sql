@@ -454,6 +454,23 @@ CREATE TABLE IF NOT EXISTS `license_cache` (
     INDEX `idx_checked`   (`checked_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ------------------------------------------------------------
+-- Registro delle richieste GDPR (artt. 15/17/20) evase manualmente
+-- dal Titolare — vedi migration 004
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `gdpr_audit_log` (
+    `id`              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `action`          ENUM('search','export','anonymise') NOT NULL,
+    `social_user_id`  INT UNSIGNED NULL COMMENT 'Riferimento interno; NULL se l''utente è stato già anonimizzato in precedenza',
+    `admin_user_id`   INT UNSIGNED NOT NULL,
+    `reason`          TEXT NULL,
+    `details`         JSON NULL COMMENT 'Conteggi righe coinvolte per tabella, esito',
+    `created_at`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`admin_user_id`) REFERENCES `admin_users`(`id`) ON DELETE RESTRICT,
+    INDEX `idx_social_user` (`social_user_id`),
+    INDEX `idx_created` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ============================================================
 -- UPGRADE: nuove colonne fact-check su installazioni esistenti
 -- ============================================================
@@ -493,5 +510,10 @@ CREATE TABLE IF NOT EXISTS `license_cache` (
 --   ADD COLUMN `must_change_password` TINYINT(1) NOT NULL DEFAULT 0
 --         COMMENT 'Se 1, l''utente deve cambiare la password al prossimo accesso'
 --         AFTER `password_hash`;
+
+-- ============================================================
+-- UPGRADE: registro richieste GDPR su installazioni esistenti (migration 004)
+-- ============================================================
+-- Vedi database/migrations/004_gdpr_dsar.sql per il CREATE TABLE completo.
 
 SET FOREIGN_KEY_CHECKS = 1;
