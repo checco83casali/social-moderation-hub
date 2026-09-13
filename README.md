@@ -327,7 +327,8 @@ the current Pro plan.
 
 ## Continuous Integration
 
-Every push to `main` and every pull request runs a GitHub Actions workflow that:
+Every push to `main` or `beta`, and every pull request targeting either, runs a
+GitHub Actions workflow that:
 
 - Lints all PHP files (`php -l`) under `src/`, `bin/`, `public/`.
 - Runs **PHPStan** static analysis at **level 6** (`composer analyse`).

@@ -31,10 +31,11 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   riconosciute via controllo diretto della colonna che introducono, invece di essere
   ri-eseguite su installazioni che le hanno già. Uso manuale: `php bin/migrate.php`.
 
-- **Canali di release `main` (test) / `stable` (clienti)** — `main` resta il canale di
-  sviluppo/test con auto-deploy verso l'installazione di staging; nuovo branch
-  `stable` per le installazioni clienti, promosso a mano con un merge fast-forward
-  quando `main` è verificato. Documentato in `docs/deployment-security.md` §9.
+- **Canali di release `beta` (test) / `main` (clienti)** — `beta` è il canale di
+  sviluppo/test con auto-deploy verso l'installazione di staging; `main` (branch di
+  default) è il canale per le installazioni clienti, promosso con un merge
+  fast-forward quando `beta` è verificato. Documentato in
+  `docs/deployment-security.md` §9.
 
 - **Coda di revisione anonimizzata** — i moderatori umani vedono solo uno pseudonimo interno
   (`Utente #ID`) nella coda di revisione, mai il nome reale Facebook. Il `display_name` è escluso

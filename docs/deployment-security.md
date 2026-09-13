@@ -226,29 +226,30 @@ These are enforced in code and require no configuration:
 
 ---
 
-## 9. Release channels — `main` (beta/test) vs `stable` (client installs)
+## 9. Release channels — `beta` (test) vs `main` (client installs)
 
-Two long-lived branches:
+Two long-lived branches (`main` is the default branch on GitHub, per the
+standard convention that `main` = stable/production):
 
-| Branch   | Audience                          | How it updates |
-|----------|------------------------------------|-----------------|
-| `main`   | Your own test/staging install      | Auto-deploy: the GitHub webhook on `moderation.datatrade.sm` (`/webhook/github`, `GITHUB_WEBHOOK_BRANCH=main` by default) pulls and migrates on every push. |
-| `stable` | Client installations                | Manual by default: `git checkout stable && git pull` on each client server. A client can opt into its own webhook (`GITHUB_WEBHOOK_SECRET` + `GITHUB_WEBHOOK_BRANCH=stable` in its `.env`, plus a GitHub webhook pointed at its own domain) if they want auto-deploy too — nothing in the app assumes a single webhook. |
+| Branch | Audience                     | How it updates |
+|--------|-------------------------------|-----------------|
+| `beta` | Your own test/staging install | Auto-deploy: the GitHub webhook on `moderation.datatrade.sm` (`/webhook/github`, `.env`: `GITHUB_WEBHOOK_BRANCH=beta`) pulls and migrates on every push. |
+| `main` | Client installations           | Auto-deploy per client that opts in: each client sets `GITHUB_WEBHOOK_SECRET` + `GITHUB_WEBHOOK_BRANCH=main` in its own `.env` and gets its own GitHub webhook pointed at its own domain — e.g. `moderation.sanmarinortv.sm`. Clients without a webhook just `git checkout main && git pull` manually. Nothing in the app assumes a single webhook; each installation's webhook only reacts to the branch its own `.env` names. |
 
-Only one webhook exists today, pointed at `moderation.datatrade.sm` and watching
-`main`. Pushing to `main` **never** touches client installs by itself — they only
-move when someone runs `git pull` (or merges/pulls `stable`) on that specific server.
+Pushing to `beta` **never** touches client installs by itself — a client only
+moves when its own webhook fires (if configured) or someone runs `git pull` on
+that specific server.
 
-**Promoting a verified `main` to `stable`:**
+**Promoting a verified `beta` to `main`:**
 
 ```bash
-git checkout stable
-git merge --ff-only main   # fails if stable has commits main doesn't — reconcile by hand, don't force
-git push origin stable
 git checkout main
+git merge --ff-only beta   # fails if main has commits beta doesn't — reconcile by hand, don't force
+git push origin main
+git checkout beta
 ```
 
-Fast-forward only, on purpose: if it fails, `stable` diverged (e.g. a hotfix
+Fast-forward only, on purpose: if it fails, `main` diverged (e.g. a hotfix
 applied directly there) and needs a real look before overwriting it.
 
 ---
