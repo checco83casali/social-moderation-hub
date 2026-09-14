@@ -57,6 +57,16 @@ function privacySetting(string $key, string $default = ''): string {
     return htmlspecialchars($val, ENT_QUOTES, 'UTF-8');
 }
 
+// Nasconde il footer "template by Francesco Casali" quando l'installazione
+// ha una licenza Pro attiva (online o offline). In caso di errore nel
+// determinare lo stato, il footer resta visibile (fail-safe).
+$licenseIsPro = false;
+try {
+    $licenseIsPro = (new \ModerationHub\Services\LicenseService())->isPro();
+} catch (\Throwable) {
+    $licenseIsPro = false;
+}
+
 $orgName     = privacySetting('privacy_org_name',             '[Your Organisation]');
 $orgAddress  = privacySetting('privacy_org_address',          '[Registered address]');
 $orgEmail    = privacySetting('privacy_org_email',            'privacy@example.com');
@@ -731,6 +741,7 @@ DPO contact: <a href="mailto:<?= $orgEmail ?>"><?= $orgEmail ?></a></p>
 
 </div><!-- /lang-section EN -->
 
+<?php if (!$licenseIsPro): ?>
 <footer>
   <p>Social Moderation Hub – Privacy Policy Template v1.0 – Effective [operator: insert date]</p>
   <p>Template authored by <strong>Francesco Casali</strong> –
@@ -740,6 +751,7 @@ DPO contact: <a href="mailto:<?= $orgEmail ?>"><?= $orgEmail ?></a></p>
      for its accuracy, completeness, and compliance with applicable data protection laws.
      Generate a pre-filled version at <code>/public/privacy-generator</code>.</em></p>
 </footer>
+<?php endif; ?>
 
 </body>
 </html>
