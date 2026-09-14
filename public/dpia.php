@@ -397,7 +397,7 @@ $violationRetentionDiffers = $violationRetentionEnabled && ((int) $violationRete
   <h3>R4 — Trasferimento a Anthropic</h3>
   <ul class="measures">
     <li><strong>Minimizzazione:</strong> vengono inviati ad Anthropic solo il testo del commento e i metadati necessari per il contesto (ID utente, contatore violazioni, nome pagina). Nessun dato identificativo diretto (nome, email, foto) viene trasmesso.</li>
-    <li><strong>DPA con Anthropic:</strong> il titolare deve stipulare un Data Processing Agreement con Anthropic e verificare le basi di trasferimento verso USA (SCCs o adeguatezza).</li>
+    <li><strong>DPA con Anthropic:</strong> il DPA con Clausole Contrattuali Standard è incorporato automaticamente nei Commercial Terms of Service di Anthropic, accettati al momento della sottoscrizione dell'API key — nessun documento separato da firmare.</li>
     <li><strong>Nessun training:</strong> i dati inviati ad Anthropic tramite API non vengono usati per addestrare i modelli (policy Anthropic API as of data di redazione).</li>
   </ul>
 
@@ -453,7 +453,7 @@ $violationRetentionDiffers = $violationRetentionEnabled && ((int) $violationRete
       <tr>
         <td>R4 — Trasferimento Anthropic</td>
         <td><span class="risk risk-residual">Basso</span></td>
-        <td>Accettabile subordinatamente alla firma del DPA con Anthropic e alla verifica delle basi di trasferimento.</td>
+        <td>Accettabile; il DPA con Clausole Contrattuali Standard è incorporato automaticamente nei Commercial Terms of Service di Anthropic, accettati al momento della sottoscrizione dell'API key.</td>
       </tr>
       <tr>
         <td>R5 — Bias AI + pregiudizio revisore</td>
@@ -923,7 +923,7 @@ $violationRetentionDiffers = $violationRetentionEnabled && ((int) $violationRete
   <h3>R4 — Transfer to Anthropic</h3>
   <ul class="measures">
     <li><strong>Minimisation:</strong> only the comment text and the metadata necessary for context (user ID, violation counter, page name) are sent to Anthropic. No direct identifying data (name, e-mail, photo) is transmitted.</li>
-    <li><strong>DPA with Anthropic:</strong> the Controller must enter into a Data Processing Agreement with Anthropic and verify the transfer basis to the USA (SCCs or adequacy).</li>
+    <li><strong>DPA with Anthropic:</strong> the DPA with Standard Contractual Clauses is automatically incorporated into Anthropic's Commercial Terms of Service, accepted when the API key was issued — no separate document to sign.</li>
     <li><strong>No training:</strong> data sent to Anthropic via the API is not used to train the models (Anthropic API policy as of the drafting date).</li>
   </ul>
 
@@ -979,7 +979,7 @@ $violationRetentionDiffers = $violationRetentionEnabled && ((int) $violationRete
       <tr>
         <td>R4 — Anthropic transfer</td>
         <td><span class="risk risk-residual">Low</span></td>
-        <td>Acceptable subject to signing the DPA with Anthropic and verifying the transfer basis.</td>
+        <td>Acceptable; the DPA with Standard Contractual Clauses is automatically incorporated into Anthropic's Commercial Terms of Service, accepted when the API key was issued.</td>
       </tr>
       <tr>
         <td>R5 — AI bias + reviewer bias</td>
