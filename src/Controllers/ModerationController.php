@@ -279,6 +279,18 @@ class ModerationController
 
         $html = $this->buildLegalDossierHtml((array) $row, $report ? (array) $report : []);
 
+        return $this->htmlToPdfResponse(
+            $response, $html, 'dossier-segnalazione-' . $commentId . '.pdf',
+            '[legalDossier] PDF generation failed for comment ' . $commentId . ': '
+        );
+    }
+
+    /**
+     * Renders an HTML document to a downloadable PDF response via dompdf.
+     * Shared by legalDossier(), exportDpiaPdf() and exportLiaPdf().
+     */
+    private function htmlToPdfResponse(Response $response, string $html, string $filename, string $logPrefix = '[pdf] PDF generation failed: '): ResponseInterface
+    {
         try {
             // dompdf deve poter SCRIVERE la cache dei font: di default punta dentro
             // vendor/, spesso non scrivibile dall'utente del web server (errore in
@@ -303,9 +315,9 @@ class ModerationController
             $response->getBody()->write($dompdf->output());
             return $response
                 ->withHeader('Content-Type', 'application/pdf')
-                ->withHeader('Content-Disposition', 'attachment; filename="dossier-segnalazione-' . $commentId . '.pdf"');
+                ->withHeader('Content-Disposition', 'attachment; filename="' . $filename . '"');
         } catch (\Throwable $e) {
-            error_log('[legalDossier] PDF generation failed for comment ' . $commentId . ': ' . $e->getMessage());
+            error_log($logPrefix . $e->getMessage());
             return $this->json($response, [
                 'error' => 'Generazione PDF fallita: ' . $e->getMessage(),
             ], 500);
@@ -1618,6 +1630,31 @@ class ModerationController
             return $this->json($response, ['error' => 'Admin required'], 403);
         }
 
+        $response->getBody()->write($this->buildDpiaHtml());
+        return $response
+            ->withHeader('Content-Type', 'text/html; charset=utf-8')
+            ->withHeader('Content-Disposition', 'inline; filename="dpia-' . date('Y-m-d') . '.html"')
+            ->withStatus(200);
+    }
+
+    // ── GET /api/dpia/pdf  ────────────────────────────────────────────
+    /** Same document as exportDpia(), rendered to a downloadable PDF. */
+    public function exportDpiaPdf(ServerRequestInterface $request, Response $response): ResponseInterface
+    {
+        $auth = $request->getAttribute('auth_user');
+        if (!in_array($auth->role ?? '', ['admin', 'supervisor'], true)) {
+            return $this->json($response, ['error' => 'Admin required'], 403);
+        }
+
+        return $this->htmlToPdfResponse(
+            $response, $this->buildDpiaHtml(), 'dpia-' . date('Y-m-d') . '.pdf',
+            '[exportDpiaPdf] PDF generation failed: '
+        );
+    }
+
+    /** Builds the DPIA document HTML (bilingual IT/EN) from current app settings and stats. */
+    private function buildDpiaHtml(): string
+    {
         $settings = DB::table('app_settings')->pluck('value', 'key')->toArray();
         $orgName    = $settings['privacy_org_name']    ?? '[Titolare non configurato]';
         $orgAddress = $settings['privacy_org_address'] ?? '[Indirizzo non configurato]';
@@ -1643,13 +1680,7 @@ class ModerationController
         ob_start();
         extract($vars);
         require __DIR__ . '/../../public/dpia.php';
-        $html = ob_get_clean();
-
-        $response->getBody()->write($html);
-        return $response
-            ->withHeader('Content-Type', 'text/html; charset=utf-8')
-            ->withHeader('Content-Disposition', 'inline; filename="dpia-' . date('Y-m-d') . '.html"')
-            ->withStatus(200);
+        return ob_get_clean();
     }
 
     // ── GET /api/lia  ───────────────────────────────────────────────
@@ -1666,6 +1697,31 @@ class ModerationController
             return $this->json($response, ['error' => 'Admin required'], 403);
         }
 
+        $response->getBody()->write($this->buildLiaHtml());
+        return $response
+            ->withHeader('Content-Type', 'text/html; charset=utf-8')
+            ->withHeader('Content-Disposition', 'inline; filename="lia-' . date('Y-m-d') . '.html"')
+            ->withStatus(200);
+    }
+
+    // ── GET /api/lia/pdf  ─────────────────────────────────────────────
+    /** Same document as exportLia(), rendered to a downloadable PDF. */
+    public function exportLiaPdf(ServerRequestInterface $request, Response $response): ResponseInterface
+    {
+        $auth = $request->getAttribute('auth_user');
+        if (!in_array($auth->role ?? '', ['admin', 'supervisor'], true)) {
+            return $this->json($response, ['error' => 'Admin required'], 403);
+        }
+
+        return $this->htmlToPdfResponse(
+            $response, $this->buildLiaHtml(), 'lia-' . date('Y-m-d') . '.pdf',
+            '[exportLiaPdf] PDF generation failed: '
+        );
+    }
+
+    /** Builds the LIA document HTML (bilingual IT/EN) from current app settings and stats. */
+    private function buildLiaHtml(): string
+    {
         $settings = DB::table('app_settings')->pluck('value', 'key')->toArray();
         $orgName    = $settings['privacy_org_name']    ?? '[Titolare non configurato]';
         $orgAddress = $settings['privacy_org_address'] ?? '[Indirizzo non configurato]';
@@ -1696,13 +1752,7 @@ class ModerationController
         ob_start();
         extract($vars);
         require __DIR__ . '/../../public/lia.php';
-        $html = ob_get_clean();
-
-        $response->getBody()->write($html);
-        return $response
-            ->withHeader('Content-Type', 'text/html; charset=utf-8')
-            ->withHeader('Content-Disposition', 'inline; filename="lia-' . date('Y-m-d') . '.html"')
-            ->withStatus(200);
+        return ob_get_clean();
     }
 
     // ── GET /api/retention/status  ───────────────────────────────────

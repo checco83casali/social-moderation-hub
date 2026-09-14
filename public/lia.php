@@ -86,6 +86,10 @@
     .doc-footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #eee;
                    font-size: 11px; color: #aaa; text-align: center; }
 
+    /* Bilingual layout */
+    .lang-section { margin-bottom: 1rem; }
+    .divider { border: none; border-top: 2px dashed #ccd; margin: 3rem 0; }
+
     @media print {
       body { padding: 1rem; }
       .doc-footer { position: fixed; bottom: 0; width: 100%; }
@@ -94,6 +98,11 @@
 </head>
 <body>
 <div class="page">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SEZIONE ITALIANA
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="lang-section" lang="it">
 
   <!-- Document header -->
   <div class="doc-header">
@@ -212,9 +221,138 @@
     </div>
   </div>
 
-  <div class="doc-footer">
-    Documento generato automaticamente dal Social Moderation Hub — <?= htmlspecialchars($appUrl, ENT_QUOTES) ?> — non sostituisce la consulenza di un legale o DPO qualificato.
+</div><!-- /lang-section IT -->
+
+<hr class="divider">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     ENGLISH SECTION
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="lang-section" lang="en">
+
+  <!-- Document header -->
+  <div class="doc-header">
+    <div class="doc-title">Legitimate Interest Assessment (LIA)</div>
+    <div class="doc-sub">Balancing test — supporting the legal basis under Art. 6(1)(f) Reg. (EU) 2016/679 (GDPR)</div>
+    <div class="doc-meta">
+      <span><strong>Controller:</strong> <?= htmlspecialchars($orgName, ENT_QUOTES) ?></span>
+      <span><strong>System:</strong> Social Moderation Hub v<?= htmlspecialchars($appVersion, ENT_QUOTES) ?></span>
+      <span><strong>Drafted on:</strong> <?= htmlspecialchars($today, ENT_QUOTES) ?></span>
+      <span><strong>Document version:</strong> 1.0</span>
+    </div>
   </div>
+
+  <!-- 1. Controller -->
+  <h2>1. Data Controller</h2>
+  <div class="titolare">
+    <p><strong>Legal name:</strong> <?= htmlspecialchars($orgName, ENT_QUOTES) ?></p>
+    <p><strong>Registered address:</strong> <?= htmlspecialchars($orgAddress, ENT_QUOTES) ?></p>
+    <p><strong>Privacy / DPO contact:</strong> <?= htmlspecialchars($orgEmail, ENT_QUOTES) ?></p>
+    <p><strong>Jurisdiction:</strong> <?= htmlspecialchars($orgCountry, ENT_QUOTES) ?></p>
+    <p><strong>Processing assessed:</strong> Automated (AI + human) moderation of comments published on the Facebook Page(s) managed through the system, including the management of recidivism-based bans and the minimal behavioural profiling necessary for that purpose.</p>
+  </div>
+
+  <p class="body-text">
+    This assessment records in writing the three-step test required by the EDPB/WP29 guidelines before a processing activity can be based on Art. 6(1)(f) GDPR (legitimate interest): the <strong>Purpose Test</strong> (does a real and specific legitimate interest exist?), the <strong>Necessity Test</strong> (is the processing necessary, or is there a less invasive alternative?), and the <strong>Balancing Test</strong> (does the Controller's interest override the data subject's rights and reasonable expectations?). This is the document referenced by §4 of the public privacy policy when it states that "the Controller has carried out a balancing assessment".
+  </p>
+
+  <!-- 2. Purpose test -->
+  <h2>2. Purpose Test — does a legitimate interest exist?</h2>
+  <div class="test-card">
+    <div class="tc-head">Declared interest <span class="verdict">Passed</span></div>
+    <div class="tc-body">
+      <p><strong>Controller's interest:</strong> protecting the Page's users from spam, scams, unlawful content and abuse, and safeguarding the Page's reputation and editorial integrity. This is not a generic interest ("improving the service"): it is specific (the safety and lawfulness of published comments), real (the volume of comments on a public Page makes the risk of spam/abuse concrete) and present (the processing responds to a current operational need, not a hypothetical one).</p>
+      <p><strong>Interests of third parties:</strong> other users of the Page also have a competing interest in not being exposed to scams, offensive content or disinformation in the comments they read.</p>
+      <p><strong>Alternative legal basis considered and discarded:</strong> consent (Art. 6.1.a) is not practicable — the user comments on a public Page without any registration relationship with the Controller, and consent "collected" by whoever moderates their own content would not be freely given. Performance of a contract (Art. 6.1.b) does not apply: no contract exists between the Controller and the occasional commenter.</p>
+    </div>
+  </div>
+
+  <!-- 3. Necessity test -->
+  <h2>3. Necessity Test — is the processing necessary?</h2>
+  <div class="test-card">
+    <div class="tc-head">Necessity of the AI pipeline <span class="verdict">Passed</span></div>
+    <div class="tc-body">
+      <p><strong>Why human moderation alone is not enough:</strong> the volume of comments on a public Page makes systematic human review of every comment impractical within a timeframe useful to limit the harm of unlawful content in real time (scams, incitement, defamation). A delay of hours or days defeats the protective purpose.</p>
+      <p><strong>Why simple keyword filters are not enough:</strong> static filters produce a high rate of false positives/negatives on natural language, irony and spelling variations — less effective than the contextual classification of a language model, and more invasive in the event of a false positive (no reasoning, no confidence gradation).</p>
+      <p><strong>Why a multi-stage pipeline:</strong> only high-confidence decisions are applied automatically (Tier 1 Haiku); uncertain cases are re-evaluated (Tier 2 Sonnet) or passed to a human moderator (Tier 3) — automated processing is therefore limited to the cases where error is least likely, not applied indiscriminately.</p>
+      <p><strong>Minimisation already built into the design:</strong> the external AI provider is never sent the user's real name, original Facebook ID, profile URL or contact details — only the comment text, a non-reversible pseudonym and risk signals aggregated into bands (see §5.2 of the privacy policy).</p>
+    </div>
+  </div>
+
+  <!-- 4. Balancing test -->
+  <h2>4. Balancing Test — does the Controller's interest override?</h2>
+
+  <div class="stat-row">
+    <div class="stat-cell">
+      <div class="label">Recidivism threshold for ban</div>
+      <div class="val"><?= (int) $recidivismLimit ?> violations</div>
+    </div>
+    <div class="stat-cell">
+      <div class="label">Active bans now</div>
+      <div class="val"><?= number_format((int) $totBans) ?></div>
+    </div>
+    <div class="stat-cell">
+      <div class="label">Appeals received</div>
+      <div class="val"><?= number_format((int) $totAppeals) ?></div>
+    </div>
+    <div class="stat-cell">
+      <div class="label">Appeals upheld</div>
+      <div class="val"><?= number_format((int) $appealsAccept) ?><?= $totAppeals > 0 ? ' (' . round($appealsAccept / $totAppeals * 100) . '%)' : '' ?></div>
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="tc-head">Impact on the data subject vs. mitigation measures <span class="verdict">Passed</span></div>
+    <div class="tc-body">
+      <p><strong>Data subject's reasonable expectation:</strong> anyone commenting publicly on a corporate/editorial Facebook Page reasonably expects comments to be moderated according to the Page's rules — this is not a surprising processing activity. The active moderation rules are published without authentication (§5.5 of the privacy policy).</p>
+      <p><strong>Potential impact on the data subject:</strong> temporary hiding of a comment; in case of recidivism, a temporary suspension (never permanent — no "definitive ban" exists in the system) of the ability to comment on the Page. No impact beyond the platform (no sharing with third parties, no automatic legal consequence).</p>
+      <p><strong>Measures that reduce the impact (the same safeguards cited in §5.4 of the privacy policy):</strong></p>
+      <ul class="measures">
+        <li><strong>Pseudonymisation:</strong> the AI provider never receives the user's real identity.</li>
+        <li><strong>No ban on first violation:</strong> a recidivism pattern is required (configurable threshold, currently <?= (int) $recidivismLimit ?> violations) before any suspension.</li>
+        <li><strong>Ban always temporary:</strong> increasing but finite duration (tier 1: <?= (int) $banCfg['hours_1'] ?>h, tier 2: <?= (int) $banCfg['days_2'] ?> days, tier 3+: <?= (int) $banCfg['days_3'] ?> days) — never irreversible by automated decision.</li>
+        <li><strong>Blind review:</strong> the human moderator reviewing uncertain cases never sees the real Facebook name, reducing the risk of bias.</li>
+        <li><strong>Appeal always available:</strong> every ban or hiding is contestable after the fact; a human reviews the challenge (see statistics above).</li>
+        <li><strong>Right to object:</strong> the data subject may object to processing based on legitimate interest at any time (Art. 21 GDPR, referenced in §8 of the privacy policy).</li>
+      </ul>
+      <p><strong>Balancing conclusion:</strong> given a real and circumscribed legitimate interest, with concrete minimisation, reversibility and contestability measures, the residual impact on the data subject is proportionate. The Controller's interest in keeping the Page safe and lawful prevails, subject to the case-by-case exercise of the right to object.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Note on minors (Recital 38 GDPR)</strong>
+    A public Facebook Page has no way to verify the age of who comments: the system does not intentionally process minors' data and does not identify them as a separate category (see §11 of the privacy policy), but it cannot rule out their presence among commenters. Recital 38 GDPR requires that, when data subjects potentially include minors, the balancing test above should weigh in favour of additional safeguards rather than presuming that the legitimate interest prevails regardless. The measures listed above (no ban on first violation, ban always temporary, blind review, appeal always available) are therefore also to be understood as the response to this requirement, not as generic measures: they are the safeguards that make reliance on legitimate interest sustainable even when the data subject may be a minor. They are not a reason to treat minors' data differently, but the reason why the Controller does not need to verify age in order to balance correctly.
+  </div>
+
+  <!-- 5. Conclusion -->
+  <h2>5. Conclusion</h2>
+  <p class="body-text">
+    All three tests are passed: the legitimate interest declared in §4 of the privacy policy is specific and real (Purpose Test), processing through the AI/human pipeline is necessary and proportionate compared to less effective alternatives (Necessity Test), and the minimisation, reversibility and contestability measures reduce the impact on the data subject to a level the Controller's interest can reasonably override (Balancing Test), including the possible presence of minors among commenters. This assessment must be updated in the event of substantial changes to the moderation pipeline, the recidivism threshold or the AI provider.
+  </p>
+
+  <!-- Signature -->
+  <div class="signature">
+    <div class="sig-head">Approval</div>
+    <div class="sig-body">
+      <div class="sig-cell">
+        <div class="sig-label">Data Controller</div>
+        <div class="sig-line"></div>
+        <div class="sig-sub">Name, role, date</div>
+      </div>
+      <div class="sig-cell">
+        <div class="sig-label">DPO / privacy consultant (if appointed)</div>
+        <div class="sig-line"></div>
+        <div class="sig-sub">Name, role, date</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /lang-section EN -->
+
+<div class="doc-footer">
+  Documento generato automaticamente dal Social Moderation Hub — <?= htmlspecialchars($appUrl, ENT_QUOTES) ?> — non sostituisce la consulenza di un legale o DPO qualificato.<br>
+  Document automatically generated by Social Moderation Hub — <?= htmlspecialchars($appUrl, ENT_QUOTES) ?> — does not replace the advice of a qualified lawyer or DPO.
+</div>
 
 </div>
 </body>

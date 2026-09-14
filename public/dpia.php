@@ -92,6 +92,10 @@
     .doc-footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #eee;
                    font-size: 11px; color: #aaa; text-align: center; }
 
+    /* Bilingual layout */
+    .lang-section { margin-bottom: 1rem; }
+    .divider { border: none; border-top: 2px dashed #ccd; margin: 3rem 0; }
+
     @media print {
       body { padding: 1rem; }
       .doc-footer { position: fixed; bottom: 0; width: 100%; }
@@ -100,6 +104,11 @@
 </head>
 <body>
 <div class="page">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SEZIONE ITALIANA
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="lang-section" lang="it">
 
   <!-- Document header -->
   <div class="doc-header">
@@ -616,11 +625,536 @@
     </div>
   </div>
 
+</div><!-- /lang-section IT -->
+
+<hr class="divider">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     ENGLISH SECTION
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="lang-section" lang="en">
+
+  <!-- Document header -->
+  <div class="doc-header">
+    <div class="doc-title">Data Protection Impact Assessment (DPIA)</div>
+    <div class="doc-sub">Data Protection Impact Assessment — Art. 35 Reg. (EU) 2016/679 (GDPR)</div>
+    <div class="doc-meta">
+      <span><strong>Controller:</strong> <?= htmlspecialchars($orgName, ENT_QUOTES) ?></span>
+      <span><strong>System:</strong> Social Moderation Hub v<?= htmlspecialchars($appVersion, ENT_QUOTES) ?></span>
+      <span><strong>Drafted on:</strong> <?= htmlspecialchars($today, ENT_QUOTES) ?></span>
+      <span><strong>Document version:</strong> 1.0</span>
+    </div>
+  </div>
+
+  <!-- 1. Controller -->
+  <h2>1. Data Controller</h2>
+  <div class="titolare">
+    <p><strong>Legal name:</strong> <?= htmlspecialchars($orgName, ENT_QUOTES) ?></p>
+    <p><strong>Registered address:</strong> <?= htmlspecialchars($orgAddress, ENT_QUOTES) ?></p>
+    <p><strong>Privacy / DPO contact:</strong> <?= htmlspecialchars($orgEmail, ENT_QUOTES) ?></p>
+    <p><strong>Jurisdiction:</strong> <?= htmlspecialchars($orgCountry, ENT_QUOTES) ?></p>
+    <p><strong>Supervisory authority:</strong> <?= htmlspecialchars($supervisory, ENT_QUOTES) ?></p>
+    <p><strong>System URL:</strong> <?= htmlspecialchars($appUrl, ENT_QUOTES) ?></p>
+  </div>
+
+  <!-- 2. Description of the processing -->
+  <h2>2. Description of the processing and the system</h2>
+  <div class="system-card">
+    <div class="sc-head">Social Moderation Hub — automated moderation pipeline</div>
+    <div class="sc-body">
+      <div class="sc-cell">
+        <div class="label">Purpose</div>
+        <div class="val">Automated moderation of comments published on the connected Facebook Page(s), in order to detect content that violates the Controller's editorial policy (spam, hate speech, scams, disinformation, etc.) and protect users from potentially unlawful content.</div>
+      </div>
+      <div class="sc-cell">
+        <div class="label">Legal basis</div>
+        <div class="val">Art. 6(1)(f) GDPR — the Controller's legitimate interest in ensuring the safety and lawfulness of its online presence and protecting the community from harmful content. The overriding interest is verified in the attached balancing test (sec. 4).</div>
+      </div>
+      <div class="sc-cell">
+        <div class="label">Categories of data processed</div>
+        <div class="val">Facebook user ID (pseudonymised), comment text, timestamp, post/page ID; internal violation counters; ban flags; AI decision logs (model, confidence, latency, textual reasoning).</div>
+      </div>
+      <div class="sc-cell">
+        <div class="label">Categories of data subjects</div>
+        <div class="val">Facebook users who comment on the connected Page(s)' posts. No special categories of data under Art. 9 GDPR are processed, unless the comment content incidentally contains them.</div>
+      </div>
+      <div class="sc-cell">
+        <div class="label">Processing pipeline</div>
+        <div class="val">Meta webhook → Claude Haiku (first stage) → Claude Sonnet (escalation) → human review queue. Data is sent to Anthropic via API for inference only; no fine-tuning or training occurs on data subjects' data.</div>
+      </div>
+      <div class="sc-cell">
+        <div class="label">Transfers outside the EU</div>
+        <div class="val">Anthropic PBC (USA) — comment text sent for AI inference. Basis: Standard Contractual Clauses (SCCs) or a specific DPA. Meta Platforms (USA/Ireland) — data already present on the originating platform.</div>
+      </div>
+      <div class="sc-cell">
+        <div class="label">Retention</div>
+        <div class="val">Operational data is retained for the configured period (GDPR window set in the system). After expiry: automatic anonymisation (PII fields replaced with hashes/NULL, statistical columns retained). Currently: <?= (int)$retentionDays ?> days.</div>
+      </div>
+      <div class="sc-cell">
+        <div class="label">Current statistics</div>
+        <div class="val">
+          Comments: <?= number_format((int)$totComments) ?> &nbsp;·&nbsp;
+          Users: <?= number_format((int)$totUsers) ?> &nbsp;·&nbsp;
+          Active bans: <?= number_format((int)$totBans) ?> &nbsp;·&nbsp;
+          Connected pages: <?= number_format((int)$totPages) ?>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Necessity and proportionality -->
+  <h2>3. Necessity and proportionality</h2>
+  <table>
+    <thead>
+      <tr><th style="width:30%">Criterion</th><th>Assessment</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Purpose limitation</strong></td>
+        <td>Data is processed exclusively for editorial moderation purposes on the Controller's Facebook Page. It is not used for commercial profiling, advertising, or sale to third parties.</td>
+      </tr>
+      <tr>
+        <td><strong>Data minimisation</strong></td>
+        <td>Only the data strictly necessary is retained: pseudonymised ID, comment text, timestamp and moderation metrics. No address, e-mail or other identifying data of the Facebook user is collected.</td>
+      </tr>
+      <tr>
+        <td><strong>Storage limitation</strong></td>
+        <td>Automatic anonymisation after <?= (int)$retentionDays ?> days via a nightly cron job. The system warns if the cron has not run for more than 48 hours.</td>
+      </tr>
+      <tr>
+        <td><strong>Accuracy</strong></td>
+        <td>AI decisions carry a confidence score. Below the threshold, the comment is escalated to human review. Human decisions override AI decisions and are logged separately.</td>
+      </tr>
+      <tr>
+        <td><strong>Transparency</strong></td>
+        <td>The public Privacy Policy (<code><?= htmlspecialchars($appUrl, ENT_QUOTES) ?>/privacy</code>) informs data subjects of the use of AI for moderation, the legitimate interest applied, and their rights (access, erasure, objection).</td>
+      </tr>
+      <tr>
+        <td><strong>Data subject rights</strong></td>
+        <td>Built-in appeal workflow: hidden comments include a cryptographically signed appeal link (URL valid for 30 days) that the user can use to contest the decision. Moderators review and respond.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- 4. Risk factors -->
+  <h2>4. Factors triggering the DPIA obligation (Art. 35(3) + WP248 guidelines)</h2>
+  <table>
+    <thead>
+      <tr><th style="width:35%">WP248 criterion</th><th style="width:12%">Present</th><th>Detail</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Evaluation / scoring</td>
+        <td style="text-align:center">✅</td>
+        <td>The system assigns a risk score to each comment and tracks a per-user violation history (recidivism).</td>
+      </tr>
+      <tr>
+        <td>Automated decisions with significant effects</td>
+        <td style="text-align:center">✅</td>
+        <td>An AI decision can hide or remove a comment fully automatically (without human intervention) when confidence exceeds the configured threshold.</td>
+      </tr>
+      <tr>
+        <td>Systematic monitoring</td>
+        <td style="text-align:center">✅</td>
+        <td>Every comment published on the Page is captured and analysed in real time via the Meta webhook.</td>
+      </tr>
+      <tr>
+        <td>Large-scale data</td>
+        <td style="text-align:center">⚠️</td>
+        <td>Scale depends on the Page's audience. With a large audience the volume can be significant. The Controller must assess whether its installation exceeds the "large scale" threshold.</td>
+      </tr>
+      <tr>
+        <td>Special category data (Art. 9)</td>
+        <td style="text-align:center">⚠️</td>
+        <td>Not intentionally processed, but user comments may contain political or religious opinions or health data. The system does not extract or store such data in dedicated fields.</td>
+      </tr>
+      <tr>
+        <td>Matching / combining datasets</td>
+        <td style="text-align:center">✅</td>
+        <td>The per-user violation history (recidivism counter, active bans) is combined with the current comment's content to enrich the context sent to Claude.</td>
+      </tr>
+      <tr>
+        <td>Vulnerability of data subjects</td>
+        <td style="text-align:center">⚠️</td>
+        <td>The Facebook user base may include minors. The system does not intentionally process minors' data, but cannot exclude them.</td>
+      </tr>
+      <tr>
+        <td>Innovative use or application of new technological solutions</td>
+        <td style="text-align:center">✅</td>
+        <td>Use of a Large Language Model (Anthropic's Claude) to make editorial decisions in an automated manner.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="font-size:12px;color:#777;margin-top:-.5rem;margin-bottom:1.5rem">
+    <strong>Conclusion:</strong> At least 3 high-risk criteria are present (scoring, automated decisions, systematic monitoring), a threshold that makes the DPIA mandatory under Art. 35(1) and the EDPB's WP248 guidelines.
+  </p>
+
+  <!-- 5. Risk identification -->
+  <h2>5. Risk identification and assessment</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:22%">Risk</th>
+        <th style="width:10%">Initial level</th>
+        <th style="width:38%">Scenario</th>
+        <th style="width:10%">Residual level</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>R1 — False positive: hiding of legitimate content</strong></td>
+        <td><span class="risk risk-high">High</span></td>
+        <td>The AI model wrongly classifies a legitimate comment as a violation and automatically hides it, limiting the user's freedom of expression.</td>
+        <td><span class="risk risk-residual">Low</span></td>
+      </tr>
+      <tr>
+        <td><strong>R2 — Incorrect ban escalation (recidivism)</strong></td>
+        <td><span class="risk risk-high">High</span></td>
+        <td>A user is temporarily or permanently banned due to false positives accumulated over time, without having actually violated the rules.</td>
+        <td><span class="risk risk-residual">Low</span></td>
+      </tr>
+      <tr>
+        <td><strong>R3 — Data breach</strong></td>
+        <td><span class="risk risk-high">High</span></td>
+        <td>Unauthorised access to the database (compromised credentials, SQL injection, server compromise, insider threat, unencrypted backups). Exposed data: comments, pseudonyms, violation history, AI logs, appeal tokens, administrator accounts. Notification obligation under Arts. 33–34 GDPR.</td>
+        <td><span class="risk risk-low">Low</span></td>
+      </tr>
+      <tr>
+        <td><strong>R4 — Data transfer to Anthropic</strong></td>
+        <td><span class="risk risk-medium">Medium</span></td>
+        <td>The comment text (potentially containing personal data) is sent to Anthropic (USA) for AI inference.</td>
+        <td><span class="risk risk-residual">Low</span></td>
+      </tr>
+      <tr>
+        <td><strong>R5 — Bias in the AI model and human reviewer</strong></td>
+        <td><span class="risk risk-medium">Medium</span></td>
+        <td>The AI model may show systematic biases. Human moderators may introduce identity-based bias (name, perceived ethnicity, perceived gender) toward the comment's author.</td>
+        <td><span class="risk risk-low">Low</span></td>
+      </tr>
+      <tr>
+        <td><strong>R6 — Dependency on a third-party service</strong></td>
+        <td><span class="risk risk-medium">Medium</span></td>
+        <td>Unavailability of the Anthropic API or model changes (deprecation, behaviour change) that alter moderation quality without notice.</td>
+        <td><span class="risk risk-residual">Low</span></td>
+      </tr>
+      <tr>
+        <td><strong>R7 — Excessive retention</strong></td>
+        <td><span class="risk risk-medium">Medium</span></td>
+        <td>Failure to run the anonymisation cron job leads to PII being retained beyond the configured period.</td>
+        <td><span class="risk risk-low">Low</span></td>
+      </tr>
+      <tr>
+        <td><strong>R8 — Undisclosed profiling</strong></td>
+        <td><span class="risk risk-medium">Medium</span></td>
+        <td>The recidivism counter builds a behavioural profile of the user over time, not explicitly declared as "profiling" in the public privacy policy.</td>
+        <td><span class="risk risk-residual">Low</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- 6. Mitigation measures -->
+  <h2>6. Technical and organisational mitigation measures</h2>
+
+  <h3>R1 + R2 — False positives and unjust bans</h3>
+  <ul class="measures">
+    <li><strong>Two-stage pipeline + threshold:</strong> Haiku decides only if it exceeds the confidence threshold; below threshold, Sonnet re-evaluates. Below the Sonnet threshold, the comment goes to the human queue without any automated action.</li>
+    <li><strong>Signed appeal:</strong> every automatically hidden comment includes a cryptographically signed appeal link (HMAC-SHA256, 30-day expiry) that the user can use to contest the decision; a human moderator reviews it and can restore the comment.</li>
+    <li><strong>Progressive ban:</strong> an automatic ban requires multiple confirmed violations (configurable threshold via <code>RECIDIVISM_COMMENT_BAN_LIMIT</code>). Moderators can manually revoke any ban from the dashboard.</li>
+    <li><strong>Full audit trail:</strong> every AI and human decision is logged with model, confidence, latency and textual reasoning, enabling after-the-fact review.</li>
+    <li><strong>Versioned moderation policy:</strong> the system prompt sent to Claude is managed through a versioned UI; changes are tracked with date and author.</li>
+  </ul>
+
+  <h3>R3 — Data Breach</h3>
+
+  <p style="font-size:12.5px;color:#555;margin-bottom:.8rem">
+    Under Arts. 33–34 GDPR, a personal data breach must be notified to the supervisory
+    authority within 72 hours of discovery (Art. 33) and, if the risk to data subjects
+    is high, directly to them as well (Art. 34).
+  </p>
+
+  <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#555;margin-bottom:.4rem">
+    Breach scenarios, likelihood and impact
+  </p>
+  <table style="margin-bottom:1.2rem">
+    <thead>
+      <tr>
+        <th style="width:22%">Scenario</th>
+        <th style="width:10%">Likelihood</th>
+        <th style="width:28%">Impact</th>
+        <th style="width:12%">Art. 33 notification</th>
+        <th style="width:12%">Art. 34 notification</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Administrator credential compromise</strong> (phishing, weak password, compromised SSO)</td>
+        <td><span class="risk risk-medium">Medium</span></td>
+        <td>Access to the entire dashboard, moderation log, social user data. If the attacker exports the DB: massive exposure of comments + violation history + active appeal tokens.</td>
+        <td>✅ Mandatory</td>
+        <td>⚠️ To be assessed</td>
+      </tr>
+      <tr>
+        <td><strong>SQL injection / direct DB access</strong> via an application vulnerability</td>
+        <td><span class="risk risk-low">Low</span></td>
+        <td>Full database dump. Exposed data: comments, pseudonyms, violation counters, AI logs, appeal tokens, administrator accounts.</td>
+        <td>✅ Mandatory</td>
+        <td>✅ Likely</td>
+      </tr>
+      <tr>
+        <td><strong>Server / hosting compromise</strong> (SSH access, cPanel panel)</td>
+        <td><span class="risk risk-low">Low</span></td>
+        <td>Access to all files including <code>.env</code> (secrets, API keys). Possible full exfiltration of the DB and encryption keys.</td>
+        <td>✅ Mandatory</td>
+        <td>✅ Likely</td>
+      </tr>
+      <tr>
+        <td><strong>Accidental dashboard exposure</strong> (firewall/IP allowlist misconfiguration)</td>
+        <td><span class="risk risk-medium">Medium</span></td>
+        <td>Dashboard reachable from the internet without restrictions. Absent an active exploit: only brute-force risk. With weak credentials: data access.</td>
+        <td>⚠️ Only if access confirmed</td>
+        <td>❌ Only if data exfiltrated</td>
+      </tr>
+      <tr>
+        <td><strong>Insider threat</strong> (authorised moderator exporting/sharing data)</td>
+        <td><span class="risk risk-low">Low</span></td>
+        <td>Unauthorised export of moderation logs or user data. Impact limited by minimisation (real names are not present in the review queue).</td>
+        <td>✅ Mandatory</td>
+        <td>⚠️ To be assessed</td>
+      </tr>
+      <tr>
+        <td><strong>Loss or theft of backups</strong></td>
+        <td><span class="risk risk-low">Low</span></td>
+        <td>If backups are not encrypted, a DB dump contains all the personal data processed.</td>
+        <td>✅ If backups unencrypted</td>
+        <td>⚠️ To be assessed</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#555;margin-bottom:.4rem">
+    Prevention measures
+  </p>
+  <ul class="measures">
+    <li><strong>IP-restricted access:</strong> the dashboard is designed to be reachable only from internal IPs or VPN (<code>docs/deployment-security.md</code>). Only <code>/webhook/meta</code> is public.</li>
+    <li><strong>JWT authentication + SSO:</strong> tokens signed with <code>APP_SECRET</code> ≥ 32 chars; MFA via Azure AD/Entra ID for administrators.</li>
+    <li><strong>OAUTH_ALLOWED_EMAIL_DOMAINS:</strong> restricts login to the corporate domain's accounts only, preventing access with personal OAuth accounts.</li>
+    <li><strong>Distinct, strong secrets:</strong> <code>APP_SECRET</code>, <code>META_WEBHOOK_VERIFY_TOKEN</code>, <code>META_APP_SECRET</code> must be distinct values (verified by the installer). The <code>.env</code> file must not be version-controlled or web-accessible.</li>
+    <li><strong>TLS mandatory:</strong> all communications (dashboard, API, webhook) must go over HTTPS. HTTP must be redirected or blocked.</li>
+    <li><strong>Scheduled anonymisation:</strong> the nightly cron progressively reduces the exposure surface by removing PII after the configured period.</li>
+    <li><strong>Minimisation in the queue:</strong> users' real names are never transmitted to the client in the review context (blind review), reducing the value of the data in the event of interception.</li>
+    <li><strong>Encrypted backups:</strong> the Controller commits to encrypting DB backups. Unencrypted backups must not be stored on network-accessible storage without authentication.</li>
+  </ul>
+
+  <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#555;margin:.8rem 0 .4rem">
+    Incident detection
+  </p>
+  <ul class="measures">
+    <li><strong>Administrator access logs:</strong> every dashboard access is logged (IP, user-agent, timestamp). Periodic review recommended (monthly or automated with alerts on logins from unusual IPs).</li>
+    <li><strong>Decision audit trail:</strong> every moderation action is attributed to an administrator user. Anomalous bulk actions can be detected after the fact.</li>
+    <li><strong>Server monitoring:</strong> the Controller must enable hosting alerts for unusual SSH access, changes to configuration files (<code>.env</code>, <code>index.php</code>) and DB query spikes.</li>
+  </ul>
+
+  <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#555;margin:.8rem 0 .4rem">
+    Response and notification procedure (Arts. 33–34 GDPR)
+  </p>
+  <table>
+    <thead>
+      <tr><th style="width:20%">Phase</th><th style="width:20%">Timing</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>1. Detection and containment</strong></td>
+        <td>Immediate (h0)</td>
+        <td>Isolate the compromised system (IP block, credential revocation, service shutdown if necessary). Preserve logs for forensic analysis. Do not delete data that might be needed for the investigation.</td>
+      </tr>
+      <tr>
+        <td><strong>2. Assessment</strong></td>
+        <td>Within 24h</td>
+        <td>Determine: categories and volume of data involved, approximate number of data subjects, probability of harm to data subjects (exposure, fraudulent use). Involve the DPO if appointed.</td>
+      </tr>
+      <tr>
+        <td><strong>3. Notification to the supervisory authority (Art. 33)</strong></td>
+        <td>Within 72h of discovery</td>
+        <td>Notification to <?= htmlspecialchars($supervisory, ENT_QUOTES) ?> via the authority's online portal. Mandatory content: nature of the breach, categories/number of data subjects, likely consequences, measures taken. If the 72h deadline is not met: state the reasons for the delay.</td>
+      </tr>
+      <tr>
+        <td><strong>4. Notification to data subjects (Art. 34)</strong></td>
+        <td>Without undue delay</td>
+        <td>Mandatory if the risk to data subjects' rights and freedoms is <em>high</em>. Channel: notification comment on the Facebook Page + e-mail if available. Content: nature of the breach, DPO contact, likely consequences, measures taken or proposed.</td>
+      </tr>
+      <tr>
+        <td><strong>5. Recovery</strong></td>
+        <td>As soon as possible</td>
+        <td>Restore from a verified encrypted backup. Rotate all secrets (<code>APP_SECRET</code>, <code>META_APP_SECRET</code>, OAuth keys). Review the security measures that failed. Update this DPIA.</td>
+      </tr>
+      <tr>
+        <td><strong>6. Internal register (Art. 33.5)</strong></td>
+        <td>Permanent</td>
+        <td>Document the breach in the internal incident register (even if not notified to the authority): discovery date, nature, data involved, actions taken, notification decision and reasoning.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:12px;color:#777;margin-top:-.3rem;margin-bottom:1.5rem">
+    <strong>Note:</strong> the threshold for notifying the supervisory authority is "risk to rights and freedoms" — certainty of harm is not required, possibility is sufficient. When in doubt, notify.
+  </p>
+
+  <h3>R4 — Transfer to Anthropic</h3>
+  <ul class="measures">
+    <li><strong>Minimisation:</strong> only the comment text and the metadata necessary for context (user ID, violation counter, page name) are sent to Anthropic. No direct identifying data (name, e-mail, photo) is transmitted.</li>
+    <li><strong>DPA with Anthropic:</strong> the Controller must enter into a Data Processing Agreement with Anthropic and verify the transfer basis to the USA (SCCs or adequacy).</li>
+    <li><strong>No training:</strong> data sent to Anthropic via the API is not used to train the models (Anthropic API policy as of the drafting date).</li>
+  </ul>
+
+  <h3>R5 — Bias in the AI model and human reviewer</h3>
+  <ul class="measures">
+    <li><strong>Blind review:</strong> when a comment is escalated to human review, the moderator sees only an internal pseudonym (e.g. "User #4821"), never the real Facebook name. The <code>display_name</code> is neither selected nor transmitted to the client in the review queue APIs (<code>/api/queue</code>, <code>/api/queue/reportable</code>). This eliminates bias based on the commenter's name, perceived ethnicity or perceived gender.</li>
+    <li><strong>Configurable policy:</strong> the system prompt can be modified by the Controller to correct systematically incorrect behaviour detected during human review.</li>
+    <li><strong>Statistical monitoring:</strong> the dashboard shows the distribution of decisions by stage and category, allowing systematic deviations in the AI model's behaviour to be detected.</li>
+  </ul>
+
+  <h3>R6 — Dependency on a third-party service</h3>
+  <ul class="measures">
+    <li><strong>Fail-safe:</strong> if the Anthropic API does not respond, the comment is automatically escalated to the human review queue instead of being automatically hidden.</li>
+    <li><strong>Multiple models:</strong> the pipeline uses Haiku (cost-efficient) and Sonnet (quality). The architecture allows model IDs to be updated in configuration without code changes.</li>
+  </ul>
+
+  <h3>R7 — Excessive retention</h3>
+  <ul class="measures">
+    <li><strong>Cron monitoring:</strong> the dashboard shows the date of the last anonymisation cron run and generates a warning if it is older than 48 hours.</li>
+    <li><strong>Operational reset:</strong> the SQL script <code>database/scripts/reset-operational-data.sql</code> is available to fully delete operational data while keeping the configuration.</li>
+  </ul>
+
+  <h3>R8 — Undisclosed profiling</h3>
+  <ul class="measures">
+    <li><strong>Disclosure in the privacy policy:</strong> the system's public privacy policy includes a dedicated section on the use of AI for moderation and recidivism tracking. The Controller must ensure it is correctly published and kept up to date.</li>
+    <li><strong>Right to object:</strong> users may exercise their right to object (Art. 21 GDPR) by contacting the Controller's privacy address.</li>
+  </ul>
+
+  <!-- 7. Residual risks -->
+  <h2>7. Residual risks and acceptability</h2>
+  <table>
+    <thead>
+      <tr><th style="width:22%">Risk</th><th>Residual level</th><th>Acceptability and notes</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>R1 — False positive</td>
+        <td><span class="risk risk-residual">Low</span></td>
+        <td>Acceptable. The appeal guarantees a remedy within a reasonable time. No data is irreversibly deleted without human review.</td>
+      </tr>
+      <tr>
+        <td>R2 — Incorrect ban</td>
+        <td><span class="risk risk-residual">Low</span></td>
+        <td>Acceptable. Bans can be revoked by moderators at any time. The system requires multiple confirmed violations before an automatic ban.</td>
+      </tr>
+      <tr>
+        <td>R3 — Data breach</td>
+        <td><span class="risk risk-low">Low</span></td>
+        <td>Acceptable with the hardening measures applied (IP restriction, HTTPS, domain allowlist, encrypted backups, MFA). The Controller is responsible for server configuration and activating the Arts. 33–34 notification procedure within 72h in the event of an incident.</td>
+      </tr>
+      <tr>
+        <td>R4 — Anthropic transfer</td>
+        <td><span class="risk risk-residual">Low</span></td>
+        <td>Acceptable subject to signing the DPA with Anthropic and verifying the transfer basis.</td>
+      </tr>
+      <tr>
+        <td>R5 — AI bias + reviewer bias</td>
+        <td><span class="risk risk-low">Low</span></td>
+        <td>Acceptable. Blind review eliminates the human reviewer's identity-based bias. The residual AI model bias is contained by human review and statistical monitoring.</td>
+      </tr>
+      <tr>
+        <td>R6 — Third-party dependency</td>
+        <td><span class="risk risk-low">Low</span></td>
+        <td>Acceptable. The fail-safe to the human queue guarantees continuity of the moderation service even if AI is unavailable.</td>
+      </tr>
+      <tr>
+        <td>R7 — Excessive retention</td>
+        <td><span class="risk risk-low">Low</span></td>
+        <td>Acceptable with active cron monitoring. The Controller commits to periodically verifying execution of the anonymisation process.</td>
+      </tr>
+      <tr>
+        <td>R8 — Profiling</td>
+        <td><span class="risk risk-residual">Low</span></td>
+        <td>Acceptable with correct publication of the privacy policy and the guarantee of the right to object.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- 8. DPO consultation -->
+  <h2>8. Opinion of the Data Protection Officer (DPO)</h2>
+  <p style="font-size:12.5px;color:#555;margin-bottom:.8rem">
+    If the Controller has appointed a DPO under Art. 37 GDPR, complete this section before final approval.
+    If no DPO has been appointed, state the reason (e.g. "Not mandatory — organisation below the Art. 37 thresholds").
+  </p>
+  <div class="dpo-notes">
+    <p class="placeholder">[ Space for the DPO's opinion — to be filled in manually before approval ]</p>
+  </div>
+
+  <!-- 9. Prior consultation -->
+  <h2>9. Prior consultation with the supervisory authority (Art. 36)</h2>
+  <p style="font-size:12.5px;color:#555;margin-bottom:.8rem">
+    Art. 36 GDPR requires prior consultation with the supervisory authority if the residual risks remain high despite the measures adopted.
+    Based on the assessment in sec. 7, no residual risk is classified as "High": prior consultation is not mandatory.
+    If the Controller considers consultation appropriate regardless, note it here.
+  </p>
+  <div class="dpo-notes">
+    <p class="placeholder">[ Prior consultation: □ Not necessary &nbsp;&nbsp; □ Started on __________ &nbsp;&nbsp; □ Opinion received on __________ ]</p>
+  </div>
+
+  <!-- 10. Review -->
+  <h2>10. Periodic review</h2>
+  <p style="font-size:12.5px;color:#555;margin-bottom:.8rem">
+    This DPIA must be reviewed at least every 12 months or whenever significant changes occur in the processing
+    (new AI models, new data categories, changes to the legal basis, relevant regulatory updates).
+  </p>
+  <table>
+    <thead>
+      <tr><th>Review date</th><th>Outcome</th><th>Changes made</th><th>Responsible</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><?= htmlspecialchars($today, ENT_QUOTES) ?> (initial drafting)</td>
+        <td>First issue</td>
+        <td>—</td>
+        <td><?= htmlspecialchars($orgName, ENT_QUOTES) ?></td>
+      </tr>
+      <tr><td style="color:#ccc;font-style:italic">[ next review ]</td><td></td><td></td><td></td></tr>
+    </tbody>
+  </table>
+
+  <!-- 11. Approval -->
+  <h2>11. Approval and signatures</h2>
+  <div class="signature">
+    <div class="sig-head">Approval signatures</div>
+    <div class="sig-body">
+      <div class="sig-cell">
+        <div class="sig-label">Data Controller</div>
+        <div class="sig-line"></div>
+        <div class="sig-sub"><?= htmlspecialchars($orgName, ENT_QUOTES) ?></div>
+        <div style="font-size:10px;color:#ccc;margin-top:.3rem">Date: _______________</div>
+      </div>
+      <div class="sig-cell">
+        <div class="sig-label">DPO (if appointed)</div>
+        <div class="sig-line"></div>
+        <div class="sig-sub">Name: _______________</div>
+        <div style="font-size:10px;color:#ccc;margin-top:.3rem">Date: _______________</div>
+      </div>
+      <div class="sig-cell">
+        <div class="sig-label">IT manager / system contact</div>
+        <div class="sig-line"></div>
+        <div class="sig-sub">Name: _______________</div>
+        <div style="font-size:10px;color:#ccc;margin-top:.3rem">Date: _______________</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /lang-section EN -->
+
   <!-- Footer -->
   <div class="doc-footer">
-    Documento generato automaticamente da Social Moderation Hub v<?= htmlspecialchars($appVersion, ENT_QUOTES) ?>
-    — <?= htmlspecialchars($appUrl, ENT_QUOTES) ?>
-    &nbsp;·&nbsp; Generato il <?= htmlspecialchars($today, ENT_QUOTES) ?>
+    Documento generato automaticamente da Social Moderation Hub v<?= htmlspecialchars($appVersion, ENT_QUOTES) ?> — <?= htmlspecialchars($appUrl, ENT_QUOTES) ?> &nbsp;·&nbsp; Generato il <?= htmlspecialchars($today, ENT_QUOTES) ?><br>
+    Document automatically generated by Social Moderation Hub v<?= htmlspecialchars($appVersion, ENT_QUOTES) ?> — <?= htmlspecialchars($appUrl, ENT_QUOTES) ?> &nbsp;·&nbsp; Generated on <?= htmlspecialchars($today, ENT_QUOTES) ?>
   </div>
 
 </div>

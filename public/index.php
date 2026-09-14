@@ -244,9 +244,11 @@ $app->group('/api', function ($group) {
 
     // DPIA art. 35 GDPR (admin/supervisor)
     $group->get('/dpia',                       [ModerationController::class, 'exportDpia']);
+    $group->get('/dpia/pdf',                   [ModerationController::class, 'exportDpiaPdf']);
 
     // LIA — Legitimate Interest Assessment, art. 6.1.f GDPR (admin/supervisor)
     $group->get('/lia',                        [ModerationController::class, 'exportLia']);
+    $group->get('/lia/pdf',                    [ModerationController::class, 'exportLiaPdf']);
 
     // Diritti dell'interessato — accesso, export, anonimizzazione (admin only)
     $group->get('/gdpr/search',                [GdprController::class, 'search']);
