@@ -284,7 +284,7 @@ $violationRetentionDiffers = $violationRetentionEnabled && ((int) $violationRete
       <tr>
         <td><strong>Compromissione credenziali amministratore</strong> (phishing, password debole, SSO compromesso)</td>
         <td><span class="risk risk-medium">Medio</span></td>
-        <td>Accesso a tutta la dashboard, log di moderazione, dati social utenti. Se l'attaccante esporta il DB: esposizione massiva di commenti + storico violazioni + token di appello attivi.</td>
+        <td>Accesso a tutta la dashboard, log di moderazione, dati social utenti. Se l'attaccante esporta il DB: esposizione massiva di commenti + storico violazioni + token di appello attivi. <strong>Nota sull'IP allowlist:</strong> se <code>INTERNAL_IP_ALLOWLIST</code> (sez. 6) è effettivamente attiva in produzione su questa installazione, la credenziale rubata da sola non basta — serve anche una posizione di rete autorizzata, il che riduce la probabilità reale rispetto al Medio qui riportato. L'allowlist è opt-in (disabilitata di default): il Medio resta il valore corretto finché non è verificato che sia attiva e correttamente configurata su questa specifica installazione.</td>
         <td>✅ Obbligatoria</td>
         <td>⚠️ Valutare</td>
       </tr>
@@ -818,7 +818,7 @@ $violationRetentionDiffers = $violationRetentionEnabled && ((int) $violationRete
       <tr>
         <td><strong>Administrator credential compromise</strong> (phishing, weak password, compromised SSO)</td>
         <td><span class="risk risk-medium">Medium</span></td>
-        <td>Access to the entire dashboard, moderation log, social user data. If the attacker exports the DB: massive exposure of comments + violation history + active appeal tokens.</td>
+        <td>Access to the entire dashboard, moderation log, social user data. If the attacker exports the DB: massive exposure of comments + violation history + active appeal tokens. <strong>Note on the IP allowlist:</strong> if <code>INTERNAL_IP_ALLOWLIST</code> (sec. 6) is actually active in production on this installation, the stolen credential alone is not enough — an authorised network position is also required, which lowers the real probability below the Medium reported here. The allowlist is opt-in (disabled by default): Medium remains the correct value until it is verified as active and correctly configured on this specific installation.</td>
         <td>✅ Mandatory</td>
         <td>⚠️ To be assessed</td>
       </tr>
