@@ -39,7 +39,7 @@ parameters:
 		-
 			message: '#^Variable \$retentionDays might not be defined\.$#'
 			identifier: variable.undefined
-			count: 4
+			count: 5
 			path: public/dpia.php
 
 		-
@@ -130,6 +130,12 @@ parameters:
 			message: '#^Variable \$recidivismLimit might not be defined\.$#'
 			identifier: variable.undefined
 			count: 6
+			path: public/lia.php
+
+		-
+			message: '#^Variable \$retentionDays might not be defined\.$#'
+			identifier: variable.undefined
+			count: 3
 			path: public/lia.php
 
 		-

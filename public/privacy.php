@@ -77,6 +77,11 @@ $appUrl      = rtrim(privacySetting('app_url', 'https://yourdomain.com'), '/');
 $appHost     = parse_url($appUrl, PHP_URL_HOST) ?: $appUrl;
 $publicPolicyUrl = $appUrl . '/public/policy';
 
+// Finestra di conservazione prima dell'anonimizzazione automatica (RetentionService).
+// 0 = funzione non configurata/attiva, non "0 giorni".
+$retentionDays    = (int) privacySetting('data_retention_days', '0');
+$retentionEnabled = $retentionDays > 0;
+
 // Estrai le due date (IT / EN) dal campo unico "DD mese YYYY / DD Month YYYY"
 $dates   = explode('/', $policyDate, 2);
 $dateIt  = trim($dates[0] ?? $policyDate);
@@ -344,16 +349,12 @@ amministrate per conto di terzi. La presente informativa è rivolta a:</p>
   </thead>
   <tbody>
     <tr>
-      <td>Commenti approvati (log interno)</td>
-      <td>12 mesi dalla ricezione, poi cancellazione automatica</td>
-    </tr>
-    <tr>
-      <td>Commenti nascosti + log di moderazione</td>
-      <td>24 mesi (necessari per gestire appelli e contenziosi)</td>
+      <td>Commenti (contenuto), log di moderazione e dati identificativi dell'utente (nome, profilo, ID piattaforma)</td>
+      <td><?php if ($retentionEnabled): ?><?= $retentionDays ?> giorni dall'ultima attività, poi anonimizzazione automatica: i campi identificativi sono sostituiti con un placeholder non reversibile; i dati statistici (decisione AI, categoria, severità, esito) sono conservati senza scadenza per finalità di sicurezza e reportistica.<?php else: ?>Anonimizzazione automatica non attualmente attiva (nessuna finestra di conservazione configurata): i dati restano identificabili fino a cancellazione manuale o esercizio del diritto alla cancellazione (§8).<?php endif; ?></td>
     </tr>
     <tr>
       <td>Storico violazioni e ban</td>
-      <td>24 mesi dall'ultima violazione; ban revocato anticipatamente su richiesta motivata</td>
+      <td>Conservato in forma statistica/aggregata anche dopo l'anonimizzazione di cui sopra, per finalità di sicurezza; il ban resta comunque sempre revocabile su richiesta motivata (§8).</td>
     </tr>
     <tr>
       <td>Token di appello</td>
@@ -369,6 +370,7 @@ amministrate per conto di terzi. La presente informativa è rivolta a:</p>
     </tr>
   </tbody>
 </table>
+<p style="font-size:12.5px;color:#555">Il periodo sopra indicato è un parametro configurabile dal Titolare nel pannello di amministrazione e può cambiare nel tempo; questa pagina riflette sempre il valore attualmente impostato. Indipendentemente da tale finestra, il Titolare può cercare, esportare o anonimizzare su richiesta i dati di un singolo utente in qualsiasi momento, per dare seguito ai diritti di cui al §8.</p>
 
 <h2>8. Diritti dell'interessato</h2>
 <p>Ai sensi degli artt. 15–22 GDPR, l'interessato ha il diritto di:</p>
@@ -625,16 +627,12 @@ DPO contact: <a href="mailto:<?= $orgEmail ?>"><?= $orgEmail ?></a></p>
   </thead>
   <tbody>
     <tr>
-      <td>Approved comments (internal log)</td>
-      <td>12 months from receipt, then automatic deletion</td>
-    </tr>
-    <tr>
-      <td>Hidden comments + moderation log</td>
-      <td>24 months (required for appeals and disputes)</td>
+      <td>Comments (content), moderation log and identifying user data (name, profile, platform ID)</td>
+      <td><?php if ($retentionEnabled): ?><?= $retentionDays ?> days from last activity, then automatic anonymisation: identifying fields are replaced with a non-reversible placeholder; statistical data (AI decision, category, severity, outcome) is retained indefinitely for security and reporting purposes.<?php else: ?>Automatic anonymisation is not currently active (no retention window configured): data remains identifiable until manually deleted or until the right to erasure is exercised (§8).<?php endif; ?></td>
     </tr>
     <tr>
       <td>Violation history and bans</td>
-      <td>24 months from last violation; bans may be lifted earlier upon reasoned request</td>
+      <td>Retained in statistical/aggregate form even after the anonymisation described above, for security purposes; a ban remains revocable at any time upon reasoned request (§8).</td>
     </tr>
     <tr>
       <td>Appeal tokens</td>
@@ -650,6 +648,7 @@ DPO contact: <a href="mailto:<?= $orgEmail ?>"><?= $orgEmail ?></a></p>
     </tr>
   </tbody>
 </table>
+<p style="font-size:12.5px;color:#555">The period shown above is a parameter the Controller can configure in the admin panel and may change over time; this page always reflects the value currently in effect. Regardless of that window, the Controller can search, export or anonymise a specific user's data on request at any time, to act on the rights described in §8.</p>
 
 <h2>8. Data subject rights</h2>
 <p>Under Arts. 15–22 GDPR, data subjects have the right to:</p>

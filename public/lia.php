@@ -9,6 +9,7 @@
 // del go-live non esistono dati operativi (ban, appelli) da misurare, quindi il
 // Balancing Test si appoggia alle garanzie progettuali, non a statistiche d'uso.
 $isPreLaunch = ((int) $totComments === 0);
+$retentionEnabled = ((int) $retentionDays) > 0;
 ?><!DOCTYPE html>
 <html lang="it">
 <head>
@@ -72,6 +73,7 @@ $isPreLaunch = ((int) $totComments === 0);
       <p><strong>Perché non bastano semplici filtri per parole chiave:</strong> i filtri statici producono un tasso elevato di falsi positivi/negativi su linguaggio naturale, ironia, variazioni ortografiche — meno efficaci della classificazione contestuale di un modello linguistico e più invasivi in caso di falso positivo (nessuna motivazione, nessuna gradazione di confidenza).</p>
       <p><strong>Perché una pipeline a più stadi:</strong> solo le decisioni ad alta confidenza vengono applicate automaticamente (Livello 1 Haiku); i casi incerti sono rivalutati (Livello 2 Sonnet) o passati a un moderatore umano (Livello 3) — il trattamento automatizzato è quindi limitato ai casi in cui l'errore è meno probabile, non applicato indiscriminatamente.</p>
       <p><strong>Minimizzazione già in fase di progettazione:</strong> al fornitore AI esterno non vengono mai inviati nome reale, ID Facebook originale, URL profilo o dati di contatto — solo il testo del commento, uno pseudonimo non reversibile e segnali di rischio aggregati per fasce (vedi §5.2 privacy policy).</p>
+      <p><strong>Limitazione della conservazione:</strong> <?php if ($retentionEnabled): ?>i dati identificativi (contenuto del commento, nome, profilo) vengono anonimizzati automaticamente dopo <?= (int) $retentionDays ?> giorni di inattività, parametro configurabile dal Titolare (vedi §7 privacy policy) — il trattamento non è quindi indefinito.<?php else: ?>la finestra di anonimizzazione automatica non è attualmente configurata (vedi §7 privacy policy); il Titolare dovrebbe impostarla per limitare la durata del trattamento al minimo necessario, coerentemente con la conclusione di questo Necessity Test.<?php endif; ?></p>
     </div>
   </div>
 
@@ -231,6 +233,7 @@ $isPreLaunch = ((int) $totComments === 0);
       <p><strong>Why simple keyword filters are not enough:</strong> static filters produce a high rate of false positives/negatives on natural language, irony and spelling variations — less effective than the contextual classification of a language model, and more invasive in the event of a false positive (no reasoning, no confidence gradation).</p>
       <p><strong>Why a multi-stage pipeline:</strong> only high-confidence decisions are applied automatically (Tier 1 Haiku); uncertain cases are re-evaluated (Tier 2 Sonnet) or passed to a human moderator (Tier 3) — automated processing is therefore limited to the cases where error is least likely, not applied indiscriminately.</p>
       <p><strong>Minimisation already built into the design:</strong> the external AI provider is never sent the user's real name, original Facebook ID, profile URL or contact details — only the comment text, a non-reversible pseudonym and risk signals aggregated into bands (see §5.2 of the privacy policy).</p>
+      <p><strong>Storage limitation:</strong> <?php if ($retentionEnabled): ?>identifying data (comment content, name, profile) is automatically anonymised after <?= (int) $retentionDays ?> days of inactivity, a parameter the Controller can configure (see §7 of the privacy policy) — processing is therefore not indefinite.<?php else: ?>the automatic anonymisation window is not currently configured (see §7 of the privacy policy); the Controller should set one to limit the duration of processing to what is necessary, consistent with the conclusion of this Necessity Test.<?php endif; ?></p>
     </div>
   </div>
 

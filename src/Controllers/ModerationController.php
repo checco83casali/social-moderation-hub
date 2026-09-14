@@ -1625,7 +1625,7 @@ class ModerationController
         $orgCountry = $settings['privacy_org_country'] ?? '[Paese non configurato]';
         $supervisory = $settings['privacy_supervisory_authority'] ?? '[Autorità non configurata]';
         $appUrl     = rtrim($settings['app_url'] ?? '', '/');
-        $retentionDays = (int)($settings['retention_days'] ?? 90);
+        $retentionDays = (int)($settings['data_retention_days'] ?? 0);
         $appVersion = defined('MH_VERSION') ? MH_VERSION : '1.5.0';
         $today      = date('d/m/Y');
 
@@ -1677,6 +1677,7 @@ class ModerationController
 
         $recidivismLimit = (int) ($settings['recidivism_comment_ban_limit'] ?? 3);
         $banCfg          = $this->ban->getConfig();
+        $retentionDays   = (int) ($settings['data_retention_days'] ?? 0);
 
         $totComments = DB::table('comments')->count();
         $totUsers    = DB::table('social_users')->count();
@@ -1688,7 +1689,7 @@ class ModerationController
         $vars = compact(
             'orgName', 'orgAddress', 'orgEmail', 'orgCountry',
             'appUrl', 'appVersion', 'today',
-            'recidivismLimit', 'banCfg',
+            'recidivismLimit', 'banCfg', 'retentionDays',
             'totComments', 'totUsers', 'totBans',
             'totAppeals', 'appealsAccept',
         );
