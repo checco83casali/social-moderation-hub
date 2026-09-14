@@ -443,29 +443,6 @@ async function openLia() {
     setTimeout(() => URL.revokeObjectURL(url), 60000);
   } catch (e) { toast('Errore apertura LIA', 'err'); }
 }
-async function downloadPdf(endpoint, filename, errLabel) {
-  try {
-    const token = localStorage.getItem('mh_token');
-    const res   = await fetch(endpoint, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (!res.ok) { toast(`Errore export PDF ${errLabel}`, 'err'); return; }
-    const blob = await res.blob();
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = filename;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 10000);
-    toast('Download PDF avviato', 'ok');
-  } catch (e) { toast(`Errore export PDF ${errLabel}`, 'err'); }
-}
-function downloadDpiaPdf() {
-  downloadPdf('/api/dpia/pdf', `dpia-${new Date().toISOString().slice(0,10)}.pdf`, 'DPIA');
-}
-function downloadLiaPdf() {
-  downloadPdf('/api/lia/pdf', `lia-${new Date().toISOString().slice(0,10)}.pdf`, 'LIA');
-}
 function onDevModeChange(checked) {
   const label = document.getElementById('dev-mode-label');
   if (label) {
