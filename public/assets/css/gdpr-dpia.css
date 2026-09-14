@@ -1,0 +1,90 @@
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 13px; line-height: 1.6; color: #1a1a2e;
+      background: #fff; padding: 2.5rem 2rem 4rem;
+    }
+    .page { max-width: 960px; margin: 0 auto; }
+
+    /* Header */
+    .doc-header { border-bottom: 3px solid #1a1a2e; padding-bottom: 1.2rem; margin-bottom: 2rem; }
+    .doc-title  { font-size: 1.4rem; font-weight: 700; letter-spacing: -.3px; margin-bottom: .3rem; }
+    .doc-sub    { font-size: 12px; color: #555; }
+    .doc-meta   { margin-top: 1rem; display: flex; gap: 2rem; flex-wrap: wrap; }
+    .doc-meta span { font-size: 12px; color: #555; }
+    .doc-meta strong { color: #1a1a2e; }
+
+    /* Sections */
+    h2 { font-size: .85rem; font-weight: 700; text-transform: uppercase;
+          letter-spacing: .8px; color: #1a1a2e; margin: 2.5rem 0 1rem;
+          padding-bottom: .4rem; border-bottom: 1px solid #ddd; }
+    h3 { font-size: .8rem; font-weight: 700; text-transform: uppercase;
+          letter-spacing: .5px; color: #555; margin: 1.5rem 0 .5rem; }
+
+    /* Titolare box */
+    .titolare { background: #f5f7ff; border: 1px solid #c8d0f0; border-radius: 6px;
+                 padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-size: 13px; }
+    .titolare p { margin-bottom: .3rem; }
+    .titolare strong { display: inline-block; min-width: 160px; color: #333; }
+
+    /* System description card */
+    .system-card { border: 1px solid #dde; border-radius: 6px; margin-bottom: 1.5rem; overflow: hidden; }
+    .sc-head { background: #1a1a2e; color: #fff; padding: .7rem 1.1rem; font-size: 13.5px; font-weight: 600; }
+    .sc-body { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+    .sc-cell { padding: .75rem 1.1rem; border-bottom: 1px solid #eef; border-right: 1px solid #eef; font-size: 12.5px; }
+    .sc-cell:nth-child(2n) { border-right: none; }
+    .sc-cell.full { grid-column: 1 / -1; border-right: none; }
+    .sc-cell .label { font-size: 10px; font-weight: 700; text-transform: uppercase;
+                       letter-spacing: .5px; color: #888; margin-bottom: .25rem; }
+    .sc-cell .val { color: #1a1a2e; }
+
+    /* Risk table */
+    table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 12px; }
+    th { background: #f0f0f8; text-align: left; padding: .55rem .8rem;
+          font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+          color: #444; border: 1px solid #dde; }
+    td { padding: .6rem .8rem; border: 1px solid #dde; vertical-align: top; }
+    tr:nth-child(even) td { background: #fafafe; }
+
+    /* Risk badge */
+    .risk { display: inline-block; padding: 2px 8px; border-radius: 10px;
+             font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+    .risk-high   { background: #ffeaea; color: #c0392b; }
+    .risk-medium { background: #fff3e0; color: #b35900; }
+    .risk-low    { background: #e8f5e9; color: #1b7a34; }
+    .risk-residual { background: #f0f4ff; color: #3a5299; }
+
+    /* Measure list */
+    ul.measures { padding-left: 1.4rem; margin: .4rem 0; }
+    ul.measures li { margin-bottom: .3rem; font-size: 12.5px; }
+
+    /* Signature block */
+    .signature { border: 1px solid #dde; border-radius: 6px; margin-bottom: 1.5rem; }
+    .sig-head { background: #f5f5f5; padding: .55rem 1rem; font-size: 11px; font-weight: 700;
+                 text-transform: uppercase; letter-spacing: .4px; color: #555;
+                 border-bottom: 1px solid #dde; }
+    .sig-body { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; }
+    .sig-cell { padding: 1.5rem 1rem; border-right: 1px solid #dde; font-size: 12px; }
+    .sig-cell:last-child { border-right: none; }
+    .sig-cell .sig-label { font-size: 10.5px; color: #888; margin-bottom: .3rem; }
+    .sig-cell .sig-line  { border-bottom: 1px solid #aaa; height: 28px; margin-bottom: .5rem; }
+    .sig-cell .sig-sub   { font-size: 10.5px; color: #bbb; }
+
+    /* DPO notes */
+    .dpo-notes { border: 1px dashed #c8d0f0; border-radius: 6px; padding: 1rem 1.25rem;
+                  background: #fafcff; min-height: 90px; }
+    .dpo-notes .placeholder { color: #bbb; font-size: 12px; font-style: italic; }
+
+    /* Footer */
+    .doc-footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #eee;
+                   font-size: 11px; color: #aaa; text-align: center; }
+
+    /* Bilingual layout */
+    .lang-section { margin-bottom: 1rem; }
+    .divider { border: none; border-top: 2px dashed #ccd; margin: 3rem 0; }
+
+    @media print {
+      body { padding: 1rem; }
+      .no-print, .doc-footer { display: none; }
+      .system-card, .signature { break-inside: avoid; }
+    }
