@@ -9,9 +9,21 @@ use Illuminate\Database\Capsule\Manager as DB;
 /**
  * GDPR data-retention anonymisation.
  *
- * Reads the `data_retention_days` setting from `app_settings`:
- *   - 0 (default)  → feature disabled, no-op
- *   - N (>0)       → every row older than N days has its PII anonymised
+ * Reads two independent settings from `app_settings`:
+ *   - `data_retention_days`      → window for general operational data
+ *     (comment content, moderation log free text, appeal text, webhook
+ *     payloads, and the identity of social users with no recorded violation)
+ *   - `violation_retention_days` → window for the identity of social users
+ *     who *have* a recorded violation/ban (`violation_count` > 0 or a row
+ *     in `ban_records`); typically longer than the general window, since
+ *     abuse/recidivism history has its own retention justification (GDPR
+ *     art. 5.1.e still requires a bounded period, just not the same one).
+ *     0/unset → falls back to `data_retention_days` (same window for everyone).
+ *   - 0 on both → feature fully disabled, no-op.
+ *
+ * The violation-count itself (an integer, no PII) is never anonymised or
+ * deleted by either window — it is a statistical/audit column, like AI
+ * decisions and severities.
  *
  * Anonymisation = PII columns are emptied / replaced with placeholders.
  * Statistical / audit columns (AI decision, severity, timestamps, ban counts)
@@ -36,7 +48,9 @@ class RetentionService
      *     skipped: bool,
      *     reason?: string,
      *     retention_days?: int,
-     *     cutoff?: string,
+     *     violation_retention_days?: int,
+     *     cutoff?: ?string,
+     *     violation_cutoff?: ?string,
      *     anonymised?: array<string,int>,
      *     started_at?: string,
      *     finished_at?: string,
@@ -48,37 +62,44 @@ class RetentionService
         $startedAt = microtime(true);
         $startedAtStr = date('Y-m-d H:i:s', (int) $startedAt);
 
-        $days = (int) (DB::table('app_settings')
-            ->where('key', 'data_retention_days')
-            ->value('value') ?? 0);
+        $settings = DB::table('app_settings')
+            ->whereIn('key', ['data_retention_days', 'violation_retention_days'])
+            ->pluck('value', 'key');
 
-        if ($days <= 0) {
+        $days           = (int) ($settings['data_retention_days'] ?? 0);
+        $violationDays  = (int) ($settings['violation_retention_days'] ?? 0);
+        $effectiveViolationDays = $violationDays > 0 ? $violationDays : $days;
+
+        if ($days <= 0 && $effectiveViolationDays <= 0) {
             return [
                 'skipped'    => true,
-                'reason'     => 'data_retention_days is 0 (disabled)',
+                'reason'     => 'data_retention_days and violation_retention_days are both 0 (disabled)',
                 'started_at' => $startedAtStr,
             ];
         }
 
-        $cutoff = date('Y-m-d H:i:s', strtotime("-{$days} days"));
+        $cutoff          = $days > 0 ? date('Y-m-d H:i:s', strtotime("-{$days} days")) : null;
+        $violationCutoff = $effectiveViolationDays > 0 ? date('Y-m-d H:i:s', strtotime("-{$effectiveViolationDays} days")) : null;
 
         $counts = [
-            'comments'        => $this->anonymiseComments($cutoff),
-            'social_users'    => $this->anonymiseSocialUsers($cutoff),
-            'moderation_log'  => $this->anonymiseModerationLog($cutoff),
-            'appeal_records'  => $this->anonymiseAppealRecords($cutoff),
-            'webhook_events'  => $this->anonymiseWebhookEvents($cutoff),
+            'comments'        => $cutoff !== null ? $this->anonymiseComments($cutoff) : 0,
+            'social_users'    => $this->anonymiseSocialUsers($cutoff, $violationCutoff),
+            'moderation_log'  => $cutoff !== null ? $this->anonymiseModerationLog($cutoff) : 0,
+            'appeal_records'  => $cutoff !== null ? $this->anonymiseAppealRecords($cutoff) : 0,
+            'webhook_events'  => $cutoff !== null ? $this->anonymiseWebhookEvents($cutoff) : 0,
         ];
 
         $finishedAt = microtime(true);
         $result = [
-            'skipped'        => false,
-            'retention_days' => $days,
-            'cutoff'         => $cutoff,
-            'anonymised'     => $counts,
-            'started_at'     => $startedAtStr,
-            'finished_at'    => date('Y-m-d H:i:s', (int) $finishedAt),
-            'duration_ms'    => (int) (($finishedAt - $startedAt) * 1000),
+            'skipped'                  => false,
+            'retention_days'           => $days,
+            'violation_retention_days' => $effectiveViolationDays,
+            'cutoff'                   => $cutoff,
+            'violation_cutoff'         => $violationCutoff,
+            'anonymised'               => $counts,
+            'started_at'               => $startedAtStr,
+            'finished_at'              => date('Y-m-d H:i:s', (int) $finishedAt),
+            'duration_ms'              => (int) (($finishedAt - $startedAt) * 1000),
         ];
 
         $this->recordRun($result);
@@ -109,8 +130,32 @@ class RetentionService
         return $count;
     }
 
-    private function anonymiseSocialUsers(string $cutoff): int
+    /**
+     * Anonymises social_users identity fields, using a different cutoff for
+     * users with a recorded violation/ban vs. users with none — see the
+     * class docblock. Either cutoff may be null, meaning that group is left
+     * untouched (its window is disabled).
+     */
+    private function anonymiseSocialUsers(?string $generalCutoff, ?string $violationCutoff): int
     {
+        $count = 0;
+        if ($generalCutoff !== null) {
+            $count += $this->anonymiseSocialUsersBatch($generalCutoff, hasViolation: false);
+        }
+        if ($violationCutoff !== null) {
+            $count += $this->anonymiseSocialUsersBatch($violationCutoff, hasViolation: true);
+        }
+        return $count;
+    }
+
+    private function anonymiseSocialUsersBatch(string $cutoff, bool $hasViolation): int
+    {
+        $hasBanRecord = function ($query) {
+            $query->select(DB::raw(1))
+                ->from('ban_records')
+                ->whereColumn('ban_records.social_user_id', 'social_users.id');
+        };
+
         // Use updated_at so that users still active (recent ban/violation)
         // are kept fully identified.
         $rows = DB::table('social_users')
@@ -118,6 +163,15 @@ class RetentionService
             ->where(function ($q) {
                 $q->where('display_name', '!=', self::ANON_PLACEHOLDER)
                   ->orWhereNull('display_name');
+            })
+            ->where(function ($q) use ($hasViolation, $hasBanRecord) {
+                if ($hasViolation) {
+                    $q->where('violation_count', '>', 0)->orWhereExists($hasBanRecord);
+                } else {
+                    $q->where(function ($q2) {
+                        $q2->where('violation_count', '<=', 0)->orWhereNull('violation_count');
+                    })->whereNotExists($hasBanRecord);
+                }
             })
             ->select('id')
             ->get();

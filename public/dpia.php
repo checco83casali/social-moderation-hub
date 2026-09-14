@@ -7,6 +7,11 @@
 // $retentionDays = 0 significa che l'anonimizzazione automatica non è
 // configurata (vedi RetentionService::purge()), non "0 giorni".
 $retentionEnabled = ((int) $retentionDays) > 0;
+// $violationRetentionDays è già stato risolto dal controller (eredita
+// $retentionDays se non impostato esplicitamente); 0 = disattivato anche
+// come fallback, cioè nessuna delle due finestre è configurata.
+$violationRetentionEnabled = ((int) $violationRetentionDays) > 0;
+$violationRetentionDiffers = $violationRetentionEnabled && ((int) $violationRetentionDays !== (int) $retentionDays);
 ?><!DOCTYPE html>
 <html lang="it">
 <head>
@@ -78,7 +83,7 @@ $retentionEnabled = ((int) $retentionDays) > 0;
       </div>
       <div class="sc-cell">
         <div class="label">Conservazione</div>
-        <div class="val"><?php if ($retentionEnabled): ?>Dati operativi conservati per il periodo configurato (finestra GDPR impostata nel sistema). Dopo la scadenza: anonimizzazione automatica (campi PII sostituiti con hash/NULL, colonne statistiche conservate). Attualmente: <?= (int)$retentionDays ?> giorni.<?php else: ?>Anonimizzazione automatica non configurata (parametro di conservazione impostato a 0 = disattivato): i dati operativi restano identificabili senza scadenza automatica, salvo cancellazione manuale o esercizio del diritto all'oblio.<?php endif; ?></div>
+        <div class="val"><?php if ($retentionEnabled): ?>Dati operativi conservati per il periodo configurato (finestra GDPR impostata nel sistema). Dopo la scadenza: anonimizzazione automatica (campi PII sostituiti con hash/NULL, colonne statistiche conservate). Attualmente: <?= (int)$retentionDays ?> giorni.<?php else: ?>Anonimizzazione automatica non configurata (parametro di conservazione impostato a 0 = disattivato): i dati operativi restano identificabili senza scadenza automatica, salvo cancellazione manuale o esercizio del diritto all'oblio.<?php endif; ?> <?php if ($violationRetentionDiffers): ?>I dati identificativi degli utenti con almeno una violazione/ban registrati seguono invece una finestra dedicata più lunga: <?= (int)$violationRetentionDays ?> giorni dall'ultima violazione (vedi sez. 6).<?php elseif (!$violationRetentionEnabled): ?>Anche la finestra dedicata ai dati di ban/violazione non è configurata.<?php endif; ?></div>
       </div>
       <div class="sc-cell">
         <div class="label">Statistiche correnti</div>
@@ -109,7 +114,7 @@ $retentionEnabled = ((int) $retentionDays) > 0;
       </tr>
       <tr>
         <td><strong>Limitazione della conservazione</strong></td>
-        <td><?php if ($retentionEnabled): ?>Anonimizzazione automatica dopo <?= (int)$retentionDays ?> giorni tramite cron notturno. Il sistema avvisa se il cron non viene eseguito da più di 48 ore.<?php else: ?>Parametro di conservazione non configurato (0 = disattivato): l'anonimizzazione automatica non è attiva. Il Titolare deve impostare una finestra di conservazione per rispettare il principio di limitazione della conservazione (art. 5.1.e GDPR).<?php endif; ?></td>
+        <td><?php if ($retentionEnabled): ?>Anonimizzazione automatica dopo <?= (int)$retentionDays ?> giorni tramite cron notturno. Il sistema avvisa se il cron non viene eseguito da più di 48 ore.<?php else: ?>Parametro di conservazione non configurato (0 = disattivato): l'anonimizzazione automatica non è attiva. Il Titolare deve impostare una finestra di conservazione per rispettare il principio di limitazione della conservazione (art. 5.1.e GDPR).<?php endif; ?> Per gli utenti con violazioni/ban registrati si applica una finestra separata (sez. 6): <?php if ($violationRetentionDiffers): ?><?= (int)$violationRetentionDays ?> giorni dall'ultima violazione.<?php elseif ($violationRetentionEnabled): ?>coincide con quella generale sopra, non essendo stata impostata separatamente.<?php else: ?>non configurata.<?php endif; ?></td>
       </tr>
       <tr>
         <td><strong>Accuratezza</strong></td>
@@ -411,9 +416,10 @@ $retentionEnabled = ((int) $retentionDays) > 0;
 
   <h3>R7 — Conservazione eccessiva</h3>
   <ul class="measures">
+    <li><strong>Doppia finestra di conservazione:</strong> il sistema distingue tra dati identificativi degli utenti senza violazioni (<code>data_retention_days</code>) e dati identificativi degli utenti con almeno una violazione/ban (<code>violation_retention_days</code>, finestra dedicata e opzionalmente più lunga — se non impostata, eredita la finestra generale). Il conteggio delle violazioni/ban resta comunque statistico e non identificativo dopo l'anonimizzazione, indipendentemente dalla finestra applicata.</li>
     <li><strong>Monitoraggio cron:</strong> il dashboard mostra la data dell'ultima esecuzione del cron di anonimizzazione e genera un avviso se è più vecchia di 48 ore.</li>
     <li><strong>Reset operativo:</strong> script SQL <code>database/scripts/reset-operational-data.sql</code> disponibile per eliminare completamente i dati operativi mantenendo la configurazione.</li>
-    <li><strong>Strumento DSAR (ricerca/export/anonimizzazione manuale):</strong> pannello admin-only (Settings → Privacy) che consente di cercare, esportare (art. 15/20 GDPR) e anonimizzare in-place (art. 17 GDPR) i dati di un singolo utente social su richiesta, indipendentemente dalla finestra di conservazione automatica sopra. Conferma in due passaggi con motivazione obbligatoria, ogni operazione registrata in <code>gdpr_audit_log</code>.</li>
+    <li><strong>Strumento DSAR (ricerca/export/anonimizzazione manuale):</strong> pannello admin-only (Settings → Privacy) che consente di cercare, esportare (art. 15/20 GDPR) e anonimizzare in-place (art. 17 GDPR) i dati di un singolo utente social su richiesta, indipendentemente dalle finestre automatiche sopra. Conferma in due passaggi con motivazione obbligatoria, ogni operazione registrata in <code>gdpr_audit_log</code>.</li>
   </ul>
 
   <h3>R8 — Profilazione non dichiarata</h3>
@@ -603,7 +609,7 @@ $retentionEnabled = ((int) $retentionDays) > 0;
       </div>
       <div class="sc-cell">
         <div class="label">Retention</div>
-        <div class="val"><?php if ($retentionEnabled): ?>Operational data is retained for the configured period (GDPR window set in the system). After expiry: automatic anonymisation (PII fields replaced with hashes/NULL, statistical columns retained). Currently: <?= (int)$retentionDays ?> days.<?php else: ?>Automatic anonymisation is not configured (retention parameter set to 0 = disabled): operational data remains identifiable with no automatic expiry, subject only to manual deletion or the exercise of the right to erasure.<?php endif; ?></div>
+        <div class="val"><?php if ($retentionEnabled): ?>Operational data is retained for the configured period (GDPR window set in the system). After expiry: automatic anonymisation (PII fields replaced with hashes/NULL, statistical columns retained). Currently: <?= (int)$retentionDays ?> days.<?php else: ?>Automatic anonymisation is not configured (retention parameter set to 0 = disabled): operational data remains identifiable with no automatic expiry, subject only to manual deletion or the exercise of the right to erasure.<?php endif; ?> <?php if ($violationRetentionDiffers): ?>Identifying data for users with at least one recorded violation/ban instead follows a dedicated, longer window: <?= (int)$violationRetentionDays ?> days from the last violation (see sec. 6).<?php elseif (!$violationRetentionEnabled): ?>The dedicated window for violation/ban data is not configured either.<?php endif; ?></div>
       </div>
       <div class="sc-cell">
         <div class="label">Current statistics</div>
@@ -634,7 +640,7 @@ $retentionEnabled = ((int) $retentionDays) > 0;
       </tr>
       <tr>
         <td><strong>Storage limitation</strong></td>
-        <td><?php if ($retentionEnabled): ?>Automatic anonymisation after <?= (int)$retentionDays ?> days via a nightly cron job. The system warns if the cron has not run for more than 48 hours.<?php else: ?>Retention parameter not configured (0 = disabled): automatic anonymisation is not active. The Controller must set a retention window to comply with the storage limitation principle (Art. 5.1.e GDPR).<?php endif; ?></td>
+        <td><?php if ($retentionEnabled): ?>Automatic anonymisation after <?= (int)$retentionDays ?> days via a nightly cron job. The system warns if the cron has not run for more than 48 hours.<?php else: ?>Retention parameter not configured (0 = disabled): automatic anonymisation is not active. The Controller must set a retention window to comply with the storage limitation principle (Art. 5.1.e GDPR).<?php endif; ?> A separate window applies to users with a recorded violation/ban (sec. 6): <?php if ($violationRetentionDiffers): ?><?= (int)$violationRetentionDays ?> days from the last violation.<?php elseif ($violationRetentionEnabled): ?>same as the general window above, since none was set separately.<?php else: ?>not configured.<?php endif; ?></td>
       </tr>
       <tr>
         <td><strong>Accuracy</strong></td>
@@ -936,9 +942,10 @@ $retentionEnabled = ((int) $retentionDays) > 0;
 
   <h3>R7 — Excessive retention</h3>
   <ul class="measures">
+    <li><strong>Dual retention window:</strong> the system distinguishes identifying data for users with no recorded violation (<code>data_retention_days</code>) from identifying data for users with at least one recorded violation/ban (<code>violation_retention_days</code>, a dedicated and optionally longer window — falling back to the general window if unset). The violation/ban count itself remains statistical and non-identifying after anonymisation, regardless of which window applied.</li>
     <li><strong>Cron monitoring:</strong> the dashboard shows the date of the last anonymisation cron run and generates a warning if it is older than 48 hours.</li>
     <li><strong>Operational reset:</strong> the SQL script <code>database/scripts/reset-operational-data.sql</code> is available to fully delete operational data while keeping the configuration.</li>
-    <li><strong>DSAR tool (manual search/export/anonymisation):</strong> an admin-only panel (Settings → Privacy) to search, export (Art. 15/20 GDPR) and anonymise in place (Art. 17 GDPR) a single social user's data on request, independent of the automatic retention window above. Two-step confirmation with a mandatory reason, every operation logged to <code>gdpr_audit_log</code>.</li>
+    <li><strong>DSAR tool (manual search/export/anonymisation):</strong> an admin-only panel (Settings → Privacy) to search, export (Art. 15/20 GDPR) and anonymise in place (Art. 17 GDPR) a single social user's data on request, independent of the automatic retention windows above. Two-step confirmation with a mandatory reason, every operation logged to <code>gdpr_audit_log</code>.</li>
   </ul>
 
   <h3>R8 — Undisclosed profiling</h3>

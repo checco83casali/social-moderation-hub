@@ -109,6 +109,8 @@ async function loadSettings() {
       // PRO: data retention
       const retEl = document.getElementById('set-data-retention-days');
       if (retEl) retEl.value = parseInt(d.data_retention_days ?? 0, 10);
+      const violRetEl = document.getElementById('set-violation-retention-days');
+      if (violRetEl) violRetEl.value = parseInt(d.violation_retention_days ?? 0, 10);
       loadRetentionStatus();
 
       // PRO: fact-check auto-publish threshold
@@ -323,6 +325,11 @@ async function saveSettings() {
     if (retEl && !retEl.disabled) {
       const retDays = parseInt(retEl.value, 10);
       if (!isNaN(retDays) && retDays >= 0) payload.data_retention_days = retDays;
+    }
+    const violRetEl = document.getElementById('set-violation-retention-days');
+    if (violRetEl && !violRetEl.disabled) {
+      const violRetDays = parseInt(violRetEl.value, 10);
+      if (!isNaN(violRetDays) && violRetDays >= 0) payload.violation_retention_days = violRetDays;
     }
     const hideEl = document.getElementById('set-hide-reply-template');
     if (hideEl && !hideEl.disabled) payload.hide_reply_template = hideEl.value.trim();
@@ -568,10 +575,14 @@ async function loadRetentionStatus() {
       return;
     }
 
+    const violNote = s.violation_retention_days > 0
+      ? `, violazioni/ban <strong>${s.effective_violation_retention_days}</strong> giorni`
+      : (s.retention_days > 0 ? `, violazioni/ban eredita la finestra generale (${s.effective_violation_retention_days} giorni)` : '');
+
     const lr = s.last_run;
     if (!lr) {
       el.innerHTML = `<div style="padding:10px 12px;background:var(--warning-bg,#fff7ed);border:1px solid var(--warning,#fdba74);color:var(--warning-text,#9a3412);border-radius:var(--radius)">
-        ⚠️ Retention impostata a <strong>${s.retention_days}</strong> giorni ma il cron non ha mai girato. Configura il cron sul server (vedi sotto).
+        ⚠️ Retention impostata a <strong>${s.retention_days}</strong> giorni${violNote} ma il cron non ha mai girato. Configura il cron sul server (vedi sotto).
       </div>`;
       return;
     }
@@ -592,7 +603,7 @@ async function loadRetentionStatus() {
       <div><strong>${palette.icon} Ultima esecuzione:</strong> ${relTime(finishedAt)} (${esc(finishedAt)})</div>
       ${lr.skipped
         ? `<div style="margin-top:4px">Esecuzione saltata: ${esc(lr.reason || '')}</div>`
-        : `<div style="margin-top:4px">Cutoff: <code>${esc(lr.cutoff)}</code> · Anonimizzati ${totals} record (commenti ${stats.comments||0}, utenti ${stats.social_users||0}, log ${stats.moderation_log||0}, ricorsi ${stats.appeal_records||0}, webhook ${stats.webhook_events||0}) · ${lr.duration_ms||0}ms</div>`
+        : `<div style="margin-top:4px">Cutoff: <code>${esc(lr.cutoff ?? 'n/d')}</code>${lr.violation_cutoff ? ` · Cutoff violazioni: <code>${esc(lr.violation_cutoff)}</code>` : ''} · Anonimizzati ${totals} record (commenti ${stats.comments||0}, utenti ${stats.social_users||0}, log ${stats.moderation_log||0}, ricorsi ${stats.appeal_records||0}, webhook ${stats.webhook_events||0}) · ${lr.duration_ms||0}ms</div>`
       }
       ${stale ? '<div style="margin-top:6px;font-weight:500">Il cron sembra non girare regolarmente — verifica la configurazione.</div>' : ''}
     </div>`;

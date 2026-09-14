@@ -77,10 +77,15 @@ $appUrl      = rtrim(privacySetting('app_url', 'https://yourdomain.com'), '/');
 $appHost     = parse_url($appUrl, PHP_URL_HOST) ?: $appUrl;
 $publicPolicyUrl = $appUrl . '/public/policy';
 
-// Finestra di conservazione prima dell'anonimizzazione automatica (RetentionService).
-// 0 = funzione non configurata/attiva, non "0 giorni".
+// Finestre di conservazione prima dell'anonimizzazione automatica (RetentionService).
+// 0 = funzione non configurata/attiva, non "0 giorni". La finestra "violazioni"
+// si applica solo agli utenti con almeno una violazione/ban registrati e,
+// se non impostata esplicitamente, eredita quella generale.
 $retentionDays    = (int) privacySetting('data_retention_days', '0');
 $retentionEnabled = $retentionDays > 0;
+$violationRetentionDaysRaw = (int) privacySetting('violation_retention_days', '0');
+$violationRetentionDays    = $violationRetentionDaysRaw > 0 ? $violationRetentionDaysRaw : $retentionDays;
+$violationRetentionEnabled = $violationRetentionDays > 0;
 
 // Estrai le due date (IT / EN) dal campo unico "DD mese YYYY / DD Month YYYY"
 $dates   = explode('/', $policyDate, 2);
@@ -238,7 +243,7 @@ amministrate per conto di terzi. La presente informativa è rivolta a:</p>
     <tr>
       <td>Gestione dei ban e storico delle violazioni (finalità preventiva / recidiva)</td>
       <td><strong>Art. 6.1.f</strong> – Legittimo interesse</td>
-      <td>Proporzionato; i dati di ban vengono cancellati dopo 24 mesi dall'ultima violazione.</td>
+      <td>Proporzionato; <?php if ($violationRetentionEnabled): ?>i dati identificativi collegati al ban (nome, profilo) vengono anonimizzati automaticamente dopo <?= $violationRetentionDays ?> giorni dall'ultima violazione (§7); lo storico del ban resta poi in forma statistica/aggregata, non identificativa.<?php else: ?>l'anonimizzazione automatica dei dati identificativi collegati al ban non è attualmente configurata (§7); lo storico resta in forma statistica/aggregata, non identificativa, per finalità di sicurezza.<?php endif; ?></td>
     </tr>
     <tr>
       <td>Procedura di appello (contestazione della moderazione)</td>
@@ -349,11 +354,19 @@ amministrate per conto di terzi. La presente informativa è rivolta a:</p>
   </thead>
   <tbody>
     <tr>
-      <td>Commenti (contenuto), log di moderazione e dati identificativi dell'utente (nome, profilo, ID piattaforma)</td>
-      <td><?php if ($retentionEnabled): ?><?= $retentionDays ?> giorni dall'ultima attività, poi anonimizzazione automatica: i campi identificativi sono sostituiti con un placeholder non reversibile; i dati statistici (decisione AI, categoria, severità, esito) sono conservati senza scadenza per finalità di sicurezza e reportistica.<?php else: ?>Anonimizzazione automatica non attualmente attiva (nessuna finestra di conservazione configurata): i dati restano identificabili fino a cancellazione manuale o esercizio del diritto alla cancellazione (§8).<?php endif; ?></td>
+      <td>Commenti (contenuto) e log di moderazione (campi testuali)</td>
+      <td><?php if ($retentionEnabled): ?><?= $retentionDays ?> giorni dall'ultima attività, poi anonimizzazione automatica: i campi sono sostituiti con un placeholder non reversibile; i dati statistici (decisione AI, categoria, severità, esito) sono conservati senza scadenza per finalità di sicurezza e reportistica.<?php else: ?>Anonimizzazione automatica non attualmente attiva (nessuna finestra di conservazione configurata): i dati restano identificabili fino a cancellazione manuale o esercizio del diritto alla cancellazione (§8).<?php endif; ?></td>
     </tr>
     <tr>
-      <td>Storico violazioni e ban</td>
+      <td>Dati identificativi dell'utente (nome, profilo, ID piattaforma) — utenti senza violazioni registrate</td>
+      <td><?php if ($retentionEnabled): ?><?= $retentionDays ?> giorni dall'ultima attività, poi anonimizzazione automatica.<?php else: ?>Anonimizzazione automatica non attualmente attiva (§8).<?php endif; ?></td>
+    </tr>
+    <tr>
+      <td>Dati identificativi dell'utente (nome, profilo, ID piattaforma) — utenti con almeno una violazione o ban registrati</td>
+      <td><?php if ($violationRetentionEnabled): ?><?= $violationRetentionDays ?> giorni dall'ultima violazione, poi anonimizzazione automatica (finestra dedicata, indipendente da quella generale — vedi §4).<?php else: ?>Anonimizzazione automatica non attualmente attiva (§8).<?php endif; ?></td>
+    </tr>
+    <tr>
+      <td>Storico violazioni e ban (dati statistici: conteggio, esito, categoria)</td>
       <td>Conservato in forma statistica/aggregata anche dopo l'anonimizzazione di cui sopra, per finalità di sicurezza; il ban resta comunque sempre revocabile su richiesta motivata (§8).</td>
     </tr>
     <tr>
@@ -516,7 +529,7 @@ DPO contact: <a href="mailto:<?= $orgEmail ?>"><?= $orgEmail ?></a></p>
     <tr>
       <td>Ban management and violation history (preventive / recidivism purpose)</td>
       <td><strong>Art. 6.1.f</strong> – Legitimate interests</td>
-      <td>Proportionate; ban data is deleted after 24 months from the last violation.</td>
+      <td>Proportionate; <?php if ($violationRetentionEnabled): ?>identifying data linked to the ban (name, profile) is automatically anonymised after <?= $violationRetentionDays ?> days from the last violation (§7); the ban history is then kept in statistical/aggregate, non-identifying form.<?php else: ?>automatic anonymisation of identifying data linked to the ban is not currently configured (§7); the history is kept in statistical/aggregate, non-identifying form, for security purposes.<?php endif; ?></td>
     </tr>
     <tr>
       <td>Appeal procedure (contesting a moderation decision)</td>
@@ -627,11 +640,19 @@ DPO contact: <a href="mailto:<?= $orgEmail ?>"><?= $orgEmail ?></a></p>
   </thead>
   <tbody>
     <tr>
-      <td>Comments (content), moderation log and identifying user data (name, profile, platform ID)</td>
-      <td><?php if ($retentionEnabled): ?><?= $retentionDays ?> days from last activity, then automatic anonymisation: identifying fields are replaced with a non-reversible placeholder; statistical data (AI decision, category, severity, outcome) is retained indefinitely for security and reporting purposes.<?php else: ?>Automatic anonymisation is not currently active (no retention window configured): data remains identifiable until manually deleted or until the right to erasure is exercised (§8).<?php endif; ?></td>
+      <td>Comments (content) and moderation log (text fields)</td>
+      <td><?php if ($retentionEnabled): ?><?= $retentionDays ?> days from last activity, then automatic anonymisation: fields are replaced with a non-reversible placeholder; statistical data (AI decision, category, severity, outcome) is retained indefinitely for security and reporting purposes.<?php else: ?>Automatic anonymisation is not currently active (no retention window configured): data remains identifiable until manually deleted or until the right to erasure is exercised (§8).<?php endif; ?></td>
     </tr>
     <tr>
-      <td>Violation history and bans</td>
+      <td>Identifying user data (name, profile, platform ID) — users with no recorded violation</td>
+      <td><?php if ($retentionEnabled): ?><?= $retentionDays ?> days from last activity, then automatic anonymisation.<?php else: ?>Automatic anonymisation is not currently active (§8).<?php endif; ?></td>
+    </tr>
+    <tr>
+      <td>Identifying user data (name, profile, platform ID) — users with at least one recorded violation or ban</td>
+      <td><?php if ($violationRetentionEnabled): ?><?= $violationRetentionDays ?> days from the last violation, then automatic anonymisation (dedicated window, independent of the general one — see §4).<?php else: ?>Automatic anonymisation is not currently active (§8).<?php endif; ?></td>
+    </tr>
+    <tr>
+      <td>Violation history and bans (statistical data: count, outcome, category)</td>
       <td>Retained in statistical/aggregate form even after the anonymisation described above, for security purposes; a ban remains revocable at any time upon reasoned request (§8).</td>
     </tr>
     <tr>

@@ -3,8 +3,10 @@
 /**
  * Data retention purge — CLI entry point.
  *
- * Reads `data_retention_days` from app_settings and anonymises every row
- * older than that threshold across comments / social_users / moderation_log
+ * Reads `data_retention_days` (general) and `violation_retention_days`
+ * (social users with a recorded violation/ban — falls back to the general
+ * window if unset) from app_settings, and anonymises every row older than
+ * the applicable threshold across comments / social_users / moderation_log
  * / appeal_records / webhook_events. Idempotent.
  *
  * Schedule via cron, e.g. every night at 03:00:
@@ -49,8 +51,10 @@ try {
     }
 
     $a = $result['anonymised'];
-    echo "[{$stamp}] retention OK — cutoff {$result['cutoff']} "
-        . "({$result['retention_days']} days), "
+    $cutoffDisplay          = $result['cutoff'] !== null ? $result['cutoff'] : 'n/d';
+    $violationCutoffDisplay = $result['violation_cutoff'] !== null ? $result['violation_cutoff'] : 'n/d';
+    echo "[{$stamp}] retention OK — cutoff {$cutoffDisplay} ({$result['retention_days']} days), "
+        . "violation_cutoff {$violationCutoffDisplay} ({$result['violation_retention_days']} days), "
         . "comments={$a['comments']} "
         . "social_users={$a['social_users']} "
         . "moderation_log={$a['moderation_log']} "

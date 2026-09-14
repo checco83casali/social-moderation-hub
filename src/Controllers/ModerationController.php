@@ -1196,6 +1196,8 @@ class ModerationController
             'banned_user_hide_template'      => "Ciao {nome}, questo commento è stato nascosto perché il tuo account è attualmente sospeso dalla pagina.\n\nPotrai tornare a commentare il {scadenza}.",
             // Data retention (PRO — 0 = disabled)
             'data_retention_days'          => '0',
+            // Violation/ban identity retention (PRO — 0 = falls back to data_retention_days)
+            'violation_retention_days'     => '0',
             // Ban escalation levels
             'ban_level_1_hours'            => '1',
             'ban_level_2_days'             => '7',
@@ -1216,7 +1218,8 @@ class ModerationController
         $merged['dev_mode']              = (bool)(int)($merged['dev_mode'] ?? 0);
         $merged['reason_max_words']      = (int)($merged['reason_max_words'] ?? 40);
         $merged['removal_reply_enabled'] = (bool)(int)($merged['removal_reply_enabled'] ?? 1);
-        $merged['data_retention_days']   = (int)($merged['data_retention_days'] ?? 0);
+        $merged['data_retention_days']      = (int)($merged['data_retention_days'] ?? 0);
+        $merged['violation_retention_days'] = (int)($merged['violation_retention_days'] ?? 0);
 
         // Moderators only receive the fields the dashboard strictly needs to function.
         if (!$isAdmin) {
@@ -1306,6 +1309,7 @@ class ModerationController
             'banned_user_hide_template'          => fn($v) => substr(trim((string) $v), 0, 1024),
             // feature: data_retention
             'data_retention_days'                => fn($v) => (string) max(0, (int) $v),
+            'violation_retention_days'           => fn($v) => (string) max(0, (int) $v),
             // feature: fact_check
             'fact_check_auto_publish_threshold'  => fn($v) => (string) max(0.5, min(1.0, (float) $v)),
             // feature: whataboutism
@@ -1626,6 +1630,8 @@ class ModerationController
         $supervisory = $settings['privacy_supervisory_authority'] ?? '[Autorità non configurata]';
         $appUrl     = rtrim($settings['app_url'] ?? '', '/');
         $retentionDays = (int)($settings['data_retention_days'] ?? 0);
+        $violationRetentionDaysRaw = (int)($settings['violation_retention_days'] ?? 0);
+        $violationRetentionDays = $violationRetentionDaysRaw > 0 ? $violationRetentionDaysRaw : $retentionDays;
         $appVersion = defined('MH_VERSION') ? MH_VERSION : '1.5.0';
         $today      = date('d/m/Y');
 
@@ -1636,7 +1642,7 @@ class ModerationController
 
         $vars = compact(
             'orgName','orgAddress','orgEmail','orgCountry','supervisory',
-            'appUrl','retentionDays','appVersion','today',
+            'appUrl','retentionDays','violationRetentionDays','appVersion','today',
             'totComments','totUsers','totBans','totPages'
         );
 
@@ -1678,6 +1684,8 @@ class ModerationController
         $recidivismLimit = (int) ($settings['recidivism_comment_ban_limit'] ?? 3);
         $banCfg          = $this->ban->getConfig();
         $retentionDays   = (int) ($settings['data_retention_days'] ?? 0);
+        $violationRetentionDaysRaw = (int) ($settings['violation_retention_days'] ?? 0);
+        $violationRetentionDays = $violationRetentionDaysRaw > 0 ? $violationRetentionDaysRaw : $retentionDays;
 
         $totComments = DB::table('comments')->count();
         $totUsers    = DB::table('social_users')->count();
@@ -1689,7 +1697,7 @@ class ModerationController
         $vars = compact(
             'orgName', 'orgAddress', 'orgEmail', 'orgCountry',
             'appUrl', 'appVersion', 'today',
-            'recidivismLimit', 'banCfg', 'retentionDays',
+            'recidivismLimit', 'banCfg', 'retentionDays', 'violationRetentionDays',
             'totComments', 'totUsers', 'totBans',
             'totAppeals', 'appealsAccept',
         );
@@ -1718,12 +1726,19 @@ class ModerationController
             return $this->json($response, ['error' => 'Admin required'], 403);
         }
 
-        $days = (int) (DB::table('app_settings')->where('key', 'data_retention_days')->value('value') ?? 0);
+        $settings = DB::table('app_settings')
+            ->whereIn('key', ['data_retention_days', 'violation_retention_days'])
+            ->pluck('value', 'key');
+        $days           = (int) ($settings['data_retention_days'] ?? 0);
+        $violationDays  = (int) ($settings['violation_retention_days'] ?? 0);
+        $effectiveViolationDays = $violationDays > 0 ? $violationDays : $days;
         $lastRun = (new RetentionService)->lastRun();
 
         return $this->json($response, [
-            'retention_days' => $days,
-            'enabled'        => $days > 0,
+            'retention_days'                => $days,
+            'violation_retention_days'      => $violationDays,
+            'effective_violation_retention_days' => $effectiveViolationDays,
+            'enabled'        => $days > 0 || $effectiveViolationDays > 0,
             'last_run'       => $lastRun,
         ]);
     }

@@ -691,6 +691,12 @@
                   <div style="font-size:11px;color:var(--muted);margin-top:5px"><strong>0</strong> = disabilitato (conserva tutto).</div>
                 </div>
 
+                <div class="form-group">
+                  <label class="form-label">Anonimizza utenti con violazioni/ban dopo (giorni)</label>
+                  <input class="form-input" type="number" id="set-violation-retention-days" min="0" max="3650" step="1" style="width:120px;text-align:center">
+                  <div style="font-size:11px;color:var(--muted);margin-top:5px">Finestra dedicata per l'identità degli utenti con almeno una violazione/ban registrati (nome, profilo) — indipendente da quella generale sopra. <strong>0</strong> = eredita la finestra generale.</div>
+                </div>
+
                 <!-- Retention cron status (populated by loadRetentionStatus()) -->
                 <div id="retention-status-info" style="margin-top:18px;font-size:12.5px;color:var(--muted);line-height:1.5"></div>
 
