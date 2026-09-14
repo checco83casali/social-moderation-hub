@@ -92,8 +92,8 @@
 
     @media print {
       body { padding: 1rem; }
-      .doc-footer { position: fixed; bottom: 0; width: 100%; }
-      .no-print { display: none; }
+      .no-print, .doc-footer { display: none; }
+      .test-card, .signature { break-inside: avoid; }
     }
   </style>
 </head>
