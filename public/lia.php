@@ -139,6 +139,26 @@ $isPreLaunch = ((int) $totComments === 0);
     I tre test sono superati: il legittimo interesse dichiarato al §4 della privacy policy è specifico e reale (Purpose Test), il trattamento tramite pipeline AI/umana è necessario e proporzionato rispetto ad alternative meno efficaci (Necessity Test), e le misure di minimizzazione, reversibilità e contestabilità riducono l'impatto sull'interessato a un livello che l'interesse del Titolare può ragionevolmente prevalere (Balancing Test), inclusa la possibile presenza di minori tra i commentatori. Questa valutazione va aggiornata in caso di modifiche sostanziali alla pipeline di moderazione, alla soglia di recidiva o al fornitore AI.
   </p>
 
+  <!-- 6. Riesame periodico -->
+  <h2>6. Riesame periodico</h2>
+  <p style="font-size:12.5px;color:#555;margin-bottom:.8rem">
+    La presente LIA deve essere riesaminata almeno ogni 12 mesi, al verificarsi di cambiamenti significativi nel trattamento (nuovi modelli AI, nuova soglia di recidiva, nuovo fornitore AI, aggiornamenti rilevanti della normativa) e comunque non appena il sistema dispone di statistiche operative reali (ban, appelli) con cui verificare nella pratica la conclusione del Balancing Test al §4 — se la prima emissione precede il go-live, quel riesame è la prima occasione in cui i numeri diventano prova, non solo previsione.
+  </p>
+  <table>
+    <thead>
+      <tr><th>Data riesame</th><th>Esito</th><th>Modifiche apportate</th><th>Responsabile</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><?= htmlspecialchars($today, ENT_QUOTES) ?> (redazione iniziale)</td>
+        <td>Prima emissione</td>
+        <td>—</td>
+        <td><?= htmlspecialchars($orgName, ENT_QUOTES) ?></td>
+      </tr>
+      <tr><td style="color:#ccc;font-style:italic">[ prossimo riesame ]</td><td></td><td></td><td></td></tr>
+    </tbody>
+  </table>
+
   <!-- Signature -->
   <div class="signature">
     <div class="sig-head">Approvazione</div>
@@ -277,6 +297,26 @@ $isPreLaunch = ((int) $totComments === 0);
   <p class="body-text">
     All three tests are passed: the legitimate interest declared in §4 of the privacy policy is specific and real (Purpose Test), processing through the AI/human pipeline is necessary and proportionate compared to less effective alternatives (Necessity Test), and the minimisation, reversibility and contestability measures reduce the impact on the data subject to a level the Controller's interest can reasonably override (Balancing Test), including the possible presence of minors among commenters. This assessment must be updated in the event of substantial changes to the moderation pipeline, the recidivism threshold or the AI provider.
   </p>
+
+  <!-- 6. Periodic review -->
+  <h2>6. Periodic review</h2>
+  <p style="font-size:12.5px;color:#555;margin-bottom:.8rem">
+    This LIA must be reviewed at least every 12 months, whenever significant changes occur in the processing (new AI models, a new recidivism threshold, a new AI provider, relevant regulatory updates), and in any case as soon as the system has real operational statistics (bans, appeals) against which the Balancing Test conclusion in §4 can be checked in practice — if the first issue precedes go-live, that review is the first time the numbers become evidence rather than a forecast.
+  </p>
+  <table>
+    <thead>
+      <tr><th>Review date</th><th>Outcome</th><th>Changes made</th><th>Responsible</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><?= htmlspecialchars($today, ENT_QUOTES) ?> (initial drafting)</td>
+        <td>First issue</td>
+        <td>—</td>
+        <td><?= htmlspecialchars($orgName, ENT_QUOTES) ?></td>
+      </tr>
+      <tr><td style="color:#ccc;font-style:italic">[ next review ]</td><td></td><td></td><td></td></tr>
+    </tbody>
+  </table>
 
   <!-- Signature -->
   <div class="signature">
