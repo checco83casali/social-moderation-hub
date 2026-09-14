@@ -456,7 +456,7 @@ $violationRetentionDiffers = $violationRetentionEnabled && ((int) $violationRete
       <tr>
         <td>R3 — Violazione dati (data breach)</td>
         <td><span class="risk risk-low">Basso</span></td>
-        <td>Accettabile con applicazione delle misure di hardening (restrizione IP, HTTPS, allowlist domini, backup cifrati, MFA). Il titolare è responsabile della configurazione del server e dell'attivazione della procedura di notifica artt. 33–34 entro 72h in caso di incidente.</td>
+        <td>Accettabile con applicazione delle misure di hardening (restrizione IP, HTTPS, allowlist domini, backup cifrati, MFA). Il titolare è responsabile della configurazione del server e dell'attivazione della procedura di notifica artt. 33–34 entro 72h in caso di incidente. <strong>Eccezione da segnalare:</strong> per lo scenario "compromissione/esposizione di <code>APP_SECRET</code>" (sez. 5) la probabilità resta bassa quanto gli altri scenari (stesso vettore: accesso a <code>.env</code> o al server), ma l'impatto è più severo — deanonimizzazione retroattiva non limitata al dato del singolo breach — e non è contenuto dalle stesse misure (l'anonimizzazione del DB non lo mitiga). Per questo sotto-scenario specifico il titolare deve trattare <code>APP_SECRET</code> come un segreto a sensibilità massima (vedi misure di prevenzione, sez. 6).</td>
       </tr>
       <tr>
         <td>R4 — Trasferimento Anthropic</td>
@@ -990,7 +990,7 @@ $violationRetentionDiffers = $violationRetentionEnabled && ((int) $violationRete
       <tr>
         <td>R3 — Data breach</td>
         <td><span class="risk risk-low">Low</span></td>
-        <td>Acceptable with the hardening measures applied (IP restriction, HTTPS, domain allowlist, encrypted backups, MFA). The Controller is responsible for server configuration and activating the Arts. 33–34 notification procedure within 72h in the event of an incident.</td>
+        <td>Acceptable with the hardening measures applied (IP restriction, HTTPS, domain allowlist, encrypted backups, MFA). The Controller is responsible for server configuration and activating the Arts. 33–34 notification procedure within 72h in the event of an incident. <strong>Exception to note:</strong> for the "compromise/exposure of <code>APP_SECRET</code>" scenario (sec. 5), probability remains as low as the other scenarios (same vector: access to <code>.env</code> or the server), but the impact is more severe — retroactive de-anonymisation not limited to the data present at breach time — and is not contained by the same measures (DB anonymisation does not mitigate it). For this specific sub-scenario the Controller must treat <code>APP_SECRET</code> as a maximum-sensitivity secret (see prevention measures, sec. 6).</td>
       </tr>
       <tr>
         <td>R4 — Anthropic transfer</td>
