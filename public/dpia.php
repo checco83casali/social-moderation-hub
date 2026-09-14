@@ -323,6 +323,13 @@ $violationRetentionDiffers = $violationRetentionEnabled && ((int) $violationRete
         <td>✅ Se backup in chiaro</td>
         <td>⚠️ Valutare</td>
       </tr>
+      <tr>
+        <td><strong>Compromissione/esposizione di <code>APP_SECRET</code></strong> (leak da <code>.env</code>, log, git history, backup non cifrato)</td>
+        <td><span class="risk risk-low">Basso</span></td>
+        <td><strong>Worst-case: deanonimizzazione retroattiva, non limitata al dato del singolo breach.</strong> <code>APP_SECRET</code> è la chiave statica (mai ruotata) con cui lo pseudonimo inviato all'AI viene derivato dall'ID Facebook reale (<code>HMAC-SHA256(id_reale, APP_SECRET)</code>) — e con cui sono firmati i token di appello. Chi ottiene questa chiave può ricalcolare lo pseudonimo per <em>qualsiasi</em> ID Facebook reale che conosce, in qualsiasi momento passato o futuro. Poiché i commenti sulla Pagina sono pubblici, l'ID reale di ogni commentatore è comunque ottenibile indipendentemente da questo sistema (Graph API, profilo pubblico) — la finestra di anonimizzazione configurata (§3 "Limitazione della conservazione") <strong>non</strong> è una mitigazione per questo scenario: ripulisce l'ID reale dal database live di questa installazione, ma non da eventuali copie esterne (export, backup, log residui lato Anthropic) create prima che l'anonimizzazione scattasse, né impedisce di ricalcolare lo pseudonimo di un commentatore futuro.</td>
+        <td>✅ Obbligatoria</td>
+        <td>✅ Probabile</td>
+      </tr>
     </tbody>
   </table>
 
@@ -338,6 +345,7 @@ $violationRetentionDiffers = $violationRetentionEnabled && ((int) $violationRete
     <li><strong>Anonimizzazione programmata:</strong> il cron notturno riduce progressivamente la superficie di esposizione eliminando i PII dopo il periodo configurato.</li>
     <li><strong>Minimizzazione in coda:</strong> il nome reale degli utenti non è mai trasmesso al client in contesto di revisione (blind review), riducendo il valore del dato in caso di intercettazione.</li>
     <li><strong>Backup cifrati:</strong> il titolare si impegna a cifrare i backup del DB. I backup in chiaro non devono essere archiviati su storage accessibile via rete senza autenticazione.</li>
+    <li><strong><code>APP_SECRET</code> come segreto a massima sensibilità:</strong> non essendo scadibile né limitato dalla finestra di anonimizzazione (vedi scenario sopra), va trattato come una chiave di cifratura — mai loggato, mai incluso in export/diagnostica, accesso al <code>.env</code> ristretto al minimo. In caso di sospetta compromissione va ruotato immediatamente; la rotazione protegge però solo gli pseudonimi calcolati <em>da quel momento in poi</em>, non annulla eventuali corrispondenze già ricostruite con la chiave precedente.</li>
   </ul>
 
   <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#555;margin:.8rem 0 .4rem">
@@ -849,6 +857,13 @@ $violationRetentionDiffers = $violationRetentionEnabled && ((int) $violationRete
         <td>✅ If backups unencrypted</td>
         <td>⚠️ To be assessed</td>
       </tr>
+      <tr>
+        <td><strong>Compromise/exposure of <code>APP_SECRET</code></strong> (leaked via <code>.env</code>, logs, git history, unencrypted backup)</td>
+        <td><span class="risk risk-low">Low</span></td>
+        <td><strong>Worst case: retroactive de-anonymisation, not limited to the data present at breach time.</strong> <code>APP_SECRET</code> is the static key (never rotated) used to derive the pseudonym sent to the AI from the real Facebook ID (<code>HMAC-SHA256(real_id, APP_SECRET)</code>) — and to sign appeal tokens. Whoever obtains this key can recompute the pseudonym for <em>any</em> real Facebook ID they know, at any point in the past or future. Because comments on the Page are public, every commenter's real ID is independently obtainable regardless of this system (Graph API, public profile) — the configured anonymisation window (sec. 3 "Storage limitation") is <strong>not</strong> a mitigation for this scenario: it clears the real ID from this installation's live database, but not from any external copy (exports, backups, residual Anthropic-side logs) made before anonymisation ran, nor does it stop the pseudonym of a future commenter from being recomputed.</td>
+        <td>✅ Mandatory</td>
+        <td>✅ Likely</td>
+      </tr>
     </tbody>
   </table>
 
@@ -864,6 +879,7 @@ $violationRetentionDiffers = $violationRetentionEnabled && ((int) $violationRete
     <li><strong>Scheduled anonymisation:</strong> the nightly cron progressively reduces the exposure surface by removing PII after the configured period.</li>
     <li><strong>Minimisation in the queue:</strong> users' real names are never transmitted to the client in the review context (blind review), reducing the value of the data in the event of interception.</li>
     <li><strong>Encrypted backups:</strong> the Controller commits to encrypting DB backups. Unencrypted backups must not be stored on network-accessible storage without authentication.</li>
+    <li><strong><code>APP_SECRET</code> as a maximum-sensitivity secret:</strong> since it does not expire and is not bounded by the anonymisation window (see scenario above), it must be treated like an encryption key — never logged, never included in exports/diagnostics, access to <code>.env</code> restricted to the minimum. If compromise is suspected it must be rotated immediately; rotation only protects pseudonyms computed <em>from that point onward</em> — it does not undo any correlation already reconstructed with the previous key.</li>
   </ul>
 
   <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#555;margin:.8rem 0 .4rem">
