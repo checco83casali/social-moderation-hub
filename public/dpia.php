@@ -10,7 +10,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>DPIA – <?= htmlspecialchars($orgName, ENT_QUOTES) ?></title>
-  <link rel="stylesheet" href="<?= htmlspecialchars($appUrl, ENT_QUOTES) ?>/assets/css/gdpr-dpia.css">
+  <link rel="stylesheet" href="<?= htmlspecialchars($appUrl, ENT_QUOTES) ?>/assets/css/gdpr-dpia.css?v=<?= (int) (@filemtime(__DIR__ . '/assets/css/gdpr-dpia.css') ?: 0) ?>">
 </head>
 <body>
 <div class="page">

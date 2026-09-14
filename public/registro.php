@@ -10,7 +10,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Registro dei Trattamenti – <?= htmlspecialchars($orgName, ENT_QUOTES) ?></title>
-  <link rel="stylesheet" href="<?= htmlspecialchars($appUrl, ENT_QUOTES) ?>/assets/css/gdpr-registro.css">
+  <link rel="stylesheet" href="<?= htmlspecialchars($appUrl, ENT_QUOTES) ?>/assets/css/gdpr-registro.css?v=<?= (int) (@filemtime(__DIR__ . '/assets/css/gdpr-registro.css') ?: 0) ?>">
 </head>
 <body>
 <div class="page">

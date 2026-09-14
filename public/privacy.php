@@ -129,7 +129,7 @@ $countryEn = trim($countries[1] ?? $orgCountry);
 
     ═══════════════════════════════════════════════════════════════
   -->
-  <link rel="stylesheet" href="<?= $appUrl ?>/assets/css/gdpr-privacy.css">
+  <link rel="stylesheet" href="<?= $appUrl ?>/assets/css/gdpr-privacy.css?v=<?= (int) (@filemtime(__DIR__ . '/assets/css/gdpr-privacy.css') ?: 0) ?>">
 </head>
 <body>
 

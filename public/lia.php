@@ -16,7 +16,7 @@ $isPreLaunch = ((int) $totComments === 0);
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>LIA – <?= htmlspecialchars($orgName, ENT_QUOTES) ?></title>
-  <link rel="stylesheet" href="<?= htmlspecialchars($appUrl, ENT_QUOTES) ?>/assets/css/gdpr-lia.css">
+  <link rel="stylesheet" href="<?= htmlspecialchars($appUrl, ENT_QUOTES) ?>/assets/css/gdpr-lia.css?v=<?= (int) (@filemtime(__DIR__ . '/assets/css/gdpr-lia.css') ?: 0) ?>">
 </head>
 <body>
 <div class="page">
