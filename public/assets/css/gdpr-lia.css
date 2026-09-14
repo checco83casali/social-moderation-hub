@@ -38,6 +38,14 @@
     .tc-body p { margin-bottom: .7rem; }
     .tc-body p:last-child { margin-bottom: 0; }
 
+    /* Review table (§6) */
+    table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 12px; }
+    th { background: #f0f0f8; text-align: left; padding: .55rem .8rem;
+          font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+          color: #444; border: 1px solid #dde; }
+    td { padding: .6rem .8rem; border: 1px solid #dde; vertical-align: top; }
+    tr:nth-child(even) td { background: #fafafe; }
+
     /* Stat row */
     .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
                  gap: 0; border: 1px solid #dde; border-radius: 6px; overflow: hidden; margin: .8rem 0 1.2rem; }
