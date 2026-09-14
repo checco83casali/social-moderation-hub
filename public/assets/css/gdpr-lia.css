@@ -79,5 +79,5 @@
     @media print {
       body { padding: 1rem; }
       .no-print, .doc-footer { display: none; }
-      .test-card, .signature { break-inside: avoid; }
+      .signature { break-inside: avoid; }
     }

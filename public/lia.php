@@ -4,6 +4,11 @@
 // interessi a supporto della base giuridica art. 6.1.f GDPR.
 // Generato automaticamente dal sistema. Non modificare manualmente.
 // Chiamato da ModerationController::exportLia() con extract($vars).
+
+// La LIA precede per definizione la decisione di avviare il trattamento: prima
+// del go-live non esistono dati operativi (ban, appelli) da misurare, quindi il
+// Balancing Test si appoggia alle garanzie progettuali, non a statistiche d'uso.
+$isPreLaunch = ((int) $totComments === 0);
 ?><!DOCTYPE html>
 <html lang="it">
 <head>
@@ -73,6 +78,18 @@
   <!-- 4. Balancing test -->
   <h2>4. Balancing Test — l'interesse del Titolare prevale?</h2>
 
+  <?php if ($isPreLaunch): ?>
+  <div class="callout" style="margin-bottom:1.2rem">
+    <strong>Sistema non ancora in produzione</strong>
+    Questa valutazione viene condotta <em>prima</em> dell'avvio del trattamento, come richiede la metodologia stessa della LIA: non esistono ancora dati operativi (ban, appelli) da misurare, e non potrebbero comunque motivare la decisione che questo documento deve supportare. La soglia sotto è il parametro configurato che governerà il trattamento fin dal primo commento; il Balancing Test che segue si fonda sulle garanzie progettuali descritte, non su statistiche d'uso — che il documento riporterà automaticamente non appena disponibili, alla prossima rigenerazione.
+  </div>
+  <div class="stat-row">
+    <div class="stat-cell">
+      <div class="label">Soglia recidiva per ban</div>
+      <div class="val"><?= (int) $recidivismLimit ?> violazioni</div>
+    </div>
+  </div>
+  <?php else: ?>
   <div class="stat-row">
     <div class="stat-cell">
       <div class="label">Soglia recidiva per ban</div>
@@ -91,6 +108,7 @@
       <div class="val"><?= number_format((int) $appealsAccept) ?><?= $totAppeals > 0 ? ' (' . round($appealsAccept / $totAppeals * 100) . '%)' : '' ?></div>
     </div>
   </div>
+  <?php endif; ?>
 
   <div class="test-card">
     <div class="tc-head">Impatto sull'interessato vs. misure di mitigazione <span class="verdict">Superato</span></div>
@@ -103,7 +121,7 @@
         <li><strong>Nessun ban alla prima violazione:</strong> serve un pattern di recidiva (soglia configurabile, attualmente <?= (int) $recidivismLimit ?> violazioni) prima di qualsiasi sospensione.</li>
         <li><strong>Ban sempre temporaneo:</strong> durata crescente ma finita (livello 1: <?= (int) $banCfg['hours_1'] ?>h, livello 2: <?= (int) $banCfg['days_2'] ?> giorni, livello 3+: <?= (int) $banCfg['days_3'] ?> giorni) — mai irreversibile per decisione automatica.</li>
         <li><strong>Blind review:</strong> il moderatore umano che rivede i casi incerti non vede mai il nome reale Facebook, riducendo il rischio di bias.</li>
-        <li><strong>Appello sempre disponibile:</strong> ogni ban o nascondimento è contestabile ex-post; un umano rivede la contestazione (vedi statistiche sopra).</li>
+        <li><strong>Appello sempre disponibile:</strong> ogni ban o nascondimento è contestabile ex-post; un umano rivede la contestazione<?= $isPreLaunch ? '' : ' (vedi statistiche sopra)' ?>.</li>
         <li><strong>Diritto di opposizione:</strong> l'interessato può opporsi al trattamento fondato sul legittimo interesse in qualsiasi momento (art. 21 GDPR, richiamato al §8 privacy policy).</li>
       </ul>
       <p><strong>Conclusione del bilanciamento:</strong> a fronte di un interesse legittimo reale e circoscritto, con misure di minimizzazione, reversibilità e contestabilità concrete, l'impatto residuo sull'interessato è proporzionato. L'interesse del Titolare a mantenere una Pagina sicura e legale prevale, salvo l'esercizio del diritto di opposizione caso per caso.</p>
@@ -199,6 +217,18 @@
   <!-- 4. Balancing test -->
   <h2>4. Balancing Test — does the Controller's interest override?</h2>
 
+  <?php if ($isPreLaunch): ?>
+  <div class="callout" style="margin-bottom:1.2rem">
+    <strong>System not yet in production</strong>
+    This assessment is carried out <em>before</em> processing begins, as the LIA methodology itself requires: there is no operational data (bans, appeals) to measure yet, and none could meaningfully inform the decision this document is meant to support anyway. The threshold below is the configured parameter that will govern processing from the first comment onward; the Balancing Test that follows rests on the designed safeguards described, not on usage statistics — which the document will report automatically once available, at the next regeneration.
+  </div>
+  <div class="stat-row">
+    <div class="stat-cell">
+      <div class="label">Recidivism threshold for ban</div>
+      <div class="val"><?= (int) $recidivismLimit ?> violations</div>
+    </div>
+  </div>
+  <?php else: ?>
   <div class="stat-row">
     <div class="stat-cell">
       <div class="label">Recidivism threshold for ban</div>
@@ -217,6 +247,7 @@
       <div class="val"><?= number_format((int) $appealsAccept) ?><?= $totAppeals > 0 ? ' (' . round($appealsAccept / $totAppeals * 100) . '%)' : '' ?></div>
     </div>
   </div>
+  <?php endif; ?>
 
   <div class="test-card">
     <div class="tc-head">Impact on the data subject vs. mitigation measures <span class="verdict">Passed</span></div>
@@ -229,7 +260,7 @@
         <li><strong>No ban on first violation:</strong> a recidivism pattern is required (configurable threshold, currently <?= (int) $recidivismLimit ?> violations) before any suspension.</li>
         <li><strong>Ban always temporary:</strong> increasing but finite duration (tier 1: <?= (int) $banCfg['hours_1'] ?>h, tier 2: <?= (int) $banCfg['days_2'] ?> days, tier 3+: <?= (int) $banCfg['days_3'] ?> days) — never irreversible by automated decision.</li>
         <li><strong>Blind review:</strong> the human moderator reviewing uncertain cases never sees the real Facebook name, reducing the risk of bias.</li>
-        <li><strong>Appeal always available:</strong> every ban or hiding is contestable after the fact; a human reviews the challenge (see statistics above).</li>
+        <li><strong>Appeal always available:</strong> every ban or hiding is contestable after the fact; a human reviews the challenge<?= $isPreLaunch ? '' : ' (see statistics above)' ?>.</li>
         <li><strong>Right to object:</strong> the data subject may object to processing based on legitimate interest at any time (Art. 21 GDPR, referenced in §8 of the privacy policy).</li>
       </ul>
       <p><strong>Balancing conclusion:</strong> given a real and circumscribed legitimate interest, with concrete minimisation, reversibility and contestability measures, the residual impact on the data subject is proportionate. The Controller's interest in keeping the Page safe and lawful prevails, subject to the case-by-case exercise of the right to object.</p>
