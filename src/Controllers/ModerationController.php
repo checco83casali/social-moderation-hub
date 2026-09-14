@@ -1580,6 +1580,9 @@ class ModerationController
         $orgEmail   = $settings['privacy_org_email']   ?? '[Email non configurata]';
         $appUrl     = rtrim($settings['app_url']       ?? '', '/');
         $today      = date('d/m/Y');
+        $retentionDays = (int) ($settings['data_retention_days'] ?? 0);
+        $violationRetentionDaysRaw = (int) ($settings['violation_retention_days'] ?? 0);
+        $violationRetentionDays = $violationRetentionDaysRaw > 0 ? $violationRetentionDaysRaw : $retentionDays;
 
         // Conta record per contesto
         $totComments = DB::table('comments')->count();
@@ -1594,6 +1597,7 @@ class ModerationController
 
         $vars = compact(
             'orgName','orgAddress','orgEmail','appUrl','today',
+            'retentionDays','violationRetentionDays',
             'totComments','totUsers','totBans','totPages','totAdmins',
             'policyName'
         );

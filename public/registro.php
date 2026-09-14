@@ -3,6 +3,13 @@
 // Registro delle Attività di Trattamento — art. 30 Reg. UE 2016/679 (GDPR)
 // Generato automaticamente dal sistema. Non modificare manualmente.
 // Chiamato da ModerationController::registroTrattamenti() con extract($vars).
+
+// $retentionDays = 0 → anonimizzazione generale non configurata (vedi
+// RetentionService::purge()). $violationRetentionDays è già risolto dal
+// controller (eredita $retentionDays se non impostato esplicitamente).
+$retentionEnabled = ((int) $retentionDays) > 0;
+$violationRetentionEnabled = ((int) $violationRetentionDays) > 0;
+$violationRetentionDiffers = $violationRetentionEnabled && ((int) $violationRetentionDays !== (int) $retentionDays);
 ?><!DOCTYPE html>
 <html lang="it">
 <head>
@@ -85,7 +92,7 @@
       </div>
       <div class="t-cell">
         <div class="t-label">Conservazione</div>
-        <div class="t-val">Commenti approvati: 12 mesi. Commenti nascosti + log: 24 mesi. Eliminazione automatica.</div>
+        <div class="t-val">Contenuto commenti e log di moderazione: <?php if ($retentionEnabled): ?><?= $retentionDays ?> giorni dall'ultima attività, poi anonimizzazione automatica.<?php else: ?>anonimizzazione automatica non attualmente configurata.<?php endif; ?> Dati identificativi dell'utente: vedi Trattamento 2.</div>
       </div>
       <div class="t-cell t-full">
         <div class="t-label">Destinatari / Responsabili</div>
@@ -107,7 +114,7 @@
       </div>
       <div class="t-cell">
         <div class="t-label">Base giuridica</div>
-        <div class="t-val">Art. 6.1.f GDPR — Legittimo interesse. Proporzionato; i dati di ban vengono eliminati 24 mesi dopo l'ultima violazione.</div>
+        <div class="t-val">Art. 6.1.f GDPR — Legittimo interesse. Proporzionato; <?php if ($violationRetentionEnabled): ?>i dati identificativi collegati al ban vengono anonimizzati automaticamente <?= $violationRetentionDays ?> giorni dopo l'ultima violazione.<?php else: ?>l'anonimizzazione automatica dei dati identificativi collegati al ban non è attualmente configurata.<?php endif; ?></div>
       </div>
       <div class="t-cell">
         <div class="t-label">Categorie di interessati</div>
@@ -131,7 +138,7 @@
       </div>
       <div class="t-cell">
         <div class="t-label">Conservazione</div>
-        <div class="t-val">24 mesi dall'ultima violazione. Il ban può essere revocato anticipatamente da un amministratore su richiesta motivata.</div>
+        <div class="t-val"><?php if ($violationRetentionEnabled): ?><?= $violationRetentionDays ?> giorni dall'ultima violazione, poi anonimizzazione dei dati identificativi (finestra dedicata<?= $violationRetentionDiffers ? ', indipendente da quella generale' : ', eredita quella generale non essendo stata impostata separatamente' ?>). Il conteggio delle violazioni resta comunque statistico e non identificativo.<?php else: ?>Anonimizzazione automatica non configurata.<?php endif; ?> Il ban può essere revocato anticipatamente da un amministratore su richiesta motivata.</div>
       </div>
       <div class="t-cell t-full">
         <div class="t-label">Destinatari</div>
@@ -175,7 +182,7 @@
       </div>
       <div class="t-cell">
         <div class="t-label">Conservazione</div>
-        <div class="t-val">Token: 30 giorni. Record appello: 24 mesi (coerente con il log di moderazione associato).</div>
+        <div class="t-val">Token: 30 giorni. Testo appello e note del revisore: <?php if ($retentionEnabled): ?><?= $retentionDays ?> giorni dalla presentazione (coerente con la finestra generale del log di moderazione).<?php else: ?>anonimizzazione automatica non attualmente configurata.<?php endif; ?></div>
       </div>
       <div class="t-cell t-full">
         <div class="t-label">Destinatari</div>
@@ -221,7 +228,7 @@
       </div>
       <div class="t-cell">
         <div class="t-label">Conservazione</div>
-        <div class="t-val">Log di accesso: 12 mesi. Log di moderazione: 24 mesi. Dati account: per la durata del rapporto + 6 mesi.</div>
+        <div class="t-val">Log di accesso: 12 mesi. Campi testuali del log di moderazione: <?php if ($retentionEnabled): ?><?= $retentionDays ?> giorni.<?php else: ?>anonimizzazione automatica non attualmente configurata.<?php endif; ?> Dati account: per la durata del rapporto + 6 mesi.</div>
       </div>
       <div class="t-cell t-full">
         <div class="t-label">Destinatari</div>
@@ -251,7 +258,7 @@
       </div>
       <div class="t-cell">
         <div class="t-label">Conservazione</div>
-        <div class="t-val">Coerente con la conservazione del log di moderazione associato (24 mesi).</div>
+        <div class="t-val">Coerente con la conservazione del log di moderazione associato (<?php if ($retentionEnabled): ?><?= $retentionDays ?> giorni<?php else: ?>anonimizzazione automatica non attualmente configurata<?php endif; ?>).</div>
       </div>
       <div class="t-cell t-full">
         <div class="t-label">Destinatari</div>

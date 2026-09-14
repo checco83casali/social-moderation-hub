@@ -259,6 +259,12 @@ parameters:
 			path: public/registro.php
 
 		-
+			message: '#^Variable \$retentionDays might not be defined\.$#'
+			identifier: variable.undefined
+			count: 6
+			path: public/registro.php
+
+		-
 			message: '#^Variable \$today might not be defined\.$#'
 			identifier: variable.undefined
 			count: 3
@@ -292,6 +298,12 @@ parameters:
 			message: '#^Variable \$totUsers might not be defined\.$#'
 			identifier: variable.undefined
 			count: 1
+			path: public/registro.php
+
+		-
+			message: '#^Variable \$violationRetentionDays might not be defined\.$#'
+			identifier: variable.undefined
+			count: 4
 			path: public/registro.php
 
 		-
