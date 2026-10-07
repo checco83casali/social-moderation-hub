@@ -175,7 +175,7 @@ async function loadReportableQueue() {
               <button class="btn btn-approve" style="padding:5px 12px;font-size:12px"
                 onclick="resolveReportable(${item.id}, 'approve')">✓ Falso positivo — ripristina</button>
               <button class="btn" style="padding:5px 12px;font-size:12px;background:var(--warn-bg);color:var(--warn);border:1px solid rgba(247,178,68,.3)"
-                onclick="resolveReportable(${item.id}, 'keep')">🙈 Mantieni nascosto</button>
+                onclick="resolveReportable(${item.id}, 'keep')">Mantieni nascosto</button>
               <button class="btn btn-remove" style="padding:5px 12px;font-size:12px"
                 onclick="resolveReportable(${item.id}, 'report')">⚠️ Avvia iter segnalazione</button>
             </div>
@@ -373,13 +373,34 @@ function renderDetail(c) {
         <div style="color:var(--text);margin-bottom:10px;white-space:pre-wrap">${esc(c.ai_whataboutism_draft)}</div>
         <button class="btn" style="width:100%;background:#a855f7;color:#fff;font-weight:600;padding:12px;font-size:14px" onclick="openWhataboutismReply()">📣 Pubblica risposta su Facebook →</button>
       </div>` : ''}
-      <textarea class="note-input" id="mod-note" rows="2" placeholder="Nota interna opzionale…"></textarea>
+      <textarea class="note-input" id="mod-note" rows="2" placeholder="Nota interna opzionale (visibile solo ai moderatori)…"></textarea>
       ${c.ai_fact_check_draft ? `
       <div style="font-size:11px;color:var(--muted);margin:4px 0 8px;text-transform:uppercase;letter-spacing:.05em">Azioni alternative</div>` : ''}
-      <div class="action-grid">
-        <button class="btn btn-approve" onclick="decide('allow')">✓ Approva commento</button>
-        <button class="btn" style="background:#fff8e7;color:#92400e;border:1px solid rgba(247,178,68,.35)" onclick="decide('hide')">🙈 Nascondi + notifica utente</button>
-        <button class="btn" style="background:var(--surface2,#f8fafc);color:var(--muted);border:1px solid var(--border)" onclick="decide('hide_silent')">🔇 Nascondi senza notifica</button>
+
+      <div class="decision-actions">
+        <div class="decision-group-label">Il commento è ok</div>
+        <div class="decision-row">
+          <button class="btn btn-approve-solid" onclick="decide('allow')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+            <span class="btn-text"><span class="btn-title">Approva</span><span class="btn-hint">Resta visibile, esce dalla coda</span></span>
+          </button>
+          <button class="btn btn-approve-reply" onclick="openApproveReply()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span class="btn-text"><span class="btn-title">Approva e rispondi</span><span class="btn-hint">Pubblica una risposta all'utente</span></span>
+          </button>
+        </div>
+
+        <div class="decision-group-label decision-group-hide">Il commento va nascosto</div>
+        <div class="decision-row">
+          <button class="btn btn-hide-notify" onclick="decide('hide')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>
+            <span class="btn-text"><span class="btn-title">Nascondi e avvisa</span><span class="btn-hint">Avviso pubblico con link di ricorso</span></span>
+          </button>
+          <button class="btn btn-hide-silent" onclick="decide('hide_silent')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>
+            <span class="btn-text"><span class="btn-title">Nascondi senza avviso</span><span class="btn-hint">Nessun messaggio né link di ricorso</span></span>
+          </button>
+        </div>
       </div>
     </div>`;
 }
@@ -389,7 +410,7 @@ async function decide(decision) {
   const note = document.getElementById('mod-note')?.value || '';
 
   // Disable all buttons and show spinner on the clicked one
-  const btns = document.querySelectorAll('.action-grid .btn');
+  const btns = document.querySelectorAll('.decision-actions .btn');
   const clickedBtn = event?.target?.closest('.btn');
   btns.forEach(b => { b.disabled = true; b.style.opacity = '.45'; });
   if (clickedBtn) {
@@ -432,6 +453,101 @@ async function decide(decision) {
     btns.forEach(b => { b.disabled = false; b.style.opacity = ''; });
     if (clickedBtn && clickedBtn._origHTML) clickedBtn.innerHTML = clickedBtn._origHTML;
     toast('Errore: ' + e.message, 'err');
+  }
+}
+
+// ── Approva + risposta all'utente ─────────────────────────────────
+// Stato del modale: se la risposta è già stata pubblicata ma l'approvazione è
+// fallita, un secondo click ritenta SOLO l'approvazione (niente doppia risposta).
+let approveReplyPosted = false;
+
+const APPROVE_REPLY_TEMPLATES = [
+  { label: 'Ringraziamento',   text: 'Grazie per il tuo contributo alla discussione.' },
+  { label: 'Chiarimento',      text: 'Grazie per il commento. Ti invitiamo a consultare i dettagli nel post: potrebbero chiarire il punto.' },
+  { label: 'Invito al dialogo', text: 'Il tuo punto di vista è benvenuto. Ti chiediamo di mantenere un tono rispettoso verso gli altri utenti.' },
+];
+
+function openApproveReply() {
+  if (!currentComment) return;
+  approveReplyPosted = false;
+  const ta = document.getElementById('approve-reply-text');
+  ta.value = '';
+  document.getElementById('approve-reply-err').style.display = 'none';
+  document.getElementById('approve-reply-quote').textContent = currentComment.content || '';
+  document.getElementById('approve-reply-chips').innerHTML = APPROVE_REPLY_TEMPLATES
+    .map((t, i) => `<button type="button" class="chip-btn" onclick="applyApproveReplyTemplate(${i})">${esc(t.label)}</button>`)
+    .join('');
+  updateApproveReplyCount();
+  const btn = document.getElementById('approve-reply-submit');
+  btn.disabled = false;
+  btn.textContent = 'Approva e pubblica risposta';
+  openModal('modal-approve-reply');
+  setTimeout(() => ta.focus(), 50);
+}
+
+function applyApproveReplyTemplate(i) {
+  const ta = document.getElementById('approve-reply-text');
+  ta.value = APPROVE_REPLY_TEMPLATES[i].text;
+  updateApproveReplyCount();
+  ta.focus();
+}
+
+function updateApproveReplyCount() {
+  const len = document.getElementById('approve-reply-text').value.length;
+  const el  = document.getElementById('approve-reply-count');
+  el.textContent = len + ' caratteri';
+}
+
+async function confirmApproveReply() {
+  if (!currentComment) return;
+  const text  = document.getElementById('approve-reply-text').value.trim();
+  const errEl = document.getElementById('approve-reply-err');
+  const btn   = document.getElementById('approve-reply-submit');
+  const note  = document.getElementById('mod-note')?.value || '';
+  errEl.style.display = 'none';
+
+  if (!approveReplyPosted && !text) {
+    errEl.textContent = 'Scrivi la risposta da pubblicare, oppure usa "Approva" per approvare senza rispondere.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px"></span>Pubblicazione…';
+
+  try {
+    // 1. Pubblica la risposta (reply() risponde 502 se Facebook rifiuta → throw).
+    if (!approveReplyPosted) {
+      const r = await api(`/comments/${currentComment.id}/reply`, 'POST', { text });
+      if (r && r.dev_mode) {
+        closeModal('modal-approve-reply');
+        toast('Dev mode attivo: la risposta NON è stata inviata su Facebook', 'err');
+        return;
+      }
+      approveReplyPosted = true;
+    }
+
+    // 2. Approva il commento (esce dalla coda).
+    await api(`/comments/${currentComment.id}/decide`, 'POST', {
+      decision: 'allow',
+      note:     note || 'Approvato con risposta all\'utente inviata dal moderatore',
+    });
+
+    closeModal('modal-approve-reply');
+    splash('Commento approvato', 'Risposta pubblicata su Facebook.', { type: 'ok' });
+    currentComment = null;
+    document.getElementById('detail-content').style.display = 'none';
+    document.getElementById('detail-empty').style.display   = 'flex';
+    loadQueue();
+    loadStats();
+  } catch (e) {
+    errEl.textContent = approveReplyPosted
+      ? 'La risposta è stata pubblicata, ma l\'approvazione non è riuscita: ' + (e.message || 'errore') + '. Premi di nuovo il pulsante per ritentare solo l\'approvazione.'
+      : (e.message || 'Errore durante l\'invio.');
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = approveReplyPosted ? 'Riprova approvazione' : originalLabel;
   }
 }
 
