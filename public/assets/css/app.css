@@ -286,6 +286,14 @@ nav { flex: 1; padding: 12px 10px; }
 .decision-group-label::before { content: "\2713  "; }
 .decision-group-hide::before { content: "\2715  "; }
 
+/* Coda: chip AI e azioni rapide nella riga */
+.q-ai { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.chip-ai { background: var(--bg-hover); color: var(--text); border: 1px solid var(--border-hi); font-weight: 600; }
+.row-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.row-actions .btn { padding: 4px 10px; font-size: 11.5px; font-weight: 600; border-radius: 8px; gap: 5px; }
+.row-actions .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.row-actions .btn:disabled { cursor: not-allowed; }
+
 /* Modale "Approva e rispondi" */
 .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
 .chip-btn {

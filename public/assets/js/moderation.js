@@ -100,6 +100,33 @@ async function loadStatsScreen() {
   }
 }
 
+// ── Riga della coda: chip valutazione AI + azioni rapide ───────────
+const ROW_ICON_ATTRS = 'width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"';
+const ROW_ICONS = {
+  check:   `<svg ${ROW_ICON_ATTRS}><path d="M20 6L9 17l-5-5"/></svg>`,
+  chat:    `<svg ${ROW_ICON_ATTRS}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+  eyeOff:  `<svg ${ROW_ICON_ATTRS}><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>`,
+  bellOff: `<svg ${ROW_ICON_ATTRS}><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><path d="M1 1l22 22"/></svg>`,
+};
+
+function queueAiChips(item) {
+  const label = { allow:'Approvato', remove:'Rimosso', uncertain:'Incerto', hide:'Nascosto', reportable:'Segnalato' }[item.ai_decision]
+    || item.ai_decision || 'AI';
+  const pct  = item.ai_confidence ? Math.round(item.ai_confidence * 100) + '%' : '';
+  const cats = (item.ai_categories || []).slice(0, 2).map(cat => categoryChip(cat)).join(' ');
+  return `<span class="chip chip-ai" title="Valutazione AI">AI: ${esc(label)}${pct ? ` · ${pct}` : ''}</span> ${cats}`;
+}
+
+// Azione rapida dalla riga: apre il commento nel dettaglio (così la nota e il
+// contesto sono quelli del commento su cui si agisce) e poi esegue l'azione.
+function rowAction(ev, id, action) {
+  ev.stopPropagation();
+  selectComment(id);
+  if (!currentComment) return;
+  if (action === 'reply') { openApproveReply(); return; }
+  decide(action);
+}
+
 // ── Queue (uncertain AI decisions only) ──────────────────────────
 async function loadQueue() {
   const list = document.getElementById('queue-list');
@@ -125,6 +152,13 @@ async function loadQueue() {
             <span class="q-time">${relTime(item.received_at)}</span>
           </div>
           <div class="q-text">${esc(item.content)}</div>
+          <div class="q-ai">${queueAiChips(item)}</div>
+          <div class="row-actions" onclick="event.stopPropagation()">
+            <button class="btn btn-approve-solid" title="Approva" onclick="rowAction(event, ${item.id}, 'allow')">${ROW_ICONS.check}Approva</button>
+            <button class="btn btn-approve-reply" title="Approva e rispondi all'utente" onclick="rowAction(event, ${item.id}, 'reply')">${ROW_ICONS.chat}Rispondi</button>
+            <button class="btn btn-hide-notify" title="Nascondi (avvisa l'utente se l'avviso automatico è attivo)" onclick="rowAction(event, ${item.id}, 'hide')">${ROW_ICONS.eyeOff}Nascondi</button>
+            ${['admin', 'supervisor'].includes(currentUserRole) ? `<button class="btn btn-hide-silent" title="Nascondi senza avviso (ignora le impostazioni)" onclick="rowAction(event, ${item.id}, 'hide_silent')">${ROW_ICONS.bellOff}Senza avviso</button>` : ''}
+          </div>
         </div>
       </div>`).join('');
 
@@ -413,8 +447,8 @@ async function decide(decision) {
   const note = document.getElementById('mod-note')?.value || '';
 
   // Disable all buttons and show spinner on the clicked one
-  const btns = document.querySelectorAll('.decision-actions .btn');
-  const clickedBtn = event?.target?.closest('.btn');
+  const btns = document.querySelectorAll('.decision-actions .btn, .row-actions .btn');
+  const clickedBtn = (typeof event !== 'undefined' ? event?.target?.closest('.btn') : null);
   btns.forEach(b => { b.disabled = true; b.style.opacity = '.45'; });
   if (clickedBtn) {
     clickedBtn.style.opacity = '1';
