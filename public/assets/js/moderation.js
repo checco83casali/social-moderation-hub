@@ -167,12 +167,14 @@ async function loadQueue() {
           </div>
           <div class="q-user">${queueUserChips(item)}</div>
           <div class="q-text">${esc(item.content)}</div>
-          <div class="q-ai">${queueAiChips(item)}</div>
+          <div class="q-footer">
+            <div class="q-ai">${queueAiChips(item)}</div>
           <div class="row-actions" onclick="event.stopPropagation()">
             <button class="btn btn-approve-solid" title="Approva" onclick="rowAction(event, ${item.id}, 'allow')">${ROW_ICONS.check}Approva</button>
             <button class="btn btn-approve-reply" title="Approva e rispondi all'utente" onclick="rowAction(event, ${item.id}, 'reply')">${ROW_ICONS.chat}Rispondi</button>
             <button class="btn btn-hide-notify" title="Nascondi (avvisa l'utente se l'avviso automatico è attivo)" onclick="rowAction(event, ${item.id}, 'hide')">${ROW_ICONS.eyeOff}Nascondi</button>
             ${['admin', 'supervisor'].includes(currentUserRole) ? `<button class="btn btn-hide-silent" title="Nascondi senza avviso (ignora le impostazioni)" onclick="rowAction(event, ${item.id}, 'hide_silent')">${ROW_ICONS.bellOff}Senza avviso</button>` : ''}
+          </div>
           </div>
         </div>
       </div>`).join('');
