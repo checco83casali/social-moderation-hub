@@ -258,6 +258,7 @@ nav { flex: 1; padding: 12px 10px; }
 }
 .decision-group-hide { color: var(--warn); margin-top: 10px; }
 .decision-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.decision-row-single { grid-template-columns: 1fr; }
 .decision-actions .btn {
   justify-content: flex-start; text-align: left; gap: 10px;
   padding: 12px 14px; min-height: 56px; line-height: 1.25;

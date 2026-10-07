@@ -291,6 +291,8 @@ function renderDetail(c) {
   const box = document.getElementById('detail-content');
   box.style.display = 'block';
 
+  // Il nascondimento silenzioso (override delle impostazioni) è riservato a supervisor e admin.
+  const canHideSilently = ['admin', 'supervisor'].includes(currentUserRole);
   const cats = (c.ai_categories || []).map(cat => categoryChip(cat)).join(' ');
   const confPct = c.ai_confidence ? Math.round(c.ai_confidence * 100) + '%' : '—';
   const stageLabel = { haiku:'Claude Haiku', sonnet:'Claude Sonnet', human:'Escalation umana' };
@@ -391,15 +393,16 @@ function renderDetail(c) {
         </div>
 
         <div class="decision-group-label decision-group-hide">Il commento va nascosto</div>
-        <div class="decision-row">
+        <div class="decision-row${canHideSilently ? '' : ' decision-row-single'}">
           <button class="btn btn-hide-notify" onclick="decide('hide')">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>
-            <span class="btn-text"><span class="btn-title">Nascondi e avvisa</span><span class="btn-hint">Avviso pubblico con link di ricorso</span></span>
+            <span class="btn-text"><span class="btn-title">Nascondi</span><span class="btn-hint">Avvisa l'utente con link di ricorso, se l'avviso automatico è attivo</span></span>
           </button>
-          <button class="btn btn-hide-silent" onclick="decide('hide_silent')">
+          ${canHideSilently ? `
+          <button class="btn btn-hide-silent" onclick="decide('hide_silent')" title="Ignora le impostazioni: nessun avviso, nessun link di ricorso">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>
-            <span class="btn-text"><span class="btn-title">Nascondi senza avviso</span><span class="btn-hint">Nessun messaggio né link di ricorso</span></span>
-          </button>
+            <span class="btn-text"><span class="btn-title">Nascondi senza avviso</span><span class="btn-hint">Ignora le impostazioni · nessun messaggio</span></span>
+          </button>` : ''}
         </div>
       </div>
     </div>`;
@@ -440,7 +443,7 @@ async function decide(decision) {
 
     const toastMsg = {
       allow:        'Commento approvato',
-      hide:         'Commento nascosto · utente notificato',
+      hide:         res && res.fb_reply_sent === false ? 'Commento nascosto · avviso non inviato' : 'Commento nascosto',
       hide_silent:  'Commento nascosto',
     }[decision] ?? 'Fatto';
     toast(toastMsg, 'ok');

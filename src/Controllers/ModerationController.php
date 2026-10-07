@@ -597,6 +597,13 @@ class ModerationController
             return $this->json($response, ['error' => 'Invalid decision.'], 422);
         }
 
+        // Nascondimento silenzioso = override delle impostazioni di notifica:
+        // riservato a supervisor e admin (il pulsante è nascosto ai moderatori in UI,
+        // qui l'enforcement vero).
+        if (!empty($body['silent']) && !in_array($auth->role ?? '', ['admin', 'supervisor'], true)) {
+            return $this->json($response, ['error' => 'Solo supervisor e admin possono nascondere senza avviso.'], 403);
+        }
+
         if ($this->isDevMode()) {
             $status = match($decision) {
                 'hide'   => 'dev_flagged',
