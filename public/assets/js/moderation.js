@@ -163,9 +163,9 @@ async function loadQueue() {
             <span class="q-name">Utente #${item.social_user_id}</span>
             ${item.ai_severity==='high'   ? '<span class="chip chip-danger">alto rischio</span>' : ''}
             ${item.ai_severity==='medium' ? '<span class="chip chip-warn">medio</span>' : ''}
+            ${queueUserChips(item)}
             <span class="q-time">${relTime(item.received_at)}</span>
           </div>
-          <div class="q-user">${queueUserChips(item)}</div>
           <div class="q-text">${esc(item.content)}</div>
           <div class="q-footer">
             <div class="q-ai">${queueAiChips(item)}</div>
