@@ -270,14 +270,21 @@ nav { flex: 1; padding: 12px 10px; }
 .decision-actions .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .decision-actions .btn:disabled { cursor: not-allowed; }
 
-.btn-approve-solid { background: var(--success); color: #06281a; border-color: var(--success); }
-.btn-approve-solid:hover { filter: brightness(1.08); }
-.btn-approve-reply { background: var(--success-bg); color: var(--success); border-color: rgba(62,207,142,.35); }
-.btn-approve-reply:hover { background: rgba(62,207,142,.2); }
-.btn-hide-notify { background: var(--warn-bg); color: var(--warn); border-color: rgba(247,178,68,.4); }
-.btn-hide-notify:hover { background: rgba(247,178,68,.2); }
-.btn-hide-silent { background: transparent; color: var(--danger); border-color: rgba(247,82,82,.35); }
-.btn-hide-silent:hover { background: var(--danger-bg); }
+/* Palette sicura per il daltonismo (Okabe-Ito): blu = approva, arancione = nascondi.
+   Le azioni si distinguono anche per stile (pieno / contorno / tratteggiato) e icona,
+   non solo per tinta. */
+.btn-approve-solid { background: #56b4e9; color: #04202f; border: 2px solid #56b4e9; }
+.btn-approve-solid:hover { background: #7cc6ee; border-color: #7cc6ee; }
+.btn-approve-reply { background: transparent; color: #7cc6ee; border: 2px solid #56b4e9; }
+.btn-approve-reply:hover { background: rgba(86,180,233,.16); }
+.btn-hide-notify { background: #e69f00; color: #2a1c00; border: 2px solid #e69f00; }
+.btn-hide-notify:hover { background: #f0b232; border-color: #f0b232; }
+.btn-hide-silent { background: transparent; color: var(--text); border: 2px dashed #e69f00; }
+.btn-hide-silent:hover { background: rgba(230,159,0,.14); }
+.decision-group-label { color: #7cc6ee; }
+.decision-group-hide { color: #f0b232; }
+.decision-group-label::before { content: "\2713  "; }
+.decision-group-hide::before { content: "\2715  "; }
 
 /* Modale "Approva e rispondi" */
 .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
