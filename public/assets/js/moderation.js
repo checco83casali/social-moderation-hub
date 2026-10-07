@@ -360,7 +360,7 @@ function renderDetail(c) {
         <div class="q-avatar">U</div>
         <div class="user-info">
           <div class="user-display">Utente #${c.social_user_id}</div>
-          <div class="user-meta">${c.violation_count || 0} violazioni · ${c.ban_status || 'clean'} · ${esc(c.page_name)}</div>
+          <div class="q-user" style="margin:4px 0 0">${queueUserChips(c)}</div>
         </div>
       </div>
     </div>
