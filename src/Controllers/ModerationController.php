@@ -605,9 +605,13 @@ class ModerationController
         }
 
         if ($this->isDevMode()) {
+            // Solo valori presenti nell'ENUM comments.status: 'dev_approved' non esiste e
+            // faceva fallire la query (Data truncated). Approvare non tocca Facebook,
+            // quindi 'approved' è lo stato reale anche in dev mode.
             $status = match($decision) {
-                'hide'   => 'dev_flagged',
-                default  => 'dev_approved',
+                'hide'        => 'dev_flagged',
+                'keep_hidden' => 'hidden_reportable',
+                default       => 'approved',
             };
             DB::table('comments')->where('id', (int) $args['id'])->update([
                 'status'       => $status,
