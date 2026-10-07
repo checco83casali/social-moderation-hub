@@ -286,7 +286,9 @@ nav { flex: 1; padding: 12px 10px; }
 .decision-group-label::before { content: "\2713  "; }
 .decision-group-hide::before { content: "\2715  "; }
 
-/* Coda: chip AI e azioni rapide nella riga */
+/* Coda: chip utente, chip AI e azioni rapide nella riga */
+.q-user { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; margin-bottom: 5px; }
+.chip-user { background: var(--bg-hover); color: var(--muted); border: 1px solid var(--border); font-weight: 500; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
 .q-ai { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
 .chip-ai { background: var(--bg-hover); color: var(--text); border: 1px solid var(--border-hi); font-weight: 600; }
 .row-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }

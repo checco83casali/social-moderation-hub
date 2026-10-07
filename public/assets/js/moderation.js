@@ -109,6 +109,21 @@ const ROW_ICONS = {
   bellOff: `<svg ${ROW_ICON_ATTRS}><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><path d="M1 1l22 22"/></svg>`,
 };
 
+function queueUserChips(item) {
+  const n = item.violation_count || 0;
+  const statusMap = {
+    clean:       { label: 'Regolare',        cls: 'chip-user' },
+    warned:      { label: 'Avvisato',        cls: 'chip-warn' },
+    temp_banned: { label: 'Ban temporaneo',  cls: 'chip-danger' },
+    perm_banned: { label: 'Ban permanente',  cls: 'chip-danger' },
+  };
+  const st = statusMap[item.ban_status || 'clean'] || { label: item.ban_status, cls: 'chip-user' };
+  return `
+    <span class="chip ${n > 0 ? 'chip-warn' : 'chip-user'}" title="Violazioni registrate per questo utente">${n} ${n === 1 ? 'violazione' : 'violazioni'}</span>
+    <span class="chip ${st.cls}" title="Stato dell'utente">${esc(st.label)}</span>
+    ${item.page_name ? `<span class="chip chip-user" title="Pagina di riferimento">${esc(item.page_name)}</span>` : ''}`;
+}
+
 function queueAiChips(item) {
   const label = { allow:'Approvato', remove:'Rimosso', uncertain:'Incerto', hide:'Nascosto', reportable:'Segnalato' }[item.ai_decision]
     || item.ai_decision || 'AI';
@@ -148,9 +163,9 @@ async function loadQueue() {
             <span class="q-name">Utente #${item.social_user_id}</span>
             ${item.ai_severity==='high'   ? '<span class="chip chip-danger">alto rischio</span>' : ''}
             ${item.ai_severity==='medium' ? '<span class="chip chip-warn">medio</span>' : ''}
-            ${item.violation_count > 0 ? `<span class="chip chip-info">${item.violation_count} violaz.</span>` : ''}
             <span class="q-time">${relTime(item.received_at)}</span>
           </div>
+          <div class="q-user">${queueUserChips(item)}</div>
           <div class="q-text">${esc(item.content)}</div>
           <div class="q-ai">${queueAiChips(item)}</div>
           <div class="row-actions" onclick="event.stopPropagation()">
