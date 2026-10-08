@@ -16,7 +16,16 @@ final class PushService
     private static array $pending = [];
     private static bool $hooked = false;
 
+    /** @var list<array{host:string,status:int}> esito dell'ultimo invio, per la diagnostica */
+    private array $lastStatuses = [];
+
     public function __construct(private readonly ?WebPush $webPush = null) {}
+
+    /** @return list<array{host:string,status:int}> */
+    public function lastStatuses(): array
+    {
+        return $this->lastStatuses;
+    }
 
     /**
      * Accoda la notifica e la invia a risposta già consegnata: il webhook di Meta
@@ -108,6 +117,7 @@ final class PushService
      */
     private function sendPayload(array $subs, array $payload): int
     {
+        $this->lastStatuses = [];
         if (!$subs) {
             return 0;
         }
@@ -120,6 +130,8 @@ final class PushService
                 $json,
                 !empty($payload['urgent']) ? 'high' : 'normal',
             );
+            $host = (string) parse_url($s->endpoint, PHP_URL_HOST);
+            $this->lastStatuses[] = ['host' => $host, 'status' => $status];
             if ($status >= 200 && $status < 300) {
                 $ok++;
                 DB::table('push_subscriptions')->where('id', $s->id)->update(['last_success_at' => date('Y-m-d H:i:s')]);

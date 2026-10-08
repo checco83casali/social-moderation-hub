@@ -70,8 +70,14 @@ class PushController
     public function test(ServerRequestInterface $request, Response $response): ResponseInterface
     {
         $uid  = (int) ($request->getAttribute('auth_user')->sub ?? 0);
-        $sent = (new PushService())->sendTest($uid);
-        return $this->json($response, ['sent' => $sent]);
+        $svc  = new PushService();
+        try {
+            $sent = $svc->sendTest($uid);
+        } catch (\Throwable $e) {
+            return $this->json($response, ['sent' => 0, 'error' => $e->getMessage()], 500);
+        }
+        // status = codice HTTP del push service (201 ok; 0 = connessione fallita)
+        return $this->json($response, ['sent' => $sent, 'results' => $svc->lastStatuses()]);
     }
 
     private function json(Response $response, mixed $data, int $status = 200): ResponseInterface
