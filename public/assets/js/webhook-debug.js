@@ -110,6 +110,8 @@
   function applyStatus(d) {
     const t = $('whd-toggle'), l = $('whd-label');
     if (t) t.checked = !!d.active;
+    const live = $('whd-live');
+    if (live) live.style.display = d.active ? 'block' : 'none';
     if (l) {
       l.textContent = d.active
         ? 'Debug attivo fino alle ' + new Date(d.until).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
