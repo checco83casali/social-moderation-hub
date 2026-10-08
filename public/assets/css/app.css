@@ -24,6 +24,7 @@
   --radius-lg: 16px;
 }
 
+html { background: var(--bg); color-scheme: dark; }
 body {
   font-family: var(--font);
   background: var(--bg);
