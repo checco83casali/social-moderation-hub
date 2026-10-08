@@ -215,12 +215,10 @@
     try {
       if (n > 0) await navigator.setAppBadge(n); else await navigator.clearAppBadge();
       lastBadge = n;
-      badgeBtn.classList.remove('show');
-    } catch (err) {
-      // iOS: serve il permesso notifiche prima di poter mostrare il badge.
-      if (err && err.name === 'NotAllowedError' && 'Notification' in window && Notification.permission === 'default') {
-        badgeBtn.classList.add('show');
-      }
+    } catch (_) {
+      // iOS: senza permesso notifiche il badge non si può mostrare (pulsante in sidebar).
+    } finally {
+      refreshNotifBtn();
     }
   }
   window.updateAppBadge = updateAppBadge;
@@ -275,26 +273,55 @@
     });
   }
 
+  // Pulsante in sidebar (menu su telefono): riflette sempre lo stato reale del permesso.
+  function refreshNotifBtn() {
+    const ok = 'Notification' in window && (pushSupported() || 'setAppBadge' in navigator);
+    badgeBtn.classList.toggle('show', ok && loggedIn());
+    if (!ok) return;
+    const perm = Notification.permission;
+    badgeBtn.textContent = perm === 'granted' ? 'Invia notifica di prova'
+      : perm === 'denied' ? 'Notifiche bloccate: come attivarle' : 'Attiva le notifiche';
+  }
+  async function onNotifBtn() {
+    const perm = Notification.permission;
+    if (perm === 'default') return enableNotifications();
+    if (perm === 'denied') {
+      toast('Notifiche bloccate: attivale da Impostazioni di iOS → Notifiche → Mod Hub (o dalle impostazioni del browser)', 'err');
+      return;
+    }
+    if (!(await ensurePushSubscription())) { toast('Iscrizione alle notifiche non riuscita su questo dispositivo', 'err'); return; }
+    try {
+      const r = await api('/push/test', 'POST');
+      toast(r.sent ? 'Notifica inviata: dovrebbe arrivare a breve' : 'Invio non riuscito: ' + JSON.stringify(r.results || r.error || []), r.sent ? 'ok' : 'err');
+    } catch (err) { toast(err.message, 'err'); }
+  }
+
   async function enableNotifications() {
-    try { await Notification.requestPermission(); } catch (_) {}
+    let perm = 'default';
+    try { perm = await Notification.requestPermission(); } catch (_) {}
+    if (perm !== 'granted') {
+      refreshNotifBtn();
+      if (perm === 'denied') toast('Permesso negato: puoi riattivarlo dalle impostazioni del dispositivo', 'err');
+      return;
+    }
     if (await ensurePushSubscription() && typeof toast === 'function') {
       toast('Notifiche attivate', 'ok');
       api('/push/test', 'POST').catch(() => {});
     }
     lastBadge = null;
     updateAppBadge(pendingTotal());
-    badgeBtn.classList.remove('show');
+    refreshNotifBtn();
     const b = $('.notif-hint');
     if (b) b.remove();
   }
-  badgeBtn.addEventListener('click', enableNotifications);
+  badgeBtn.addEventListener('click', onNotifBtn);
 
   // Richiesta esplicita del permesso notifiche (necessario per il badge, soprattutto su iOS):
   // il browser accetta requestPermission solo da un gesto dell'utente → banner con pulsante.
   function maybeShowNotifHint() {
     if (!('Notification' in window) || Notification.permission !== 'default') return;
     if (!('setAppBadge' in navigator) && !pushSupported()) return;
-    badgeBtn.classList.add('show');
+    refreshNotifBtn();
     try { if (localStorage.getItem('mh_notif_hint') === '1') return; } catch (_) {}
     if ($('.notif-hint')) return;
     const el = document.createElement('div');
@@ -333,11 +360,20 @@
         if (nav && getComputedStyle($('#login-screen')).display === 'none') nav.click();
       }
       syncTabs();
-      if (getComputedStyle($('#login-screen')).display === 'none') {
+    }, 400);
+    // Il login si risolve in modo asincrono: aspetta che la dashboard sia davvero
+    // visibile (fino a 30 s) prima di proporre installazione e notifiche.
+    let tries = 0;
+    const waitForLogin = setInterval(() => {
+      const login = $('#login-screen');
+      const shown = login && getComputedStyle(login).display !== 'none';
+      if (!shown && loggedIn()) {
+        clearInterval(waitForLogin);
+        refreshNotifBtn();
         setTimeout(maybeShowIosHint, 2500);
         setTimeout(maybeShowNotifHint, 3500);
         ensurePushSubscription();
-      }
-    }, 400);
+      } else if (++tries > 30) clearInterval(waitForLogin);
+    }, 1000);
   });
 })();
