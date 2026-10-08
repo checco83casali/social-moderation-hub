@@ -41,6 +41,7 @@ class AccessGuardMiddleware implements MiddlewareInterface
         '/appeal',
         '/public/',
         '/privacy',
+        '/pwa/',         // icone dell'app: le chiedono browser e store, non sono riservate
     ];
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface

@@ -13,22 +13,22 @@
   "theme_color": "#0e0f11",
   "categories": ["productivity", "utilities"],
   "icons": [
-    { "src": "/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/assets/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "/pwa/icon/192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/pwa/icon/512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/pwa/icon/maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
     {
       "name": "Coda revisione",
       "short_name": "Coda",
       "url": "/dashboard.html?source=shortcut&screen=queue",
-      "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [{ "src": "/pwa/icon/192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Ricorsi",
       "short_name": "Ricorsi",
       "url": "/dashboard.html?source=shortcut&screen=appeals",
-      "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [{ "src": "/pwa/icon/192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }

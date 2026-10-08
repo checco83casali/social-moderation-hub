@@ -14,6 +14,9 @@ BOZZA_CONSEGNA_LEGALE.pdf
 
 # Runtime logs / error files
 /logs/
+
+# Dati caricati dall'admin (es. icona personalizzata dell'app): mai nel repo, mai toccati dal deploy
+/storage/
 error_log
 
 # Web installer lock (created after setup)

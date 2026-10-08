@@ -7,7 +7,7 @@
 // Strategia: network-first con ripiego sulla cache. Quando sei online ottieni
 // sempre l'ultima versione appena deployata (nessuno sfasamento tra HTML e JS);
 // offline l'app si apre comunque e mostra lo stato "Offline".
-const VERSION = 'mh-v3';
+const VERSION = 'mh-v4';
 const SHELL_CACHE = `${VERSION}-shell`;
 const FONT_CACHE  = `${VERSION}-fonts`;
 
@@ -26,9 +26,7 @@ const SHELL = [
   '/assets/js/gdpr.js',
   '/assets/js/app.js',
   '/assets/js/pwa.js',
-  '/assets/icons/icon-192.png',
-  '/assets/icons/icon-512.png',
-  '/assets/icons/apple-touch-icon.png',
+  '/assets/js/branding.js',
 ];
 
 // Percorsi che il service worker non tocca mai (sempre rete, nessuna cache).

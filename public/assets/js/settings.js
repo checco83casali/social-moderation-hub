@@ -81,6 +81,9 @@ async function loadSettings() {
     if (replyPanel) replyPanel.style.display = isAdmin ? 'block' : 'none';
     if (gdprPanel)  gdprPanel.style.display  = isAdmin ? 'block' : 'none';
     if (gdprPanel && isAdmin) loadGdprAuditLog();
+    const brandingPanel = document.getElementById('branding-panel');
+    if (brandingPanel) brandingPanel.style.display = isAdmin ? 'block' : 'none';
+    if (brandingPanel && isAdmin && typeof loadBranding === 'function') loadBranding();
 
     if (!isAdmin) {
       document.getElementById('settings-save-btn').style.opacity = '.4';

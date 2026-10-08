@@ -11,6 +11,7 @@ use ModerationHub\Controllers\PolicyController;
 use ModerationHub\Controllers\WebhookController;
 use ModerationHub\Controllers\DeployController;
 use ModerationHub\Controllers\GdprController;
+use ModerationHub\Controllers\BrandingController;
 use ModerationHub\Middleware\AuthMiddleware;
 use ModerationHub\Middleware\AccessGuardMiddleware;
 use ModerationHub\Services\OAuthService;
@@ -168,6 +169,9 @@ $app->get('/privacy', function ($request, $response) {
     $response->getBody()->write($html);
     return $response->withHeader('Content-Type', 'text/html; charset=utf-8');
 });
+// Public: icone dell'app (PWA) — personalizzata se caricata, altrimenti predefinita
+$app->get('/pwa/icon/{name}', [BrandingController::class, 'icon']);
+
 // Public: Meta webhook (token-verified on GET, HMAC-signature-verified on POST)
 $app->get('/webhook/meta',  [WebhookController::class, 'verify']);
 $app->post('/webhook/meta', [WebhookController::class, 'receive']);
@@ -253,6 +257,11 @@ $app->group('/api', function ($group) {
     $group->get('/gdpr/export/{id}',           [GdprController::class, 'export']);
     $group->post('/gdpr/anonymise/{id}',       [GdprController::class, 'anonymise']);
     $group->get('/gdpr/audit',                 [GdprController::class, 'auditLog']);
+
+    // Icona dell'app (PWA): stato (tutti), upload/ripristino (admin)
+    $group->get('/branding',                   [BrandingController::class, 'status']);
+    $group->post('/branding/icon',             [BrandingController::class, 'upload']);
+    $group->delete('/branding/icon',           [BrandingController::class, 'reset']);
 
     // Approved comments
     $group->get('/comments/approved',          [ModerationController::class, 'approvedComments']);
