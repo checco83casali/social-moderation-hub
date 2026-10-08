@@ -181,13 +181,52 @@
       if (tabEl) tabEl.setAttribute('aria-label', hidden ? t.label : `${t.label}, ${n} ${t.badgeLabel || 'in attesa'}`);
     });
     const login = $('#login-screen');
-    tabbar.hidden = !!login && getComputedStyle(login).display !== 'none';
+    const loggedOut = !!login && getComputedStyle(login).display !== 'none';
+    tabbar.hidden = loggedOut;
+    // Badge sull'icona: numero in coda; azzerato se sei disconnesso.
+    const q = parseInt(((document.getElementById('nav-queue-count') || {}).textContent || '').trim(), 10);
+    if (typeof window.updateAppBadge === 'function') window.updateAppBadge(loggedOut ? 0 : (isNaN(q) ? 0 : q));
   }
   const syncObserver = new MutationObserver(syncTabs);
   $$('.nav-item').forEach(n => syncObserver.observe(n, { attributes: true, childList: true, subtree: true, characterData: true }));
   const loginEl = $('#login-screen');
   if (loginEl) syncObserver.observe(loginEl, { attributes: true, attributeFilter: ['style', 'class'] });
   syncTabs();
+
+  // ── Badge sull'icona dell'app (numero di commenti in coda) ─────────
+  // Si aggiorna con i contatori: finché l'app è aperta o in background recente.
+  // Con l'app chiusa il numero resta all'ultimo valore (servirebbero le notifiche push).
+  // Su iPhone/iPad il badge richiede il permesso notifiche → pulsante opt-in.
+  const badgeBtn = document.createElement('button');
+  badgeBtn.className = 'install-btn';
+  badgeBtn.type = 'button';
+  badgeBtn.textContent = 'Attiva il badge sull\'icona';
+  if (footer) footer.insertBefore(badgeBtn, footer.firstChild);
+  let lastBadge = null;
+
+  async function updateAppBadge(n) {
+    if (!('setAppBadge' in navigator)) return;
+    n = Number(n) || 0;
+    if (n === lastBadge) return;
+    try {
+      if (n > 0) await navigator.setAppBadge(n); else await navigator.clearAppBadge();
+      lastBadge = n;
+      badgeBtn.classList.remove('show');
+    } catch (err) {
+      // iOS: serve il permesso notifiche prima di poter mostrare il badge.
+      if (err && err.name === 'NotAllowedError' && 'Notification' in window && Notification.permission === 'default') {
+        badgeBtn.classList.add('show');
+      }
+    }
+  }
+  window.updateAppBadge = updateAppBadge;
+  badgeBtn.addEventListener('click', async () => {
+    try { await Notification.requestPermission(); } catch (_) {}
+    lastBadge = null;
+    const n = parseInt(($('#nav-queue-count') || {}).textContent, 10);
+    updateAppBadge(n);
+    badgeBtn.classList.remove('show');
+  });
 
   // ── Collegamenti rapidi (?screen=queue|appeals|…) e avvio ──────────
   const params = new URLSearchParams(location.search);
