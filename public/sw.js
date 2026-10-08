@@ -7,7 +7,7 @@
 // Strategia: network-first con ripiego sulla cache. Quando sei online ottieni
 // sempre l'ultima versione appena deployata (nessuno sfasamento tra HTML e JS);
 // offline l'app si apre comunque e mostra lo stato "Offline".
-const VERSION = 'mh-v5';
+const VERSION = 'mh-v6';
 const SHELL_CACHE = `${VERSION}-shell`;
 const FONT_CACHE  = `${VERSION}-fonts`;
 

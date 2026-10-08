@@ -76,6 +76,10 @@ button, .btn, .nav-item, .q-item, .chip-btn, .panel-action { touch-action: manip
     padding: env(safe-area-inset-top) 16px 0;
   }
   #mobile-menu-btn { display: none !important; }
+  /* Indicatori Live / DEV MODE visibili anche su telefono (app.css li nasconde) */
+  .topbar-badge { display: inline-block; flex-shrink: 0; margin-left: 6px; white-space: nowrap; }
+  #topbar { gap: 4px; }
+  .topbar-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #content { padding: 14px 14px calc(88px + env(safe-area-inset-bottom)); }
 
   /* Statistiche: striscia scorrevole invece di una griglia alta */
