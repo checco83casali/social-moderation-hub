@@ -87,8 +87,11 @@ CREATE TABLE IF NOT EXISTS `policies` (
 --                    → NOT stored here. Hardcoded in ClaudeService::TECHNICAL_PROMPT_BLOCK
 --                      and appended at call time by composeSystemPrompt().
 -- ─────────────────────────────────────────────────────────────────────────────
-INSERT INTO `policies` (`name`, `description`, `moderation_prompt`, `created_by`) VALUES
-('Default Policy', 'Standard community moderation policy with scam and threat detection',
+-- Idempotente: inserisce la policy di default SOLO se la tabella è vuota. Con
+-- il vecchio `VALUES ... ON DUPLICATE KEY UPDATE id=id` (nessuna chiave unica oltre
+-- all'id) ogni riesecuzione aggiungeva una "Default Policy" duplicata e attiva.
+INSERT INTO `policies` (`name`, `description`, `moderation_prompt`, `created_by`)
+SELECT 'Default Policy', 'Standard community moderation policy with scam and threat detection',
 
 -- ════════════════════════════════════════════════════════════════════
 -- MODERATION_PROMPT — operator-editable section starts here
@@ -221,7 +224,9 @@ Potentially illegal content             | Human (reportable) — auto-hidden imm
 -- are appended automatically at runtime by ClaudeService::composeSystemPrompt()
 -- and are NOT stored in this column.
 -- ════════════════════════════════════════════════════════════════════',
-1) ON DUPLICATE KEY UPDATE `id`=`id`;
+1
+FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM `policies`);
 
 -- ------------------------------------------------------------
 -- Social Users (Facebook commenters being tracked)

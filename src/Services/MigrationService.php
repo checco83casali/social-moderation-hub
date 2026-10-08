@@ -11,14 +11,14 @@ use Illuminate\Database\Capsule\Manager as DB;
  * chiamato da DeployController::pull() dopo ogni `git pull` riuscito.
  *
  * Traccia le migrazioni applicate in `schema_migrations` (auto-creata al
- * primo uso). 001_initial_schema.sql è idempotente (CREATE TABLE IF NOT
- * EXISTS + ON DUPLICATE KEY UPDATE / INSERT IGNORE sui seed) e viene sempre
- * eseguita senza rischio, anche se già applicata in precedenza. 002 e 003
- * sono invece ALTER TABLE non idempotenti: prima di eseguirle, il runner
- * verifica se la colonna che introducono esiste già (perché applicata a mano
- * in passato, o perché 001 la include ormai di serie) e in tal caso le marca
- * come applicate senza ri-eseguirle — altrimenti l'ALTER fallirebbe su
- * colonna duplicata.
+ * primo uso). Ogni file viene eseguito UNA sola volta: quelli già registrati
+ * vengono saltati. Anche la 001 (schema + seed) segue questa regola: su un
+ * database già in produzione, dove il runner non aveva ancora traccia di
+ * nulla, rieseguirla farebbe ricreare i seed (es. una policy di default
+ * duplicata e attiva). Per questo 001, 002 e 003 hanno un marcatore: prima di
+ * eseguirle il runner verifica se la tabella/colonna che introducono esiste
+ * già (applicata a mano o da install.php) e in tal caso le marca come
+ * applicate senza ri-eseguirle.
  *
  * Da 004 in poi ogni nuovo file .sql viene eseguito automaticamente una sola
  * volta, in ordine alfabetico, alla prima occasione utile.
@@ -33,6 +33,7 @@ class MigrationService
 
     /** Migrazioni storiche precedenti al runner + [tabella, colonna] che ne prova l'esito. */
     private const HISTORICAL_MARKERS = [
+        '001_initial_schema.sql' => ['policies', 'moderation_prompt'],
         '002_whataboutism.sql'  => ['moderation_log', 'ai_whataboutism_suggested'],
         '003_temp_password.sql' => ['admin_users', 'must_change_password'],
     ];
