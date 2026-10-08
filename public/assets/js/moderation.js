@@ -1,7 +1,7 @@
-// Badge per i commenti ricevuti con dev_mode attivo (nessuna azione reale su Facebook).
+// Badge "TEST" per i commenti ricevuti con dev_mode attivo (nessuna azione reale su Facebook).
 function devChip(x) {
   return x && Number(x.is_dev) === 1
-    ? '<span class="chip" style="background:rgba(247,178,68,.15);color:#f7b244;border:1px solid rgba(247,178,68,.3);font-weight:600;cursor:default" title="Commento gestito in dev mode: nessuna azione reale eseguita su Facebook">⚠ DEV MODE</span>'
+    ? '<span class="chip" style="background:rgba(247,178,68,.15);color:#f7b244;border:1px solid rgba(247,178,68,.3);font-weight:600;cursor:default" title="Commento gestito in dev mode: nessuna azione reale eseguita su Facebook">⚠ TEST</span>'
     : '';
 }
 
