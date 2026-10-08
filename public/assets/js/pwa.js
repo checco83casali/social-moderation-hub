@@ -220,13 +220,41 @@
     }
   }
   window.updateAppBadge = updateAppBadge;
-  badgeBtn.addEventListener('click', async () => {
+  async function enableNotifications() {
     try { await Notification.requestPermission(); } catch (_) {}
     lastBadge = null;
     const n = parseInt(($('#nav-queue-count') || {}).textContent, 10);
     updateAppBadge(n);
     badgeBtn.classList.remove('show');
-  });
+    const b = $('.notif-hint');
+    if (b) b.remove();
+  }
+  badgeBtn.addEventListener('click', enableNotifications);
+
+  // Richiesta esplicita del permesso notifiche (necessario per il badge, soprattutto su iOS):
+  // il browser accetta requestPermission solo da un gesto dell'utente → banner con pulsante.
+  function maybeShowNotifHint() {
+    if (!('Notification' in window) || Notification.permission !== 'default') return;
+    if (!('setAppBadge' in navigator)) return;
+    badgeBtn.classList.add('show');
+    try { if (localStorage.getItem('mh_notif_hint') === '1') return; } catch (_) {}
+    if ($('.notif-hint')) return;
+    const el = document.createElement('div');
+    el.className = 'ios-hint notif-hint show';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-label', 'Attiva le notifiche');
+    el.innerHTML =
+      '<div style="flex:1;color:var(--muted)"><strong>Attiva le notifiche</strong><br>' +
+      'Serve per mostrare sull\'icona il numero di commenti da moderare.</div>' +
+      '<button class="btn btn-primary notif-hint-go" type="button">Attiva</button>' +
+      '<button class="ios-hint-x" type="button" aria-label="Chiudi">✕</button>';
+    $('.notif-hint-go', el).addEventListener('click', enableNotifications);
+    $('.ios-hint-x', el).addEventListener('click', () => {
+      try { localStorage.setItem('mh_notif_hint', '1'); } catch (_) {}
+      el.remove();
+    });
+    document.body.appendChild(el);
+  }
 
   // ── Collegamenti rapidi (?screen=queue|appeals|…) e avvio ──────────
   const params = new URLSearchParams(location.search);
@@ -247,7 +275,10 @@
         if (nav && getComputedStyle($('#login-screen')).display === 'none') nav.click();
       }
       syncTabs();
-      if (getComputedStyle($('#login-screen')).display === 'none') setTimeout(maybeShowIosHint, 2500);
+      if (getComputedStyle($('#login-screen')).display === 'none') {
+        setTimeout(maybeShowIosHint, 2500);
+        setTimeout(maybeShowNotifHint, 3500);
+      }
     }, 400);
   });
 })();
