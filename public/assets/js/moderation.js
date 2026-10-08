@@ -1,3 +1,10 @@
+// Badge per i commenti ricevuti con dev_mode attivo (nessuna azione reale su Facebook).
+function devChip(x) {
+  return x && Number(x.is_dev) === 1
+    ? '<span class="chip chip-info" title="Commento gestito in dev mode: nessuna azione reale eseguita su Facebook">✓ DEV</span>'
+    : '';
+}
+
 // ── Stats (quick bar in queue screen) ────────────────────────────
 async function loadStats() {
   try {
@@ -160,7 +167,7 @@ async function loadQueue() {
         <div class="q-avatar">U</div>
         <div class="q-body">
           <div class="q-header">
-            <span class="q-name">Utente #${item.social_user_id}</span>
+            <span class="q-name">Utente #${item.social_user_id}</span>${devChip(item)}
             ${item.ai_severity==='high'   ? '<span class="chip chip-danger">alto rischio</span>' : ''}
             ${item.ai_severity==='medium' ? '<span class="chip chip-warn">medio</span>' : ''}
             ${queueUserChips(item)}
@@ -213,7 +220,7 @@ async function loadReportableQueue() {
           <div class="bc-header">
             <div class="ban-avatar" style="width:26px;height:26px;font-size:10px;background:var(--danger)">U</div>
             <span class="bc-user">Utente #${item.social_user_id}</span>
-            <span class="bc-page">${esc(item.page_name)}</span>
+            <span class="bc-page">${esc(item.page_name)}</span>${devChip(item)}
             ${item.violation_count > 0 ? `<span class="chip chip-danger">${item.violation_count} violaz.</span>` : ''}
             <span class="bc-time">${relTime(item.received_at)}</span>
             ${fbLink ? `<a href="${fbLink}" target="_blank" rel="noopener" class="btn-sm" style="margin-left:auto;text-decoration:none" title="Vedi su Facebook">🔗</a>` : ''}
@@ -310,7 +317,7 @@ async function loadReportableArchive() {
         <div class="bc-item">
           <div class="bc-header">
             <span class="bc-user">${esc(c.display_name||'Anonimo')}</span>
-            <span class="bc-page">${esc(c.page_name)}</span>
+            <span class="bc-page">${esc(c.page_name)}</span>${devChip(c)}
             <span class="chip chip-danger">⚠️ segnalato alle autorità</span>
             <span class="bc-time">${relTime(c.processed_at||c.received_at)}</span>
           </div>
@@ -866,7 +873,7 @@ async function loadBannedComments() {
           <div class="bc-header">
             <div class="ban-avatar" style="width:26px;height:26px;font-size:10px">${(c.display_name||'?')[0].toUpperCase()}</div>
             <span class="bc-user">${esc(c.display_name||'Anonimo')}</span>
-            <span class="bc-page">${esc(c.page_name)}</span>
+            <span class="bc-page">${esc(c.page_name)}</span>${devChip(c)}
             <span class="bc-time">${relTime(c.processed_at||c.received_at)}</span>
             ${fbLink ? `<a href="${fbLink}" target="_blank" rel="noopener" class="btn-sm" style="margin-left:auto;text-decoration:none" title="Apri su Facebook">🔗 Vedi su Facebook</a>` : ''}
           </div>
@@ -942,7 +949,7 @@ async function loadApprovedComments() {
           <div class="bc-header">
             <div class="ban-avatar" style="width:26px;height:26px;font-size:10px;background:var(--success)">${(c.display_name||'?')[0].toUpperCase()}</div>
             <span class="bc-user">${esc(c.display_name||'Anonimo')}</span>
-            <span class="bc-page">${esc(c.page_name)}</span>
+            <span class="bc-page">${esc(c.page_name)}</span>${devChip(c)}
             <span class="bc-time">${relTime(c.processed_at||c.received_at)}</span>
             ${fbLink ? `<a href="${fbLink}" target="_blank" rel="noopener" class="btn-sm" style="margin-left:auto;text-decoration:none" title="Apri su Facebook">🔗 Vedi su Facebook</a>` : ''}
           </div>
@@ -1194,7 +1201,7 @@ async function loadHiddenComments() {
           <div class="bc-header">
             <div class="ban-avatar" style="width:26px;height:26px;font-size:10px;background:#f7a244">${(c.display_name||'?')[0].toUpperCase()}</div>
             <span class="bc-user">${esc(c.display_name||'Anonimo')}</span>
-            <span class="bc-page">${esc(c.page_name)}</span>
+            <span class="bc-page">${esc(c.page_name)}</span>${devChip(c)}
             <span class="bc-time">${relTime(c.processed_at||c.received_at)}</span>
             ${reportBadge} ${appealBadge} ${deciderBadge}
             ${fbLink ? `<a href="${fbLink}" target="_blank" rel="noopener" class="btn-sm" style="margin-left:auto;text-decoration:none" title="Vedi su Facebook">🔗</a>` : ''}

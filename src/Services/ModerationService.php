@@ -28,7 +28,7 @@ class ModerationService
      * Returns true when dev_mode is enabled in app_settings.
      * In dev mode the AI pipeline runs normally but no real actions
      * are executed: no Facebook deletes, no violation increments, no bans.
-     * Comments are tagged with status 'dev_flagged' instead of 'removed'.
+     * Comments get the normal status (hidden, approved...) plus is_dev = 1, shown with a DEV badge.
      */
     // ──────────────────────────────────────────────────────────────────
     // Ban notification helpers
@@ -280,6 +280,7 @@ class ModerationService
             'content'             => $webhookComment['message'] ?? '',
             'content_hash'        => $commentHash,
             'status'              => 'pending',
+            'is_dev'              => $this->isDevMode() ? 1 : 0,
             'received_at'         => date('Y-m-d H:i:s'),
         ]);
 
@@ -984,7 +985,8 @@ class ModerationService
         if ($devMode) {
             $this->logger?->info("[DEV MODE] Would hide comment #{$commentId}");
             DB::table('comments')->where('id', $commentId)->update([
-                'status'       => 'dev_flagged',
+                'status'       => $reportable ? 'hidden_reportable' : 'hidden',
+                'is_dev'       => 1,
                 'processed_at' => date('Y-m-d H:i:s'),
             ]);
             return ['action' => 'dev_flagged_hide', 'comment_id' => $commentId, 'dev_mode' => true];

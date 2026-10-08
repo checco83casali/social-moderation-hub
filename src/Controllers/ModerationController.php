@@ -50,7 +50,7 @@ class ModerationController
             })
             ->where('c.status', 'escalated_human')
             ->select([
-                'c.id', 'c.content', 'c.received_at', 'c.platform_comment_id', 'c.status',
+                'c.id', 'c.content', 'c.received_at', 'c.platform_comment_id', 'c.status', 'c.is_dev',
                 'su.id as social_user_id', 'su.violation_count', 'su.ban_status',
                 'cp.page_name', 'cp.page_id as facebook_page_id',
                 'ml.stage as ai_stage', 'ml.ai_decision', 'ml.ai_confidence',
@@ -109,7 +109,7 @@ class ModerationController
             })
             ->where('c.status', 'escalated_reportable')
             ->select([
-                'c.id', 'c.content', 'c.received_at', 'c.platform_comment_id', 'c.status',
+                'c.id', 'c.content', 'c.received_at', 'c.platform_comment_id', 'c.status', 'c.is_dev',
                 'su.id as social_user_id', 'su.violation_count', 'su.ban_status',
                 'cp.page_name', 'cp.page_id as facebook_page_id',
                 'ml.stage as ai_stage', 'ml.ai_decision', 'ml.ai_confidence',
@@ -160,7 +160,7 @@ class ModerationController
             ->leftJoin('admin_users as au', 'au.id', '=', 'ml.human_user_id')
             ->where('c.status', 'reported_legal')
             ->select([
-                'c.id', 'c.content', 'c.received_at', 'c.processed_at', 'c.platform_comment_id',
+                'c.id', 'c.content', 'c.received_at', 'c.processed_at', 'c.platform_comment_id', 'c.is_dev',
                 'su.display_name', 'su.violation_count',
                 'cp.page_name',
                 'ml.ai_categories', 'ml.ai_severity', 'ml.human_note', 'ml.human_decided_at',
@@ -255,7 +255,7 @@ class ModerationController
             })
             ->where('c.id', $commentId)
             ->select([
-                'c.id', 'c.content', 'c.received_at', 'c.processed_at',
+                'c.id', 'c.content', 'c.received_at', 'c.processed_at', 'c.is_dev',
                 'c.platform_comment_id', 'c.platform_post_id',
                 'su.display_name', 'su.platform_user_id', 'su.violation_count', 'su.ban_status',
                 'cp.page_name', 'cp.page_id as facebook_page_id',
@@ -547,7 +547,7 @@ class ModerationController
 
         $items = $query
             ->select([
-                'c.id', 'c.content', 'c.received_at', 'c.processed_at', 'c.status',
+                'c.id', 'c.content', 'c.received_at', 'c.processed_at', 'c.status', 'c.is_dev',
                 'c.platform_comment_id', 'c.platform_post_id',
                 'su.id as social_user_id', 'su.display_name', 'su.violation_count',
                 'cp.page_name', 'cp.page_id as facebook_page_id',
@@ -609,12 +609,13 @@ class ModerationController
             // faceva fallire la query (Data truncated). Approvare non tocca Facebook,
             // quindi 'approved' è lo stato reale anche in dev mode.
             $status = match($decision) {
-                'hide'        => 'dev_flagged',
+                'hide'        => 'hidden',
                 'keep_hidden' => 'hidden_reportable',
                 default       => 'approved',
             };
             DB::table('comments')->where('id', (int) $args['id'])->update([
                 'status'       => $status,
+                'is_dev'       => 1,
                 'processed_at' => date('Y-m-d H:i:s'),
             ]);
             return $this->json($response, [
@@ -1029,7 +1030,7 @@ class ModerationController
 
         $items = $query
             ->select([
-                'c.id', 'c.content', 'c.received_at', 'c.processed_at',
+                'c.id', 'c.content', 'c.received_at', 'c.processed_at', 'c.is_dev',
                 'c.platform_comment_id', 'c.platform_post_id',
                 'su.id as social_user_id', 'su.display_name', 'su.violation_count', 'su.ban_status',
                 'cp.page_name', 'cp.page_id as facebook_page_id',
@@ -1428,7 +1429,7 @@ class ModerationController
 
         $items = $query
             ->select([
-                'c.id', 'c.content', 'c.received_at', 'c.processed_at',
+                'c.id', 'c.content', 'c.received_at', 'c.processed_at', 'c.is_dev',
                 'c.platform_comment_id', 'c.platform_post_id',
                 'su.id as social_user_id', 'su.display_name', 'su.violation_count',
                 'cp.page_name', 'cp.page_id as facebook_page_id',
