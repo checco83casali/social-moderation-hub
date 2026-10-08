@@ -108,9 +108,9 @@ async function initApp() {
   loadQueue();
   loadStats();
   setInterval(() => {
-    if (document.getElementById('screen-queue').classList.contains('active')) {
-      loadQueue(); loadStats();
-    }
+    // I contatori (badge Ricorsi / Segnalazioni) si aggiornano da qualunque schermata.
+    loadStats();
+    if (document.getElementById('screen-queue').classList.contains('active')) loadQueue();
   }, 30000);
 }
 

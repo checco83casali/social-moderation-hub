@@ -85,9 +85,9 @@
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible' || !navigator.onLine) return;
     const q = $('#screen-queue');
-    if (q && q.classList.contains('active') && typeof loadQueue === 'function' && getComputedStyle($('#login-screen')).display === 'none') {
-      loadQueue(); loadStats();
-    }
+    if (typeof loadStats !== 'function' || getComputedStyle($('#login-screen')).display !== 'none') return;
+    loadStats();
+    if (q && q.classList.contains('active') && typeof loadQueue === 'function') loadQueue();
   });
 
   // ── Dettaglio commento a tutto schermo (mobile/tablet) ─────────────
@@ -127,13 +127,14 @@
 
   // ── Barra di navigazione in basso ─────────────────────────────────
   const TABS = [
-    { screen: 'queue',      label: 'Coda',         badge: 'nav-queue-count',
+    { screen: 'queue',           label: 'Coda',    badge: 'nav-queue-count',
       icon: '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>' },
-    { screen: 'reportable', label: 'Segnalazioni', badge: 'nav-reportable-count',
-      icon: '<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>' },
-    { screen: 'appeals',    label: 'Ricorsi',      badge: 'nav-appeals-count',
+    { screen: 'banned-comments', label: 'Nascosti', badge: null,
+      icon: '<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>' },
+    { screen: 'appeals',         label: 'Ricorsi', badge: 'nav-appeals-count',
       icon: '<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>' },
-    { screen: null,         label: 'Menu',         badge: null,
+    // Menu: il badge conta le segnalazioni pericolose in attesa (la voce "Segnalazioni" è nel menu).
+    { screen: null,              label: 'Menu',    badge: 'nav-reportable-count', badgeLabel: 'segnalazioni in attesa',
       icon: '<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>' },
   ];
   const tabbar = document.createElement('nav');
@@ -176,6 +177,8 @@
       const hidden = !n || n === '0' || getComputedStyle(src).display === 'none';
       dst.hidden = hidden;
       dst.textContent = n;
+      const tabEl = dst.closest('.tab');
+      if (tabEl) tabEl.setAttribute('aria-label', hidden ? t.label : `${t.label}, ${n} ${t.badgeLabel || 'in attesa'}`);
     });
     const login = $('#login-screen');
     tabbar.hidden = !!login && getComputedStyle(login).display !== 'none';
