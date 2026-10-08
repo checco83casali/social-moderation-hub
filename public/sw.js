@@ -7,7 +7,7 @@
 // Strategia: network-first con ripiego sulla cache. Quando sei online ottieni
 // sempre l'ultima versione appena deployata (nessuno sfasamento tra HTML e JS);
 // offline l'app si apre comunque e mostra lo stato "Offline".
-const VERSION = 'mh-v2';
+const VERSION = 'mh-v3';
 const SHELL_CACHE = `${VERSION}-shell`;
 const FONT_CACHE  = `${VERSION}-fonts`;
 
@@ -68,7 +68,10 @@ function withTimeout(promise, ms) {
 async function networkFirst(request, cacheName, timeoutMs, cacheKey) {
   const cache = await caches.open(cacheName);
   try {
-    const res = await withTimeout(fetch(request), timeoutMs);
+    // cache:'no-cache' = riconferma sempre col server (richiesta condizionale, 304 se
+    // invariato): senza, la cache HTTP del browser può servire per ore un CSS/JS vecchio
+    // dopo un deploy (euristica sul Last-Modified).
+    const res = await withTimeout(fetch(request.url, { cache: 'no-cache', credentials: 'same-origin' }), timeoutMs);
     if (res && res.ok && res.type === 'basic') cache.put(cacheKey || request, res.clone());
     return res;
   } catch (_) {

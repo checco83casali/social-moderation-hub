@@ -117,6 +117,32 @@ button, .btn, .nav-item, .q-item, .chip-btn, .panel-action { touch-action: manip
   .sheet-actions { flex-direction: column-reverse; }
   .sheet-actions .btn-primary, .sheet-actions .btn-secondary { width: 100%; min-height: 48px; justify-content: center; }
 
+  /* Menu laterale sopra la barra in basso (altrimenti il profilo utente in fondo resta coperto) */
+  #sidebar { z-index: 210; height: 100vh; height: 100dvh; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+  #sidebar-overlay { z-index: 200; }
+  #sidebar nav { flex: 1 0 auto; }
+  #sidebar .sidebar-footer { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+  .user-dropdown { z-index: 220; }
+
+  /* Niente scorrimento orizzontale della pagina: le parti larghe scorrono da sole */
+  #content { overflow-x: hidden; }
+  #screen-settings div[style*="grid-template-columns"],
+  #screen-policy   div[style*="grid-template-columns"],
+  #screen-pages    div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+  #screen-settings div[style*="max-width"] { max-width: 100% !important; }
+  /* Schede delle impostazioni: striscia scorrevole su una riga */
+  #screen-settings > div:first-child {
+    flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    margin-left: -14px; margin-right: -14px; padding: 0 14px;
+  }
+  #screen-settings > div:first-child::-webkit-scrollbar { display: none; }
+  #screen-settings > div:first-child > button { flex: 0 0 auto; white-space: nowrap; min-height: 44px; }
+  .form-group, .form-input, .form-textarea, .form-select { max-width: 100%; }
+  .form-input, .form-textarea, .form-select { width: 100%; box-sizing: border-box; }
+  .filter-bar { flex-wrap: wrap; gap: 6px; }
+  .filter-btn { min-height: 40px; }
+  table.ban-table { display: block; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+
   /* Barra di navigazione in basso */
   #tabbar {
     display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 120;

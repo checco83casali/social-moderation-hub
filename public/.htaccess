@@ -28,6 +28,11 @@ RewriteRule ^ index.php [QSA,L]
 # cache HTTP vecchia), altrimenti gli aggiornamenti dell'app non arrivano.
 AddType application/manifest+json .webmanifest
 <IfModule mod_headers.c>
+  # Asset dell'app: il browser li riconferma sempre (ETag → 304 se invariati) invece di
+  # tenerli in cache "a stima": così un deploy arriva a tutti subito.
+  <FilesMatch "\.(css|js|html|webmanifest)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
   <FilesMatch "^(sw\.js|manifest\.webmanifest|offline\.html)$">
     Header set Cache-Control "no-cache, must-revalidate"
   </FilesMatch>
