@@ -84,6 +84,9 @@ async function loadSettings() {
     const brandingPanel = document.getElementById('branding-panel');
     if (brandingPanel) brandingPanel.style.display = isAdmin ? 'block' : 'none';
     if (brandingPanel && isAdmin && typeof loadBranding === 'function') loadBranding();
+    const whdPanel = document.getElementById('webhook-debug-panel');
+    if (whdPanel) whdPanel.style.display = isAdmin ? 'block' : 'none';
+    if (whdPanel && isAdmin && typeof loadWebhookDebug === 'function') loadWebhookDebug();
 
     if (!isAdmin) {
       document.getElementById('settings-save-btn').style.opacity = '.4';

@@ -6,6 +6,7 @@ namespace ModerationHub\Controllers;
 
 use ModerationHub\Services\MetaGraphService;
 use ModerationHub\Services\ModerationService;
+use ModerationHub\Services\WebhookDebug;
 use Illuminate\Database\Capsule\Manager as DB;
 use Monolog\Logger;
 use Psr\Http\Message\ResponseInterface;
@@ -46,14 +47,26 @@ class WebhookController
         $signature = $request->getHeaderLine('X-Hub-Signature-256');
 
         // Validate signature
+        $debug = WebhookDebug::isActive();
+
         if (!$this->meta->validateSignature($rawBody, $signature)) {
             $this->logger?->warning('Webhook: invalid signature');
+            if ($debug) {
+                $this->storeDebugEvent($request, $rawBody, 'invalid_signature', [
+                    'result' => 'rifiutato: firma X-Hub-Signature-256 non valida o assente',
+                ]);
+            }
             $response->getBody()->write(json_encode(['error' => 'invalid signature']));
             return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
         }
 
         $payload = json_decode($rawBody, true);
         if (!is_array($payload)) {
+            if ($debug) {
+                $this->storeDebugEvent($request, $rawBody, 'invalid_json', [
+                    'result' => 'rifiutato: il corpo non è JSON valido',
+                ]);
+            }
             return $response->withStatus(400);
         }
 
@@ -68,6 +81,7 @@ class WebhookController
 
         // Extract and moderate comments
         $comments = $this->meta->parseWebhookComments($payload);
+        $trace    = [];
 
         foreach ($comments as $comment) {
             $page = DB::table('connected_pages')
@@ -76,24 +90,63 @@ class WebhookController
                 ->first();
 
             if (!$page) {
+                $trace[] = ['comment_id' => $comment['id'], 'page_id' => $comment['page_id'], 'result' => 'ignorato: pagina non collegata o non attiva'];
                 continue;
             }
 
             try {
                 $result = $this->moderation->processWebhookComment($comment, (array) $page);
                 $this->logger?->info("Moderated comment", $result);
+                $trace[] = ['comment_id' => $comment['id'], 'page_id' => $comment['page_id'], 'result' => $result];
             } catch (\Throwable $e) {
                 $this->logger?->error("Moderation failed: " . $e->getMessage());
+                $trace[] = ['comment_id' => $comment['id'], 'page_id' => $comment['page_id'], 'result' => 'errore: ' . $e->getMessage()];
                 DB::table('webhook_events')->where('id', $eventId)->update([
                     'error' => $e->getMessage(),
                 ]);
             }
         }
 
-        DB::table('webhook_events')->where('id', $eventId)->update(['processed' => 1]);
+        $update = ['processed' => 1];
+        if ($debug) {
+            $update['debug'] = $this->debugJson($request, [
+                'comments_parsed' => count($comments),
+                'comments'        => $trace,
+                'result'          => $comments ? 'elaborato' : 'nessun commento da moderare in questo evento (campo/tipo/verbo non gestito o commento della pagina stessa)',
+            ]);
+        }
+        DB::table('webhook_events')->where('id', $eventId)->update($update);
 
         // Meta requires a 200 response quickly
         $response->getBody()->write(json_encode(['ok' => true]));
         return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+    }
+
+    // ── Debug helpers ──────────────────────────────────────────────
+    /** @param array<string, mixed> $extra */
+    private function storeDebugEvent(ServerRequestInterface $request, string $rawBody, string $type, array $extra): void
+    {
+        try {
+            DB::table('webhook_events')->insert([
+                'page_id'     => null,
+                'event_type'  => $type,
+                'payload'     => substr($rawBody, 0, WebhookDebug::MAX_PAYLOAD),
+                'processed'   => 0,
+                'debug'       => $this->debugJson($request, $extra),
+                'received_at' => date('Y-m-d H:i:s'),
+            ]);
+        } catch (\Throwable $e) {
+            $this->logger?->error('Webhook debug store failed: ' . $e->getMessage());
+        }
+    }
+
+    /** @param array<string, mixed> $extra */
+    private function debugJson(ServerRequestInterface $request, array $extra): string
+    {
+        $server = $request->getServerParams();
+        return (string) json_encode([
+            'ip'      => $server['REMOTE_ADDR'] ?? null,
+            'headers' => WebhookDebug::safeHeaders($request->getHeaders()),
+        ] + $extra, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
     }
 }

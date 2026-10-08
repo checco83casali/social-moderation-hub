@@ -902,6 +902,26 @@
           </div>
         </div>
 
+        <!-- Debug webhook Facebook (admin only) -->
+        <div id="webhook-debug-panel" style="display:none;margin-top:20px;max-width:900px">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Debug webhook Facebook</div></div>
+            <div class="policy-form">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:6px">
+                <input type="checkbox" id="whd-toggle" style="width:18px;height:18px;accent-color:var(--warn);cursor:pointer">
+                <span style="font-size:13px;font-weight:500" id="whd-label">Debug disattivo</span>
+              </label>
+              <p style="font-size:11.5px;color:var(--muted);line-height:1.5;margin:0 0 14px">Con il debug attivo vengono registrati anche header, IP ed esito dell'elaborazione, e gli eventi con firma non valida. Si spegne da solo dopo 2 ore. I payload contengono dati personali: disattivalo e svuota il log appena finito.</p>
+              <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+                <button type="button" class="btn-secondary" id="whd-refresh">Aggiorna</button>
+                <button type="button" class="btn-secondary" id="whd-clear">Svuota log eventi</button>
+              </div>
+              <div id="whd-msg" role="status" style="display:none;font-size:12px;margin-bottom:10px"></div>
+              <div id="whd-list" style="font-size:12px"></div>
+            </div>
+          </div>
+        </div>
+
       </div><!-- /stab-sistema -->
 
       <!-- ══ TAB: Licenza ══════════════════════════════════════════════ -->
@@ -1359,6 +1379,7 @@
 <script src="assets/js/settings.js"></script>
 <script src="assets/js/gdpr.js"></script>
 <script src="assets/js/branding.js"></script>
+<script src="assets/js/webhook-debug.js"></script>
 <script src="assets/js/app.js"></script>
 <script src="assets/js/pwa.js"></script>
 

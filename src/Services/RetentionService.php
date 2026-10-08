@@ -244,6 +244,7 @@ class RetentionService
             ->update([
                 'payload' => '{}',
                 'error'   => null,
+                'debug'   => null, // IP, header e esito del debug webhook
             ]);
     }
 

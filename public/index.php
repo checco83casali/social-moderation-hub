@@ -12,6 +12,7 @@ use ModerationHub\Controllers\WebhookController;
 use ModerationHub\Controllers\DeployController;
 use ModerationHub\Controllers\GdprController;
 use ModerationHub\Controllers\BrandingController;
+use ModerationHub\Controllers\WebhookDebugController;
 use ModerationHub\Middleware\AuthMiddleware;
 use ModerationHub\Middleware\AccessGuardMiddleware;
 use ModerationHub\Services\OAuthService;
@@ -264,6 +265,11 @@ $app->group('/api', function ($group) {
     $group->get('/branding',                   [BrandingController::class, 'status']);
     $group->post('/branding/icon',             [BrandingController::class, 'upload']);
     $group->delete('/branding/icon',           [BrandingController::class, 'reset']);
+
+    // Debug webhook Meta (admin): stato + ultimi eventi, attiva/disattiva, svuota
+    $group->get('/webhook-debug',              [WebhookDebugController::class, 'status']);
+    $group->post('/webhook-debug',             [WebhookDebugController::class, 'toggle']);
+    $group->delete('/webhook-debug',           [WebhookDebugController::class, 'clear']);
 
     // Approved comments
     $group->get('/comments/approved',          [ModerationController::class, 'approvedComments']);
