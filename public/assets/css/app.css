@@ -792,3 +792,43 @@ body.sidebar-open #mobile-menu-btn { display: none !important; }
   border: 1px solid rgba(79,142,247,.25);
   margin: 2px 3px 2px 0;
 }
+/* ── Debug webhook (Impostazioni → Sistema) ───────────────────────── */
+.whd-switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; font-weight: 500; }
+.whd-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.whd-track { width: 38px; height: 22px; border-radius: 22px; background: var(--bg-hover); border: 1px solid var(--border-hi); position: relative; transition: background .15s; flex-shrink: 0; }
+.whd-track::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--muted); transition: transform .15s, background .15s; }
+.whd-switch input:checked + .whd-track { background: var(--warn-bg); border-color: var(--warn); }
+.whd-switch input:checked + .whd-track::after { transform: translateX(16px); background: var(--warn); }
+.whd-switch input:focus-visible + .whd-track { outline: 2px solid var(--accent); outline-offset: 2px; }
+.whd-help { font-size: 11.5px; color: var(--muted); line-height: 1.5; margin: 8px 0 16px; }
+.whd-toolbar { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.whd-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.whd-actions { display: flex; gap: 8px; }
+.whd-f { font: inherit; font-size: 12px; padding: 5px 11px; border-radius: 20px; border: 1px solid var(--border-hi); background: transparent; color: var(--muted); cursor: pointer; }
+.whd-f:hover { color: var(--text); }
+.whd-f.active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.whd-n { opacity: .7; font-variant-numeric: tabular-nums; }
+.whd-msg { font-size: 12px; margin-bottom: 10px; }
+.whd-list { display: flex; flex-direction: column; gap: 8px; }
+.whd-empty { color: var(--muted); font-size: 13px; padding: 18px 0; text-align: center; }
+.whd-card { border: 1px solid var(--border); border-left-width: 3px; border-radius: var(--radius); background: var(--bg-card); overflow: hidden; }
+.whd-card.k-comment  { border-left-color: var(--accent); }
+.whd-card.k-reaction { border-left-color: var(--success); }
+.whd-card.k-other    { border-left-color: var(--border-hi); }
+.whd-card.k-error    { border-left-color: var(--danger); }
+.whd-card > summary { list-style: none; cursor: pointer; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+.whd-card > summary::-webkit-details-marker { display: none; }
+.whd-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
+.whd-time { margin-left: auto; font-variant-numeric: tabular-nums; }
+.whd-tag { padding: 1px 8px; border-radius: 20px; font-size: 10.5px; font-weight: 600; background: var(--bg-hover); color: var(--muted); }
+.whd-tag.t-comment  { background: var(--accent-bg);  color: var(--accent); }
+.whd-tag.t-reaction { background: var(--success-bg); color: var(--success); }
+.whd-tag.t-error    { background: var(--danger-bg);  color: var(--danger); }
+.whd-tag.t-warn     { background: var(--warn-bg);    color: var(--warn); }
+.whd-line { font-size: 13px; line-height: 1.45; word-break: break-word; }
+.whd-line b { font-weight: 600; }
+.whd-line .whd-msgtxt { color: var(--muted); }
+.whd-body { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--border); }
+.whd-body h4 { margin: 10px 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; }
+.whd-pre { margin: 0; padding: 8px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; overflow: auto; max-height: 300px; font-family: var(--mono); font-size: 11.5px; white-space: pre-wrap; word-break: break-all; }
+@media (max-width: 640px) { .whd-toolbar { flex-direction: column; align-items: stretch; } .whd-actions .btn-secondary { flex: 1; } }

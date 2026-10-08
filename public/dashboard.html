@@ -907,17 +907,28 @@
           <div class="panel">
             <div class="panel-head"><div class="panel-title">Debug webhook Facebook</div></div>
             <div class="policy-form">
-              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:6px">
-                <input type="checkbox" id="whd-toggle" style="width:18px;height:18px;accent-color:var(--warn);cursor:pointer">
-                <span style="font-size:13px;font-weight:500" id="whd-label">Debug disattivo</span>
+              <label class="whd-switch">
+                <input type="checkbox" id="whd-toggle">
+                <span class="whd-track" aria-hidden="true"></span>
+                <span id="whd-label">Debug disattivo</span>
               </label>
-              <p style="font-size:11.5px;color:var(--muted);line-height:1.5;margin:0 0 14px">Con il debug attivo vengono registrati anche header, IP ed esito dell'elaborazione, e gli eventi con firma non valida. Si spegne da solo dopo 2 ore. I payload contengono dati personali: disattivalo e svuota il log appena finito.</p>
-              <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px">
-                <button type="button" class="btn-secondary" id="whd-refresh">Aggiorna</button>
-                <button type="button" class="btn-secondary" id="whd-clear">Svuota log eventi</button>
+              <p class="whd-help">Registra anche header, IP ed esito dell'elaborazione e gli eventi con firma non valida. Si spegne da solo dopo 2 ore. I payload contengono dati personali: disattivalo e svuota il log appena hai finito.</p>
+
+              <div class="whd-toolbar">
+                <div class="whd-filters" id="whd-filters" role="group" aria-label="Filtra per tipo">
+                  <button type="button" class="whd-f active" data-f="all">Tutti <span class="whd-n"></span></button>
+                  <button type="button" class="whd-f" data-f="comment">Commenti <span class="whd-n"></span></button>
+                  <button type="button" class="whd-f" data-f="reaction">Reaction <span class="whd-n"></span></button>
+                  <button type="button" class="whd-f" data-f="other">Altro <span class="whd-n"></span></button>
+                  <button type="button" class="whd-f" data-f="error">Errori <span class="whd-n"></span></button>
+                </div>
+                <div class="whd-actions">
+                  <button type="button" class="btn-secondary" id="whd-refresh">Aggiorna</button>
+                  <button type="button" class="btn-secondary" id="whd-clear">Svuota</button>
+                </div>
               </div>
-              <div id="whd-msg" role="status" style="display:none;font-size:12px;margin-bottom:10px"></div>
-              <div id="whd-list" style="font-size:12px"></div>
+              <div id="whd-msg" role="status" class="whd-msg" style="display:none"></div>
+              <div id="whd-list" class="whd-list"></div>
             </div>
           </div>
         </div>
