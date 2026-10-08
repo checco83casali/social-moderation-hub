@@ -7,7 +7,7 @@
 // Strategia: network-first con ripiego sulla cache. Quando sei online ottieni
 // sempre l'ultima versione appena deployata (nessuno sfasamento tra HTML e JS);
 // offline l'app si apre comunque e mostra lo stato "Offline".
-const VERSION = 'mh-v11';
+const VERSION = 'mh-v12';
 const SHELL_CACHE = `${VERSION}-shell`;
 const FONT_CACHE  = `${VERSION}-fonts`;
 
@@ -125,4 +125,44 @@ self.addEventListener('fetch', event => {
   if (url.pathname.startsWith('/assets/') || url.pathname === '/favicon.svg' || url.pathname === '/manifest.webmanifest') {
     event.respondWith(networkFirst(req, SHELL_CACHE, 3500));
   }
+});
+
+// ── Notifiche push ──────────────────────────────────────────────────
+// Il server invia {title, body, tag, url, urgent, badge}. Su iOS ogni push deve
+// mostrare una notifica, quindi anche l'avviso "in coda" è visibile.
+self.addEventListener('push', event => {
+  let d = {};
+  try { d = event.data ? event.data.json() : {}; } catch (_) {}
+  event.waitUntil((async () => {
+    await self.registration.showNotification(d.title || 'Moderation Hub', {
+      body: d.body || '',
+      tag: d.tag || 'mh',
+      renotify: true,
+      requireInteraction: !!d.urgent,
+      icon: '/pwa/icon/192.png',
+      badge: '/pwa/icon/192.png',
+      data: { url: d.url || '/dashboard.html' },
+    });
+    // Numero sull'icona anche con l'app chiusa.
+    if (typeof d.badge === 'number' && 'setAppBadge' in self.navigator) {
+      try { d.badge > 0 ? await self.navigator.setAppBadge(d.badge) : await self.navigator.clearAppBadge(); } catch (_) {}
+    }
+  })());
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || '/dashboard.html';
+  const screen = new URL(url, self.location.origin).searchParams.get('screen');
+  event.waitUntil((async () => {
+    const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const w of wins) {
+      if (new URL(w.url).origin === self.location.origin) {
+        await w.focus();
+        w.postMessage({ type: 'goto', screen });
+        return;
+      }
+    }
+    await self.clients.openWindow(url);
+  })());
 });

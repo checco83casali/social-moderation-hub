@@ -13,6 +13,7 @@ use ModerationHub\Controllers\DeployController;
 use ModerationHub\Controllers\GdprController;
 use ModerationHub\Controllers\BrandingController;
 use ModerationHub\Controllers\WebhookDebugController;
+use ModerationHub\Controllers\PushController;
 use ModerationHub\Middleware\AuthMiddleware;
 use ModerationHub\Middleware\AccessGuardMiddleware;
 use ModerationHub\Services\OAuthService;
@@ -265,6 +266,12 @@ $app->group('/api', function ($group) {
     $group->get('/branding',                   [BrandingController::class, 'status']);
     $group->post('/branding/icon',             [BrandingController::class, 'upload']);
     $group->delete('/branding/icon',           [BrandingController::class, 'reset']);
+
+    // Notifiche push (Web Push): chiave pubblica, iscrizione del dispositivo, prova
+    $group->get('/push/key',                   [PushController::class, 'key']);
+    $group->post('/push/subscribe',            [PushController::class, 'subscribe']);
+    $group->post('/push/unsubscribe',          [PushController::class, 'unsubscribe']);
+    $group->post('/push/test',                 [PushController::class, 'test']);
 
     // Debug webhook Meta (admin): stato + ultimi eventi, attiva/disattiva, svuota
     $group->get('/webhook-debug',              [WebhookDebugController::class, 'status']);

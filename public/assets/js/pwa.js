@@ -184,8 +184,12 @@
     const loggedOut = !!login && getComputedStyle(login).display !== 'none';
     tabbar.hidden = loggedOut;
     // Badge sull'icona: numero in coda; azzerato se sei disconnesso.
-    const q = parseInt(((document.getElementById('nav-queue-count') || {}).textContent || '').trim(), 10);
-    if (typeof window.updateAppBadge === 'function') window.updateAppBadge(loggedOut ? 0 : (isNaN(q) ? 0 : q));
+    if (typeof window.updateAppBadge === 'function') window.updateAppBadge(loggedOut ? 0 : pendingTotal());
+  }
+  // Totale per il badge dell'icona: commenti in coda + segnalazioni in attesa.
+  function pendingTotal() {
+    const num = id => { const n = parseInt(((document.getElementById(id) || {}).textContent || '').trim(), 10); return isNaN(n) ? 0 : n; };
+    return num('nav-queue-count') + num('nav-reportable-count');
   }
   const syncObserver = new MutationObserver(syncTabs);
   $$('.nav-item').forEach(n => syncObserver.observe(n, { attributes: true, childList: true, subtree: true, characterData: true }));
@@ -220,11 +224,65 @@
     }
   }
   window.updateAppBadge = updateAppBadge;
+  // ── Notifiche push: iscrizione del dispositivo ────────────────────
+  const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  const loggedIn = () => typeof TOKEN !== 'undefined' && !!TOKEN;
+  const urlB64ToBytes = b64 => {
+    const raw = atob((b64 + '='.repeat((4 - b64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/'));
+    return Uint8Array.from(raw, c => c.charCodeAt(0));
+  };
+  // Crea (o riallinea all'utente corrente) l'iscrizione e la registra sul server.
+  async function ensurePushSubscription() {
+    if (!pushSupported() || Notification.permission !== 'granted' || !loggedIn()) return false;
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        const { publicKey } = await api('/push/key');
+        sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToBytes(publicKey) });
+      }
+      await api('/push/subscribe', 'POST', sub.toJSON());
+      return true;
+    } catch (_) { return false; }
+  }
+  async function removePushSubscription() {
+    if (!pushSupported()) return;
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (!sub) return;
+      await api('/push/unsubscribe', 'POST', { endpoint: sub.endpoint }).catch(() => {});
+      await sub.unsubscribe();
+    } catch (_) {}
+  }
+  // Al logout il dispositivo smette di ricevere gli avvisi di quell'utente.
+  if (typeof window.logout === 'function') {
+    const baseLogout = window.logout;
+    let loggingOut = false; // api() chiama logout() sui 401: evita il rientro
+    window.logout = function () {
+      if (loggingOut) return baseLogout();
+      loggingOut = true;
+      Promise.race([removePushSubscription(), new Promise(r => setTimeout(r, 2500))]).finally(() => baseLogout());
+    };
+  }
+  // Tocco su una notifica con l'app già aperta: vai alla schermata giusta.
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', ev => {
+      const d = ev.data || {};
+      if (d.type !== 'goto' || !/^[a-z-]+$/.test(d.screen || '')) return;
+      const nav = $(`.nav-item[data-screen="${d.screen}"]`);
+      if (nav) nav.click();
+    });
+  }
+
   async function enableNotifications() {
     try { await Notification.requestPermission(); } catch (_) {}
+    if (await ensurePushSubscription() && typeof toast === 'function') {
+      toast('Notifiche attivate', 'ok');
+      api('/push/test', 'POST').catch(() => {});
+    }
     lastBadge = null;
-    const n = parseInt(($('#nav-queue-count') || {}).textContent, 10);
-    updateAppBadge(n);
+    updateAppBadge(pendingTotal());
     badgeBtn.classList.remove('show');
     const b = $('.notif-hint');
     if (b) b.remove();
@@ -235,7 +293,7 @@
   // il browser accetta requestPermission solo da un gesto dell'utente → banner con pulsante.
   function maybeShowNotifHint() {
     if (!('Notification' in window) || Notification.permission !== 'default') return;
-    if (!('setAppBadge' in navigator)) return;
+    if (!('setAppBadge' in navigator) && !pushSupported()) return;
     badgeBtn.classList.add('show');
     try { if (localStorage.getItem('mh_notif_hint') === '1') return; } catch (_) {}
     if ($('.notif-hint')) return;
@@ -245,7 +303,7 @@
     el.setAttribute('aria-label', 'Attiva le notifiche');
     el.innerHTML =
       '<div style="flex:1;color:var(--muted)"><strong>Attiva le notifiche</strong><br>' +
-      'Serve per mostrare sull\'icona il numero di commenti da moderare.</div>' +
+      'Ricevi un avviso per le segnalazioni e i commenti in coda, con il totale sull\'icona.</div>' +
       '<button class="btn btn-primary notif-hint-go" type="button">Attiva</button>' +
       '<button class="ios-hint-x" type="button" aria-label="Chiudi">✕</button>';
     $('.notif-hint-go', el).addEventListener('click', enableNotifications);
@@ -278,6 +336,7 @@
       if (getComputedStyle($('#login-screen')).display === 'none') {
         setTimeout(maybeShowIosHint, 2500);
         setTimeout(maybeShowNotifHint, 3500);
+        ensurePushSubscription();
       }
     }, 400);
   });
