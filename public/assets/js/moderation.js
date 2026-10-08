@@ -136,7 +136,7 @@ function queueAiChips(item) {
 // contesto sono quelli del commento su cui si agisce) e poi esegue l'azione.
 function rowAction(ev, id, action) {
   ev.stopPropagation();
-  selectComment(id);
+  selectComment(id, { quiet: true });
   if (!currentComment) return;
   if (action === 'reply') { openApproveReply(); return; }
   decide(action);

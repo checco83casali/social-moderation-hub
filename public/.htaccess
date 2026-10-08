@@ -22,3 +22,16 @@ RewriteRule ^(dpia|registro|lia)\.php$ index.php [L]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ index.php [QSA,L]
+
+# ── PWA ───────────────────────────────────────────────────────────
+# Il service worker deve essere sempre riletto dal browser (mai servito da una
+# cache HTTP vecchia), altrimenti gli aggiornamenti dell'app non arrivano.
+AddType application/manifest+json .webmanifest
+<IfModule mod_headers.c>
+  <FilesMatch "^(sw\.js|manifest\.webmanifest|offline\.html)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+  <FilesMatch "^sw\.js$">
+    Header set Service-Worker-Allowed "/"
+  </FilesMatch>
+</IfModule>

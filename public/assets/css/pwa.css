@@ -1,0 +1,150 @@
+/* ── PWA + mobile-first ───────────────────────────────────────────
+   Caricato DOPO app.css: sovrascrive il layout desktop sui telefoni.
+   Breakpoint: ≤900px = dettaglio commento a tutto schermo; ≤640px = barra
+   di navigazione in basso, modali come fogli dal basso, target da 44px. */
+
+html { -webkit-text-size-adjust: 100%; color-scheme: dark; }
+body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
+button, .btn, .nav-item, .q-item, .chip-btn, .panel-action { touch-action: manipulation; }
+
+/* Barra in basso e foglio di dettaglio: nascosti su desktop */
+#tabbar { display: none; }
+.sheet-back { display: none; }
+.install-btn, .ios-hint { display: none; }
+
+/* Indicatore connessione */
+.topbar-badge.offline { background: rgba(230,159,0,.16); color: #f0b232; }
+
+/* Pulsante "Installa app" (Chrome/Android/desktop) */
+.install-btn {
+  margin: 0 12px 10px; padding: 10px 12px; min-height: 40px;
+  border-radius: var(--radius); border: 1px dashed var(--border-hi);
+  background: transparent; color: var(--text); font: 600 13px var(--font);
+  cursor: pointer; align-items: center; justify-content: center; gap: 8px;
+}
+.install-btn.show { display: flex; }
+.install-btn:hover { background: var(--bg-hover); }
+
+/* Suggerimento installazione su iPhone/iPad (Safari non ha il prompt nativo) */
+.ios-hint {
+  position: fixed; left: 12px; right: 12px; z-index: 300;
+  bottom: calc(76px + env(safe-area-inset-bottom));
+  padding: 12px 14px; border-radius: 14px; background: var(--bg-card);
+  border: 1px solid var(--border-hi); box-shadow: 0 8px 28px rgba(0,0,0,.5);
+  font-size: 13px; line-height: 1.5; gap: 10px; align-items: flex-start;
+}
+.ios-hint.show { display: flex; }
+.ios-hint strong { color: var(--text); }
+.ios-hint .ios-hint-x {
+  flex-shrink: 0; width: 32px; height: 32px; margin: -6px -6px 0 0; border: 0; border-radius: 8px;
+  background: transparent; color: var(--muted); font-size: 18px; cursor: pointer;
+}
+
+/* ── Tablet e telefono: dettaglio commento a tutto schermo (≤900px) ── */
+@media (max-width: 900px) {
+  #detail-panel { display: none; }
+  body.detail-open { overflow: hidden; }
+  body.detail-open #detail-panel {
+    display: flex; flex-direction: column;
+    position: fixed; top: 0; right: 0; bottom: 0; left: var(--sidebar-w); z-index: 150;
+    margin: 0; border-radius: 0; border: 0; background: var(--bg-card);
+    overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+    padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
+  }
+  body.detail-open #detail-panel .panel-head {
+    position: sticky; top: 0; z-index: 2; background: var(--bg-card);
+    display: flex; align-items: center; gap: 8px;
+  }
+  body.detail-open #detail-panel .sheet-back {
+    display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 12px 0 6px;
+    margin-left: -6px; border: 0; background: transparent; color: var(--accent);
+    font: 600 14px var(--font); cursor: pointer; border-radius: 10px;
+  }
+  .queue-list { max-height: none; }
+}
+
+/* ── Telefono (≤640px) ───────────────────────────────────────────── */
+@media (max-width: 640px) {
+  body.detail-open #detail-panel { left: 0; }
+
+  /* Barra superiore con area sicura (notch / status bar) */
+  #topbar {
+    height: calc(54px + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) 16px 0;
+  }
+  #mobile-menu-btn { display: none !important; }
+  #content { padding: 14px 14px calc(88px + env(safe-area-inset-bottom)); }
+
+  /* Statistiche: striscia scorrevole invece di una griglia alta */
+  .stats-grid {
+    display: flex; gap: 10px; overflow-x: auto; margin: 0 -14px 14px; padding: 0 14px 4px;
+    scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  }
+  .stats-grid::-webkit-scrollbar { display: none; }
+  .stats-grid .stat-card { flex: 0 0 132px; scroll-snap-align: start; }
+
+  /* Bersagli tattili ≥ 44px */
+  .btn, .btn-primary, .btn-secondary, .panel-action, .nav-item, .user-dropdown-item { min-height: 44px; }
+  .panel-action { padding: 0 12px; }
+  .decision-actions .btn { min-height: 60px; }
+
+  /* Evita lo zoom automatico di iOS sui campi di testo */
+  input, textarea, select, .form-input, .form-textarea, .note-input { font-size: 16px !important; }
+
+  /* Riga della coda: azioni rapide a griglia, facili da premere col pollice */
+  .q-item { padding: 12px; }
+  .q-footer { flex-direction: column; flex-wrap: nowrap; align-items: stretch; }
+  .row-actions {
+    margin-left: 0; display: grid; align-content: start; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px;
+  }
+  .row-actions .btn { min-height: 42px; justify-content: center; font-size: 12.5px; }
+
+  /* Modali: fogli dal basso */
+  div[id^="modal-"] { align-items: flex-end !important; padding: 0 !important; }
+  div[id^="modal-"] > div {
+    width: 100% !important; max-width: 100% !important; margin: 0 !important;
+    max-height: 92vh !important; max-height: 92dvh !important; overflow-y: auto !important;
+    border-radius: 18px 18px 0 0 !important;
+    padding: 22px 18px calc(22px + env(safe-area-inset-bottom)) !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Modale "rispondi": campo più basso, pulsanti a tutta larghezza */
+  #approve-reply-text { height: 112px; min-height: 0; }
+  .sheet-actions { flex-direction: column-reverse; }
+  .sheet-actions .btn-primary, .sheet-actions .btn-secondary { width: 100%; min-height: 48px; justify-content: center; }
+
+  /* Barra di navigazione in basso */
+  #tabbar {
+    display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 120;
+    background: rgba(22,24,28,.96); border-top: 1px solid var(--border-hi);
+    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+  }
+  #tabbar[hidden] { display: none; }
+  body.detail-open #tabbar { display: none; }
+  #tabbar .tab {
+    flex: 1; min-height: 52px; position: relative; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 3px; border: 0; border-radius: 12px;
+    background: transparent; color: var(--muted); font: 600 10.5px var(--font); cursor: pointer;
+  }
+  #tabbar .tab svg { width: 22px; height: 22px; }
+  #tabbar .tab.active { color: #7cc6ee; background: rgba(86,180,233,.12); }
+  #tabbar .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  #tabbar .tab-badge {
+    position: absolute; top: 4px; left: calc(50% + 6px); min-width: 17px; height: 17px; padding: 0 5px;
+    border-radius: 9px; background: #e69f00; color: #2a1c00; font: 700 10px/17px var(--font); text-align: center;
+  }
+  #tabbar .tab-badge[hidden] { display: none; }
+
+  .ios-hint { bottom: calc(76px + env(safe-area-inset-bottom)); }
+}
+
+/* App installata: nessuna barra del browser, quindi niente scroll elastico */
+@media (display-mode: standalone) {
+  body { overscroll-behavior: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

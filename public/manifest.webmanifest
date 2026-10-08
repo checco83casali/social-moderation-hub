@@ -1,0 +1,34 @@
+{
+  "name": "Moderation Hub",
+  "short_name": "Mod Hub",
+  "description": "Revisione umana dei commenti social: coda, ricorsi e segnalazioni.",
+  "lang": "it",
+  "dir": "ltr",
+  "id": "/dashboard.html",
+  "start_url": "/dashboard.html?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0e0f11",
+  "theme_color": "#0e0f11",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    { "src": "/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Coda revisione",
+      "short_name": "Coda",
+      "url": "/dashboard.html?source=shortcut&screen=queue",
+      "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Ricorsi",
+      "short_name": "Ricorsi",
+      "url": "/dashboard.html?source=shortcut&screen=appeals",
+      "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}
