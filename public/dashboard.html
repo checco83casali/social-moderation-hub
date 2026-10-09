@@ -389,9 +389,10 @@
               <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.6">
                 Quando un commento viene nascosto, il sistema risponde automaticamente con un messaggio privato all'utente contenente la motivazione e il link per il ricorso.
               </p>
-              <label style="display:flex;align-items:center;gap:14px;cursor:pointer;user-select:none;margin-bottom:12px">
-                <input type="checkbox" id="set-reply-enabled" style="width:18px;height:18px;accent-color:var(--accent);cursor:pointer" onchange="onReplyEnabledChange(this.checked)">
-                <span style="font-size:13px;font-weight:500">Abilita notifica automatica</span>
+              <label class="whd-switch ok" style="margin-bottom:12px">
+                <input type="checkbox" id="set-reply-enabled" onchange="onReplyEnabledChange(this.checked)">
+                <span class="whd-track" aria-hidden="true"></span>
+                <span>Abilita notifica automatica</span>
               </label>
               <div id="reply-gdpr-warning" style="display:none;background:rgba(247,82,82,.1);border:1px solid rgba(247,82,82,.35);border-radius:var(--radius);padding:12px 16px;font-size:12.5px;line-height:1.6">
                 <strong style="color:var(--danger)">⚠️ Attenzione — possibile non conformità GDPR</strong><br>
@@ -901,9 +902,10 @@
                 nessuna cancellazione su Facebook, nessun incremento violazioni, nessun ban utente.<br>
                 I commenti che sarebbero rimossi vengono taggati come <code style="font-family:var(--mono);font-size:11px;background:var(--bg-hover);padding:1px 5px;border-radius:4px">dev_flagged</code>.
               </p>
-              <label style="display:flex;align-items:center;gap:14px;cursor:pointer;user-select:none">
-                <input type="checkbox" id="set-dev-mode" style="width:18px;height:18px;accent-color:var(--warn);cursor:pointer" onchange="onDevModeChange(this.checked)">
-                <span style="font-size:13px;font-weight:500" id="dev-mode-label">Modalità sviluppo disattiva</span>
+              <label class="whd-switch">
+                <input type="checkbox" id="set-dev-mode" onchange="onDevModeChange(this.checked)">
+                <span class="whd-track" aria-hidden="true"></span>
+                <span id="dev-mode-label">Modalità sviluppo disattiva</span>
               </label>
               <p style="font-size:11px;color:var(--muted);margin-top:12px">Ricordati di disattivarla prima di andare in produzione.</p>
             </div>
