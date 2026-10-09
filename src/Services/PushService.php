@@ -81,11 +81,13 @@ final class PushService
         return ['queue' => $q, 'reportable' => $r, 'total' => $q + $r];
     }
 
-    /** Titolo di tutte le notifiche: il nome dell'applicazione. */
-    private function appName(): string
+    /**
+     * Titolo delle notifiche: volutamente vuoto. Il nome dell'applicazione lo mostra già
+     * il sistema operativo sopra la notifica; ripeterlo nel titolo lo duplicherebbe.
+     */
+    private function title(): string
     {
-        $name = trim((string) ($_ENV['SITE_NAME'] ?? ''));
-        return $name !== '' ? $name : 'Moderation Hub';
+        return '';
     }
 
     /** "Revisione: inizio del testo…" (una sola riga), oppure solo l'etichetta se il testo manca. */
@@ -107,7 +109,7 @@ final class PushService
     {
         $c = $this->counts();
         $payload = [
-            'title'  => $this->appName(),
+            'title'  => $this->title(),
             'tag'    => $kind,
             'urgent' => $kind === 'reportable',
         ];
@@ -132,7 +134,7 @@ final class PushService
         $c = $this->counts();
         return $this->sendPayload(
             DB::table('push_subscriptions')->where('user_id', $userId)->get()->all(),
-            ['title' => $this->appName(), 'body' => $this->line('test', 'Notifiche attive ✓') . "\n" . 'Riceverai avvisi per revisioni, segnalazioni e ricorsi', 'tag' => 'test', 'url' => '/dashboard.html', 'urgent' => false, 'badge' => $c['total']],
+            ['title' => $this->title(), 'body' => $this->line('test', 'Notifiche attive ✓') . "\n" . 'Riceverai avvisi per revisioni, segnalazioni e ricorsi', 'tag' => 'test', 'url' => '/dashboard.html', 'urgent' => false, 'badge' => $c['total']],
         );
     }
 

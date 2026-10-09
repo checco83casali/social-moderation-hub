@@ -135,7 +135,8 @@ self.addEventListener('push', event => {
   let d = {};
   try { d = event.data ? event.data.json() : {}; } catch (_) {}
   event.waitUntil((async () => {
-    await self.registration.showNotification(d.title || 'Moderation Hub', {
+    // Titolo vuoto voluto: il nome dell'app lo mostra già il sistema. Il ripiego vale solo se manca del tutto.
+    await self.registration.showNotification(typeof d.title === 'string' ? d.title : 'Moderation Hub', {
       body: d.body || '',
       tag: d.tag || 'mh',
       renotify: true,
