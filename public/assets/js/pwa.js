@@ -183,6 +183,7 @@
     const login = $('#login-screen');
     const loggedOut = !!login && getComputedStyle(login).display !== 'none';
     tabbar.hidden = loggedOut;
+    document.body.classList.toggle('has-tabbar', !loggedOut);   // i toast si alzano sopra la barra
     // Badge sull'icona: numero in coda; azzerato se sei disconnesso.
     if (typeof window.updateAppBadge === 'function') window.updateAppBadge(loggedOut ? 0 : pendingTotal());
   }

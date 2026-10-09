@@ -1037,8 +1037,6 @@ async function loadApprovedComments() {
     countEl.textContent = `${d.total} commenti`;
     if (!d.items?.length) { list.innerHTML = '<div class="empty">Nessun commento approvato</div>'; return; }
     const stageLabel = { haiku:'Haiku', sonnet:'Sonnet', human:'Umano' };
-    const canHideApproved = ['admin', 'supervisor'].includes(currentUserRole);
-    d.items.forEach(c => { approvedMap[c.id] = c; });
     list.innerHTML = d.items.map(c => {
       const cats    = (c.ai_categories||[]).map(cat => categoryChip(cat)).join(' ');
       const conf    = c.ai_confidence ? Math.round(c.ai_confidence*100)+'%' : '—';
@@ -1067,14 +1065,15 @@ async function loadApprovedComments() {
         fbLink = `https://www.facebook.com/permalink.php?story_fbid=${postId}&id=${pageId}`;
       }
 
+      approvedMap[c.id] = Object.assign({}, c, { _fbLink: fbLink });
       return `
         <div class="bc-item">
-          <div class="bc-header">
+          <div class="bc-header has-menu">
             <div class="ban-avatar" style="width:26px;height:26px;font-size:10px;background:var(--success)">${(c.display_name||'?')[0].toUpperCase()}</div>
             <span class="bc-user">${esc(c.display_name||'Anonimo')}</span>
             <span class="bc-page">${esc(c.page_name)}</span>${devChip(c)}
             <span class="bc-time">${relTime(c.processed_at||c.received_at)}</span>
-            ${fbLink ? `<a href="${fbLink}" target="_blank" rel="noopener" class="btn-sm" style="margin-left:auto;text-decoration:none" title="Apri su Facebook">🔗 Vedi su Facebook</a>` : ''}
+            ${rowMenuButton(`openApprovedMenu(event, ${c.id})`)}
           </div>
           <div class="bc-content">${esc(c.content)}</div>
           <div class="bc-footer">
@@ -1082,7 +1081,6 @@ async function loadApprovedComments() {
             ${c.ai_reason ? `<span style="font-size:11px;color:var(--muted);flex-basis:100%;margin-top:4px">${esc(c.ai_reason)}</span>` : ''}
             ${c.human_note ? `<span style="font-size:11px;color:var(--muted);flex-basis:100%;margin-top:2px">📝 ${esc(c.human_note)}</span>` : ''}
             <span class="bc-conf">${conf}</span>
-            ${canHideApproved ? `<button class="btn btn-hide-notify" style="margin-left:auto;padding:5px 12px;font-size:12px" title="Nascondi con avviso: conta come violazione dell'utente" onclick="hideApprovedComment(${c.id})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>Nascondi con avviso</button>` : ''}
           </div>
         </div>`;
     }).join('');
@@ -1093,6 +1091,17 @@ async function loadApprovedComments() {
 
 // Commento già approvato → nascondi con avviso (solo admin/supervisor; il server lo impone).
 const approvedMap = {};
+function openApprovedMenu(ev, id) {
+  const c = approvedMap[id];
+  if (!c) return;
+  const items = [];
+  if (c._fbLink) items.push({ label: 'Vedi su Facebook', icon: MENU_ICONS.link, href: c._fbLink });
+  if (['admin', 'supervisor'].includes(currentUserRole)) {
+    items.push({ label: 'Nascondi con avviso…', icon: MENU_ICONS.hide, tone: 'warn', onClick: () => hideApprovedComment(id) });
+  }
+  openRowMenu(ev.currentTarget, items);
+}
+
 function hideApprovedComment(id) {
   const c = approvedMap[id];
   if (!c) return;
@@ -1328,28 +1337,41 @@ async function loadHiddenComments() {
              <div style="font-size:12.5px;color:var(--text);line-height:1.5;white-space:pre-wrap">${esc(c.removal_reply_text)}</div>
            </div>`
         : '';
+      hiddenMap[c.id] = Object.assign({}, c, {
+        _fbLink: fbLink,
+        _canRestore: isAdminOrSupervisor && !c.pending_legal_review && !c.is_reportable && c.appeal_status !== 'pending',
+      });
       return `
         <div class="bc-item" id="hc-${c.id}">
-          <div class="bc-header">
+          <div class="bc-header has-menu">
             <div class="ban-avatar" style="width:26px;height:26px;font-size:10px;background:#f7a244">${(c.display_name||'?')[0].toUpperCase()}</div>
             <span class="bc-user">${esc(c.display_name||'Anonimo')}</span>
             <span class="bc-page">${esc(c.page_name)}</span>${devChip(c)}
             <span class="bc-time">${relTime(c.processed_at||c.received_at)}</span>
             ${reportBadge} ${appealBadge} ${deciderBadge}
-            ${fbLink ? `<a href="${fbLink}" target="_blank" rel="noopener" class="btn-sm" style="margin-left:auto;text-decoration:none" title="Vedi su Facebook">🔗</a>` : ''}
+            ${rowMenuButton(`openHiddenMenu(event, ${c.id})`)}
           </div>
           <div class="bc-content">${esc(c.content)}</div>
           ${c.ai_reason ? `<div style="font-size:11px;color:var(--muted);margin-top:4px">Motivazione AI: ${esc(c.ai_reason)}</div>` : ''}
           ${replyBlock}
           <div class="bc-footer" style="margin-top:10px">
             ${aiSignalChips(c)} ${cats}
-            ${(isAdminOrSupervisor && !c.pending_legal_review && !c.is_reportable && c.appeal_status !== 'pending') ? `<button class="btn btn-approve-solid" style="margin-left:auto;padding:5px 12px;font-size:12px" title="Torna visibile, nessuna risposta, scala 1 violazione all'utente" onclick="restoreHiddenComment(${c.id})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Approva (senza risposta)</button>` : ''}
           </div>
         </div>`;
     }).join('');
   } catch (e) {
     list.innerHTML = '<div class="empty">Errore nel caricamento</div>';
   }
+}
+
+const hiddenMap = {};
+function openHiddenMenu(ev, id) {
+  const c = hiddenMap[id];
+  if (!c) return;
+  const items = [];
+  if (c._fbLink) items.push({ label: 'Vedi su Facebook', icon: MENU_ICONS.link, href: c._fbLink });
+  if (c._canRestore) items.push({ label: 'Approva (senza risposta)…', icon: MENU_ICONS.check, tone: 'ok', onClick: () => restoreHiddenComment(id) });
+  openRowMenu(ev.currentTarget, items);
 }
 
 // Commento nascosto → approva senza risposta: torna visibile e scala 1 violazione (solo admin/supervisor).
@@ -1360,8 +1382,9 @@ async function restoreHiddenComment(id) {
     confirmLabel: 'Approva senza risposta',
   }))) return;
   try {
-    await api(`/comments/${id}/decide`, 'POST', { decision: 'restore', note: 'Approvato senza risposta da supervisore (ripristino)' });
-    toast('Commento approvato e ripristinato', 'ok');
+    const res = await api(`/comments/${id}/decide`, 'POST', { decision: 'restore', note: 'Approvato senza risposta da supervisore (ripristino)' });
+    if (res && res.dev_mode) toast('Dev mode attivo: nessuna azione reale su Facebook', 'err');
+    else toast('Commento approvato e ripristinato', 'ok');
     document.getElementById(`hc-${id}`)?.remove();
     loadStats();
   } catch (e) {

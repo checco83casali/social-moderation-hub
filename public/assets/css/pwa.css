@@ -170,6 +170,9 @@ button, .btn, .nav-item, .q-item, .chip-btn, .panel-action { touch-action: manip
   }
   #tabbar .tab-badge[hidden] { display: none; }
 
+  /* Avvisi (toast) sopra la barra in basso; se la barra è nascosta tornano in fondo */
+  body.has-tabbar:not(.detail-open) #toast { bottom: calc(76px + env(safe-area-inset-bottom)); }
+
   .ios-hint { bottom: calc(76px + env(safe-area-inset-bottom)); }
 }
 

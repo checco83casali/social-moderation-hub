@@ -217,6 +217,105 @@ function aiSignalChips(c) {
 function openModal(id) { document.getElementById(id).style.display = 'flex'; }
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
+// ── Menù "⋯" per riga ──────────────────────────────────────────────
+// openRowMenu(bottone, [{ label, icon?, href?, onClick?, tone?: 'warn'|'ok' }]).
+// Disegnato in <body> con position:fixed (non viene tagliato dai pannelli); su schermi stretti
+// diventa una scheda dal basso. Esc / clic fuori / scroll lo chiudono; frecce per muoversi.
+const MENU_ICONS = {
+  dots:  '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>',
+  link:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>',
+  hide:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>',
+  check: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>',
+};
+let rowMenu = null;
+
+function closeRowMenu(returnFocus = true) {
+  if (!rowMenu) return;
+  const { el, backdrop, anchor, cleanup } = rowMenu;
+  rowMenu = null;
+  cleanup();
+  el.remove();
+  if (backdrop) backdrop.remove();
+  anchor.setAttribute('aria-expanded', 'false');
+  if (returnFocus) anchor.focus();
+}
+
+function rowMenuButton(onclick) {
+  return `<button type="button" class="row-menu-btn" aria-haspopup="menu" aria-expanded="false" aria-label="Altre azioni" title="Altre azioni" onclick="${onclick}">${MENU_ICONS.dots}</button>`;
+}
+
+function openRowMenu(anchor, items) {
+  const wasOpenOnThis = rowMenu && rowMenu.anchor === anchor;
+  closeRowMenu(false);
+  if (wasOpenOnThis || !items.length) return;      // secondo clic sul ⋯ = chiude
+
+  const sheet = window.matchMedia('(max-width: 640px)').matches;
+  const el = document.createElement('div');
+  el.className = 'row-menu' + (sheet ? ' sheet' : '');
+  el.setAttribute('role', 'menu');
+
+  const nodes = items.map(it => {
+    const n = document.createElement(it.href ? 'a' : 'button');
+    if (it.href) { n.href = it.href; n.target = '_blank'; n.rel = 'noopener'; } else { n.type = 'button'; }
+    n.className = 'row-menu-item' + (it.tone ? ' ' + it.tone : '');
+    n.setAttribute('role', 'menuitem');
+    n.tabIndex = -1;
+    n.innerHTML = (it.icon || '') + '<span></span>';
+    n.lastChild.textContent = it.label;
+    n.addEventListener('click', () => {
+      closeRowMenu(false);
+      if (it.onClick) it.onClick();
+    });
+    el.appendChild(n);
+    return n;
+  });
+
+  let backdrop = null;
+  if (sheet) {
+    backdrop = document.createElement('div');
+    backdrop.className = 'row-menu-backdrop';
+    backdrop.addEventListener('mousedown', () => closeRowMenu());
+    backdrop.addEventListener('touchstart', () => closeRowMenu(), { passive: true });
+    document.body.appendChild(backdrop);
+  }
+  document.body.appendChild(el);
+
+  if (!sheet) {                                    // sotto il pulsante, allineato a destra; se non c'è spazio, sopra
+    const r = anchor.getBoundingClientRect();
+    const w = el.offsetWidth, h = el.offsetHeight;
+    let top = r.bottom + 6;
+    if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 6);
+    el.style.top  = top + 'px';
+    el.style.left = Math.min(Math.max(8, r.right - w), window.innerWidth - w - 8) + 'px';
+  }
+
+  const onKey = (e) => {
+    const i = nodes.indexOf(document.activeElement);
+    if (e.key === 'Escape') { e.preventDefault(); closeRowMenu(); }
+    else if (e.key === 'Tab') { closeRowMenu(false); }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); nodes[(i + 1) % nodes.length].focus(); }
+    else if (e.key === 'ArrowUp')   { e.preventDefault(); nodes[(i - 1 + nodes.length) % nodes.length].focus(); }
+    else if (e.key === 'Home')      { e.preventDefault(); nodes[0].focus(); }
+    else if (e.key === 'End')       { e.preventDefault(); nodes[nodes.length - 1].focus(); }
+  };
+  const onDown   = (e) => { if (!el.contains(e.target) && !anchor.contains(e.target)) closeRowMenu(false); };
+  const onScroll = (e) => { if (!el.contains(e.target)) closeRowMenu(false); };
+  const onResize = () => closeRowMenu(false);
+  document.addEventListener('keydown', onKey, true);
+  document.addEventListener('mousedown', onDown, true);
+  window.addEventListener('scroll', onScroll, true);
+  window.addEventListener('resize', onResize);
+
+  anchor.setAttribute('aria-expanded', 'true');
+  rowMenu = { el, backdrop, anchor, cleanup: () => {
+    document.removeEventListener('keydown', onKey, true);
+    document.removeEventListener('mousedown', onDown, true);
+    window.removeEventListener('scroll', onScroll, true);
+    window.removeEventListener('resize', onResize);
+  } };
+  nodes[0].focus();
+}
+
 // Modale di conferma: sostituisce window.confirm. Uso: if (!(await confirmDialog({...}))) return;
 // Esc / clic fuori / Annulla → false. Per le azioni "danger" il focus parte su Annulla.
 function confirmDialog({ title = 'Confermi?', message = '', confirmLabel = 'Conferma', cancelLabel = 'Annulla', danger = false } = {}) {

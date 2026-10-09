@@ -331,6 +331,39 @@ nav { flex: 1; padding: 12px 10px; }
 .screen { display: none; }
 .screen.active { display: block; }
 
+/* Menù "⋯" per riga (liste approvati / nascosti) */
+.row-menu-btn {
+  margin-left: auto; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: 0; border-radius: 8px; color: var(--muted); cursor: pointer; flex-shrink: 0;
+}
+.row-menu-btn:hover, .row-menu-btn[aria-expanded="true"] { background: var(--bg-hover); color: var(--text); }
+.row-menu-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.row-menu {
+  position: fixed; z-index: 650; min-width: 230px; padding: 6px;
+  background: var(--bg-card); border: 1px solid var(--border-hi); border-radius: 10px;
+  box-shadow: 0 10px 32px rgba(0,0,0,.4);
+}
+.row-menu-item {
+  display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; padding: 9px 12px;
+  background: transparent; border: 0; border-radius: 7px; color: var(--text); font: 500 13px var(--font);
+  text-align: left; text-decoration: none; cursor: pointer;
+}
+.row-menu-item:hover, .row-menu-item:focus-visible { background: var(--bg-hover); outline: none; }
+.row-menu-item svg { flex-shrink: 0; color: var(--muted); }
+.row-menu-item.warn svg { color: var(--warn); }
+.row-menu-item.ok svg   { color: var(--success); }
+.row-menu-backdrop { position: fixed; inset: 0; z-index: 649; background: rgba(0,0,0,.4); }
+@media (max-width: 640px) {
+  .row-menu.sheet {
+    left: 0; right: 0; bottom: 0; top: auto; min-width: 0; border-radius: 16px 16px 0 0; border-bottom: 0;
+    padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+  }
+  .row-menu.sheet .row-menu-item { min-height: 48px; font-size: 14.5px; padding: 12px 14px; }
+  /* Su mobile il ⋯ sta nell'angolo in alto a destra della scheda */
+  .bc-item .row-menu-btn { position: absolute; top: 4px; right: 6px; margin: 0; width: 40px; height: 40px; }
+  .bc-header.has-menu { padding-right: 36px; }
+}
+
 /* ── Toast ────────────────────────────────────────────────────── */
 #toast {
   position: fixed; bottom: 24px; right: 24px;
@@ -458,7 +491,7 @@ nav { flex: 1; padding: 12px 10px; }
 .badge-human { background: var(--success-bg); color: var(--success); font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
 
 /* ── Banned comments list ─────────────────────────────────────── */
-.bc-item { padding: 16px 20px; border-bottom: 1px solid var(--border); transition: background .12s; }
+.bc-item { position: relative; padding: 16px 20px; border-bottom: 1px solid var(--border); transition: background .12s; }
 .bc-item:last-child { border-bottom: none; }
 .bc-item:hover { background: var(--bg-hover); }
 .bc-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
