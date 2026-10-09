@@ -76,12 +76,37 @@ class ModerationController
             })
             ->toArray();
 
+        $items = $this->withPostContext($items);
+
         return $this->json($response, [
             'total'    => $total,
             'page'     => $page,
             'per_page' => $limit,
             'items'    => $items,
         ]);
+    }
+
+    /**
+     * Aggiunge a ogni commento il riassunto del suo post (feature Pro `post_context`), se
+     * esiste, come `post_context`. Mai bloccante: senza tabella o senza riassunti → invariato.
+     */
+    private function withPostContext(array $items): array
+    {
+        $ids = array_values(array_unique(array_filter(array_column($items, 'platform_post_id'))));
+        if ($ids === []) return $items;
+        try {
+            $summaries = DB::table('post_contexts')
+                ->whereIn('platform_post_id', $ids)
+                ->where('status', 'ready')
+                ->pluck('summary', 'platform_post_id')
+                ->all();
+        } catch (\Throwable) {
+            return $items;
+        }
+        foreach ($items as &$it) {
+            $it['post_context'] = $summaries[$it['platform_post_id'] ?? ''] ?? null;
+        }
+        return $items;
     }
 
     // ── GET /api/queue/reportable  ──────────────────────────────────

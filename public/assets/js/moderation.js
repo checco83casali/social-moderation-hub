@@ -348,6 +348,12 @@ function renderDetail(c) {
       <div class="comment-bubble">${esc(c.content)}</div>
     </div>
 
+    ${c.post_context ? `
+    <div class="detail-section">
+      <div class="detail-section-title">Contesto del post</div>
+      <div class="post-context" title="Clicca per espandere o ridurre" onclick="this.classList.toggle('open')">${esc(c.post_context)}</div>
+    </div>` : ''}
+
     <div class="detail-section">
       <div class="detail-section-title">Utente</div>
       <div class="user-row">
