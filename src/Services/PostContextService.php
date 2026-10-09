@@ -56,7 +56,7 @@ class PostContextService
     /**
      * Riassunto del post per il commento in moderazione, o null se non disponibile.
      *
-     * @param array  $page           Riga di connected_pages (serve id + page_access_token)
+     * @param array<string,mixed> $page Riga di connected_pages (serve id + page_access_token)
      * @param string $platformPostId ID del post Facebook (dal webhook)
      */
     public function forPost(array $page, string $platformPostId): ?string
@@ -106,23 +106,31 @@ class PostContextService
         }
     }
 
-    /** Legge il post da Facebook, chiede il riassunto a Haiku e lo salva. */
+    /**
+     * Legge il post da Facebook, chiede il riassunto a Haiku e lo salva.
+     *
+     * @param array<string,mixed>      $page
+     * @param array<string,mixed>|null $post Post già letto da Facebook (altrimenti lo legge qui)
+     */
     private function generate(array $page, string $platformPostId, ?array $post = null): ?string
     {
         $post ??= $this->meta->getPost($platformPostId, $page['page_access_token']) ?? [];
         if (empty($post['id'])) {
-            return $this->fail($platformPostId, 'Post non leggibile da Facebook');
+            $this->fail($platformPostId, 'Post non leggibile da Facebook');
+            return null;
         }
 
         [$text, $link, $image] = $this->extract($post);
         if ($text === '' && $link === [] && $image === null) {
-            return $this->fail($platformPostId, 'Post senza contenuto utilizzabile');
+            $this->fail($platformPostId, 'Post senza contenuto utilizzabile');
+            return null;
         }
 
         $article = !empty($link['url']) ? $this->fetchArticleText((string) $link['url']) : '';
         $summary = $this->claude->summarizePost($text, $link, $article, $image);
         if ($summary === null) {
-            return $this->fail($platformPostId, 'Riassunto AI non riuscito');
+            $this->fail($platformPostId, 'Riassunto AI non riuscito');
+            return null;
         }
 
         $now = date('Y-m-d H:i:s');
@@ -138,7 +146,11 @@ class PostContextService
         return $summary;
     }
 
-    /** Se è ora, controlla su Facebook se il post è cambiato e nel caso rigenera il riassunto. */
+    /**
+     * Se è ora, controlla su Facebook se il post è cambiato e nel caso rigenera il riassunto.
+     *
+     * @param array<string,mixed> $page
+     */
     private function recheckIfDue(array $page, object $row): void
     {
         $dueBefore = date('Y-m-d H:i:s', time() - self::RECHECK_MINUTES * 60);
@@ -159,7 +171,10 @@ class PostContextService
         }
     }
 
-    /** @return array{0:string,1:array,2:?string} [testo, link, immagine] */
+    /**
+     * @param  array<string,mixed> $post
+     * @return array{0:string,1:array<string,string>,2:?string} [testo, link, immagine]
+     */
     private function extract(array $post): array
     {
         $text = trim((string) ($post['message'] ?? $post['story'] ?? ''));
@@ -181,6 +196,7 @@ class PostContextService
         return [$text, $link, $image];
     }
 
+    /** @param array<string,string> $link */
     private function sourceHash(string $text, array $link): string
     {
         return hash('sha256', $text . "\n" . ($link['url'] ?? '') . "\n" . ($link['title'] ?? ''));
@@ -198,7 +214,7 @@ class PostContextService
         return null;
     }
 
-    private function fail(string $platformPostId, string $error): ?string
+    private function fail(string $platformPostId, string $error): void
     {
         DB::table('post_contexts')->where('platform_post_id', $platformPostId)->update([
             'status'     => 'failed',
@@ -206,7 +222,6 @@ class PostContextService
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
         $this->logger?->info("Post context {$platformPostId}: {$error}");
-        return null;
     }
 
     /**

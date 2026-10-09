@@ -377,6 +377,8 @@ class MetaGraphService
     /**
      * Contenuto di un post della pagina (testo, link condiviso, immagine) per il
      * contesto dei commenti. Never throws — null on any failure.
+     *
+     * @return array<string,mixed>|null
      */
     public function getPost(string $postId, string $pageToken): ?array
     {

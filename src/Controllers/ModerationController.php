@@ -89,6 +89,9 @@ class ModerationController
     /**
      * Aggiunge a ogni commento il riassunto del suo post (feature Pro `post_context`), se
      * esiste, come `post_context`. Mai bloccante: senza tabella o senza riassunti → invariato.
+     *
+     * @param  array<int,array<string,mixed>> $items
+     * @return array<int,array<string,mixed>>
      */
     private function withPostContext(array $items): array
     {
