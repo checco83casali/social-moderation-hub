@@ -144,7 +144,7 @@ button, .btn, .nav-item, .q-item, .chip-btn, .panel-action { touch-action: manip
   #screen-settings div[style*="max-width"] { max-width: 100% !important; }
   /* Schede delle impostazioni: striscia scorrevole su una riga */
   #screen-settings > div:first-child {
-    flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none;
     margin-left: -14px; margin-right: -14px; padding: 0 14px;
   }
   #screen-settings > div:first-child::-webkit-scrollbar { display: none; }
