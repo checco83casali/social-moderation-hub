@@ -95,7 +95,7 @@ class GdprService
      * placeholder sui campi PII, righe conservate per continuità statistica
      * e per eventuali appelli/contenziosi già aperti.
      *
-     * @return array{comments:int,social_users:int,moderation_log:int,appeal_records:int}
+     * @return array{comments:int,social_users:int,moderation_log:int,appeal_records:int,audit_log:int}
      */
     public function anonymiseUser(int $socialUserId): array
     {
@@ -104,7 +104,19 @@ class GdprService
             'social_users'   => $this->anonymiseSocialUser($socialUserId),
             'moderation_log' => $this->anonymiseModerationLog($socialUserId),
             'appeal_records' => $this->anonymiseAppealRecords($socialUserId),
+            'audit_log'      => $this->anonymiseAuditLog($socialUserId),
         ];
+    }
+
+    /** Audit: restano chi/cosa/quando; note e dettagli (possono contenere testo dell'utente) vengono svuotati. */
+    private function anonymiseAuditLog(int $socialUserId): int
+    {
+        try {
+            return (int) DB::table('audit_log')->where('social_user_id', $socialUserId)
+                ->update(['note' => null, 'details' => null]);
+        } catch (\Throwable) {
+            return 0;   // tabella non ancora migrata
+        }
     }
 
     private function anonymiseComments(int $socialUserId): int

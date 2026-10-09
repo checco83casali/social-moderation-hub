@@ -6,6 +6,7 @@ namespace ModerationHub\Controllers;
 
 use ModerationHub\Services\LicenseService;
 use Illuminate\Database\Capsule\Manager as DB;
+use ModerationHub\Services\AuditService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Psr7\Response;
@@ -80,6 +81,8 @@ class LicenseController
 
         $result = $this->license->activate($key, $domain, $auth->sub);
 
+        AuditService::log($auth, 'license.activate', ['details' => ['ok' => $result['ok'], 'status' => $result['status'], 'plan' => $result['plan']]]);
+
         $httpStatus = $result['ok'] ? 200 : 422;
         return $this->json($response, [
             'ok'       => $result['ok'],
@@ -100,6 +103,7 @@ class LicenseController
         }
 
         $this->license->deactivate($auth->sub);
+        AuditService::log($auth, 'license.deactivate');
 
         return $this->json($response, ['ok' => true, 'status' => 'free']);
     }

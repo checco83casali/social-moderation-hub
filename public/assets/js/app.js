@@ -31,6 +31,7 @@ document.querySelectorAll('.nav-item[data-screen]').forEach(item => {
       'approved-comments':'Commenti approvati',
       settings:           'Impostazioni',
       appeals:            'Ricorsi',
+      audit:              'Registro audit',
     };
     document.getElementById('topbar-title').textContent = titles[sc] || sc;
     if (sc === 'queue')             { loadQueue(); loadStats(); }
@@ -44,6 +45,7 @@ document.querySelectorAll('.nav-item[data-screen]').forEach(item => {
     if (sc === 'approved-comments') loadApprovedComments();
     if (sc === 'settings')          loadSettings();
     if (sc === 'appeals')           loadAppeals();
+    if (sc === 'audit')             loadAudit();
   });
 });
 
@@ -63,6 +65,7 @@ async function initApp() {
 
     if (currentUserRole === 'admin') {
       document.getElementById('nav-settings').style.display = 'flex';
+      document.getElementById('nav-audit').style.display    = 'flex';
       const menuUsers = document.getElementById('menu-manage-users');
       if (menuUsers) menuUsers.style.display = 'flex';
       const dp = document.getElementById('dev-mode-panel');
@@ -88,6 +91,7 @@ async function initApp() {
       const features      = s.license?.features ?? [];
       const hasReportable = features.includes('reportable_queue');
       const hasStats      = features.includes('advanced_stats');
+      const hasAudit      = features.includes('advanced_audit') || hasStats;   // come LicenseService::canViewAudit()
       const statsWall     = document.getElementById('stats-upgrade-wall');
       const statsContent  = document.getElementById('stats-content');
       const repWall       = document.getElementById('reportable-upgrade-wall');
@@ -99,6 +103,8 @@ async function initApp() {
       if (repWall)      repWall.style.display      = hasReportable ? 'none'  : 'block';
       if (repContent)   repContent.style.display   = hasReportable ? 'block' : 'none';
       if (statsBadge)   statsBadge.style.display   = hasStats      ? 'none'  : 'inline-block';
+      const auditBadge = document.getElementById('nav-audit-pro-badge');
+      if (auditBadge)   auditBadge.style.display   = hasAudit      ? 'none'  : 'inline-block';
       if (repBadge)     repBadge.style.display     = hasReportable ? 'none'  : 'inline-block';
     } catch(e) {}
 

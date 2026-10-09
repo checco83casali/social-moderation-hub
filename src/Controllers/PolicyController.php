@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ModerationHub\Controllers;
 
 use Illuminate\Database\Capsule\Manager as DB;
+use ModerationHub\Services\AuditService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Psr7\Response;
@@ -95,6 +96,8 @@ class PolicyController
             'updated_at'        => date('Y-m-d H:i:s'),
         ]);
 
+        AuditService::log($auth, 'policy.create', ['details' => ['policy_id' => (int) $id, 'name' => trim($body['name']), 'version' => $lastVersion + 1]]);
+
         return $this->json($response, ['id' => $id, 'message' => 'Policy created'], 201);
     }
 
@@ -138,6 +141,10 @@ class PolicyController
         $update['updated_at'] = date('Y-m-d H:i:s');
         DB::table('policies')->where('id', $policy->id)->update($update);
 
+        AuditService::log($request->getAttribute('auth_user'), 'policy.update', [
+            'details' => ['policy_id' => (int) $policy->id, 'fields' => array_keys(array_diff_key($update, ['updated_at' => 1]))],
+        ]);
+
         return $this->json($response, ['message' => 'Policy updated']);
     }
 
@@ -162,6 +169,8 @@ class PolicyController
                 'updated_at' => date('Y-m-d H:i:s'),
             ]);
         });
+
+        AuditService::log($auth, 'policy.activate', ['details' => ['policy_id' => (int) $policy->id, 'name' => $policy->name, 'version' => (int) $policy->version]]);
 
         return $this->json($response, ['message' => "Policy '{$policy->name}' v{$policy->version} is now active"]);
     }

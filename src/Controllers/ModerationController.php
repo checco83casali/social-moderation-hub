@@ -12,6 +12,7 @@ use ModerationHub\Services\RetentionService;
 use Illuminate\Database\Capsule\Manager as DB;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use ModerationHub\Services\AuditService;
 use Slim\Psr7\Response;
 
 /**
@@ -223,6 +224,12 @@ class ModerationController
             'human_decided_at' => $now,
             'final_action'     => 'reported_legal',
             'created_at'       => $now,
+        ]);
+
+        AuditService::log($auth, 'comment.report_legal', [
+            'comment_id'     => $commentId,
+            'social_user_id' => $comment->social_user_id ?? null,
+            'note'           => $note,
         ]);
 
         return $this->json($response, [
@@ -446,6 +453,12 @@ class ModerationController
             'reviewer_note' => $body['note'] ?? '',
         ]);
 
+        AuditService::log($auth, 'appeal.' . $decision, [
+            'comment_id'     => (int) $appeal->comment_id,
+            'social_user_id' => $appeal->social_user_id ?? null,
+            'note'           => (string) ($body['note'] ?? ''),
+        ]);
+
         if ($decision === 'accept') {
             $result = $this->moderation->applyHumanDecision(
                 commentId:   (int) $appeal->comment_id,
@@ -600,6 +613,11 @@ class ModerationController
         $isSupervisor  = in_array($auth->role ?? '', ['admin', 'supervisor'], true);
         $commentStatus = (string) DB::table('comments')->where('id', (int) $args['id'])->value('status');
 
+        // Contesto per il registro di audit (prima che la decisione cambi qualcosa).
+        $requested   = $decision;
+        $auditUserId = (int) (DB::table('comments')->where('id', (int) $args['id'])->value('social_user_id') ?? 0);
+        $violBefore  = (int) (DB::table('social_users')->where('id', $auditUserId)->value('violation_count') ?? 0);
+
         // "Approva (senza risposta)" su un commento NASCOSTO: ripristina e scala la violazione
         // (stesso effetto di unhide). Riservato a supervisor e admin; solo commenti 'hidden'
         // (segnalazioni legali e ricorsi hanno i loro flussi).
@@ -644,6 +662,7 @@ class ModerationController
                 'is_dev'       => 1,
                 'processed_at' => date('Y-m-d H:i:s'),
             ]);
+            $this->auditDecision($auth, $requested, (int) $args['id'], $auditUserId, $commentStatus, $violBefore, $body, null, null, true);
             return $this->json($response, [
                 'dev_mode' => true,
                 'action'   => $status,
@@ -674,7 +693,46 @@ class ModerationController
             replyText:   $replyText,
         );
 
+        $this->auditDecision($auth, $requested, (int) $args['id'], $auditUserId, $commentStatus, $violBefore, $body, $replyText, $result, false);
+
         return $this->json($response, $result);
+    }
+
+    /**
+     * Registro di audit di una decisione umana su un commento (chi, cosa, prima/dopo).
+     *
+     * @param array<string,mixed>      $body
+     * @param array<string,mixed>|null $result
+     */
+    private function auditDecision(
+        ?object $auth, string $requested, int $commentId, int $userId, string $statusBefore,
+        int $violBefore, array $body, ?string $replyText, ?array $result, bool $dev,
+    ): void {
+        $action = match ($requested) {
+            'allow'       => 'comment.approve',
+            'hide'        => 'comment.hide',
+            'keep_hidden' => 'comment.keep_hidden',
+            default       => 'comment.restore',   // restore / unhide (anche da Segnalazioni)
+        };
+        $details = array_filter([
+            'requested'         => $requested,
+            'status_before'     => $statusBefore,
+            'status_after'      => (string) DB::table('comments')->where('id', $commentId)->value('status'),
+            'silent'            => !empty($body['silent']) ? true : null,
+            'reply_text'        => $replyText,
+            'violations_before' => $violBefore,
+            'violations_after'  => (int) (DB::table('social_users')->where('id', $userId)->value('violation_count') ?? 0),
+            'ban_action'        => $result['ban_action'] ?? null,
+            'fb_hidden'         => ($result !== null && array_key_exists('fb_hidden', $result)) ? $result['fb_hidden'] : null,
+            'dev_mode'          => $dev ? true : null,
+        ], static fn ($v) => $v !== null);
+
+        AuditService::log($auth, $action, [
+            'comment_id'     => $commentId,
+            'social_user_id' => $userId ?: null,
+            'note'           => (string) ($body['note'] ?? ''),
+            'details'        => $details,
+        ]);
     }
 
     // ── GET /api/comments/{id}/hide-reply-preview  ──────────────────
@@ -733,6 +791,12 @@ class ModerationController
                 'removal_reply_text' => $text,
             ]);
         }
+
+        AuditService::log($request->getAttribute('auth_user'), 'comment.reply', [
+            'comment_id'     => (int) $comment->id,
+            'social_user_id' => $comment->social_user_id ?? null,
+            'details'        => ['sent' => $sent, 'text' => $text],
+        ]);
 
         if (!$sent) {
             return $this->json($response, [
@@ -800,6 +864,12 @@ class ModerationController
             categories:   $body['categories'] ?? [],
         );
 
+        AuditService::log($auth, 'user.ban', [
+            'social_user_id' => (int) $args['id'],
+            'note'           => (string) ($body['reason'] ?? 'Manual ban by admin'),
+            'details'        => ['result' => $result],
+        ]);
+
         return $this->json($response, ['action' => $result]);
     }
 
@@ -819,6 +889,12 @@ class ModerationController
             adminUserId:  $auth->sub,
             reason:       $body['reason'] ?? '',
         );
+
+        AuditService::log($auth, 'user.unban', [
+            'social_user_id' => (int) $args['id'],
+            'note'           => (string) ($body['reason'] ?? ''),
+            'details'        => ['lifted' => $lifted],
+        ]);
 
         return $this->json($response, ['lifted' => $lifted]);
     }
@@ -1415,9 +1491,15 @@ class ModerationController
         }
 
         $saved = [];
+        $auditChanges = [];
         foreach ($allowed as $key => $sanitize) {
             if (!array_key_exists($key, $body)) continue;
             $value = (string) $sanitize($body[$key]);
+            $old   = (string) (DB::table('app_settings')->where('key', $key)->value('value') ?? '');
+            if ($old !== $value) {
+                $secret = (bool) preg_match('/(secret|token|key|password)/i', (string) $key);
+                $auditChanges[$key] = $secret ? ['***', '***'] : [mb_substr($old, 0, 300), mb_substr($value, 0, 300)];
+            }
             DB::table('app_settings')->updateOrInsert(
                 ['key' => $key],
                 ['value' => $value, 'updated_by' => $auth->sub, 'updated_at' => date('Y-m-d H:i:s')]
@@ -1439,7 +1521,12 @@ class ModerationController
                 }
                 $this->writeEnvKey('ANTHROPIC_API_KEY', $newKey);
                 $saved['anthropic_api_key_masked'] = substr($newKey, 0, 10) . '…****';
+                $auditChanges['anthropic_api_key'] = ['***', '***'];
             }
+        }
+
+        if ($auditChanges !== []) {
+            AuditService::log($auth, 'settings.update', ['details' => ['changed' => $auditChanges]]);
         }
 
         return $this->json($response, ['saved' => true, 'settings' => $saved]);
@@ -1604,8 +1691,15 @@ class ModerationController
         if ($pageId)   $query->where('c.page_id', $pageId);
         if ($decision) $query->where('ml.ai_decision', $decision);
 
-        $rows = $query->orderByDesc('ml.created_at')->get()->map(function ($row) {
+        // Solo gli admin vedono CHI ha deciso: per i supervisori la colonna resta vuota
+        // (il middleware di redazione non tocca il CSV, quindi lo si fa qui).
+        $showActors = ($auth->role ?? '') === 'admin';
+
+        $rows = $query->orderByDesc('ml.created_at')->get()->map(function ($row) use ($showActors) {
             $arr = (array) $row;
+            if (!$showActors) {
+                $arr['reviewed_by'] = null;
+            }
             $arr['ai_categories'] = json_decode($arr['ai_categories'] ?? '[]', true);
             if (is_array($arr['ai_categories'])) {
                 $arr['ai_categories'] = implode(';', $arr['ai_categories']);
@@ -1628,9 +1722,9 @@ class ModerationController
         ob_start();
         $out = fopen('php://output', 'w');
         if (!empty($rows)) {
-            fputcsv($out, array_keys($rows[0]));
+            fputcsv($out, array_keys($rows[0]), ',', '"', '');
             foreach ($rows as $row) {
-                fputcsv($out, array_values($row));
+                fputcsv($out, array_values($row), ',', '"', '');
             }
         }
         fclose($out);

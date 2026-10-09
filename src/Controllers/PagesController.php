@@ -7,6 +7,7 @@ namespace ModerationHub\Controllers;
 use ModerationHub\Services\MetaGraphService;
 use ModerationHub\Services\LicenseService;
 use Illuminate\Database\Capsule\Manager as DB;
+use ModerationHub\Services\AuditService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Psr7\Response;
@@ -464,6 +465,8 @@ class PagesController
             'disconnected_at' => date('Y-m-d H:i:s'),
             'updated_at'      => date('Y-m-d H:i:s'),
         ]);
+
+        AuditService::log($auth, 'page.disconnect', ['page_id' => (int) $page->id, 'details' => ['page_name' => $page->page_name]]);
 
         return $this->json($response, ['message' => "Pagina '{$page->page_name}' disconnessa"]);
     }

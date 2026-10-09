@@ -1155,7 +1155,7 @@ async function openDrawer(userId) {
     const commentHtml = (comments.comments || []).map(c => {
       const cats = (c.ai_categories||[]).map(cat => categoryChip(cat)).join(' ');
       const decider = c.decided_by_human
-        ? ` · <span class="badge-human" title="Decisione di un moderatore">${esc(c.decided_by_name)}</span>`
+        ? ` · <span class="badge-human" title="Decisione di un moderatore">${esc(c.decided_by_name || 'Umano')}</span>`
         : '';
       return `
         <div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)">
@@ -1336,7 +1336,7 @@ async function loadHiddenComments() {
       // Chi ha nascosto il commento: o un moderatore (nome valorizzato), o l'AI
       // (auto-hide della pipeline — caso tipico dei reportable e degli "hide" diretti).
       const deciderBadge = c.hidden_by_human
-        ? `<span class="badge-human" title="Nascosto da un moderatore">Nascosto da: ${esc(c.decided_by_name)}</span>`
+        ? `<span class="badge-human" title="Nascosto da un moderatore">Nascosto da: ${esc(c.decided_by_name || 'un moderatore')}</span>`
         : `<span class="badge-ai" title="Nascondimento automatico della pipeline AI">Nascosto dall'AI</span>`;
       const fbLink = c.platform_comment_id && c.platform_post_id
         ? `https://www.facebook.com/permalink.php?story_fbid=${(c.platform_post_id.split('_')[1]||c.platform_post_id)}&id=${c.facebook_page_id}&comment_id=${c.platform_comment_id}`

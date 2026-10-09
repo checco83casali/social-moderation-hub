@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ModerationHub\Controllers;
 
+use ModerationHub\Services\AuditService;
 use ModerationHub\Services\OAuthService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -184,6 +185,8 @@ class AuthController
         } catch (\Throwable $e) {
             return $this->error($response, $e->getMessage(), 422);
         }
+
+        AuditService::log($auth, 'user.create', ['details' => ['email' => $email, 'role' => $role]]);
 
         $response->getBody()->write(json_encode([
             'ok'            => true,

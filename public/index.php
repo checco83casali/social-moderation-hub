@@ -15,6 +15,8 @@ use ModerationHub\Controllers\BrandingController;
 use ModerationHub\Controllers\WebhookDebugController;
 use ModerationHub\Controllers\PushController;
 use ModerationHub\Middleware\AuthMiddleware;
+use ModerationHub\Middleware\RedactActorsMiddleware;
+use ModerationHub\Controllers\AuditController;
 use ModerationHub\Middleware\AccessGuardMiddleware;
 use ModerationHub\Services\OAuthService;
 use Slim\Factory\AppFactory;
@@ -279,6 +281,10 @@ $app->group('/api', function ($group) {
     $group->post('/webhook-debug',             [WebhookDebugController::class, 'toggle']);
     $group->delete('/webhook-debug',           [WebhookDebugController::class, 'clear']);
 
+    // Registro di audit (solo admin: il controller lo impone)
+    $group->get('/audit',                      [AuditController::class, 'list']);
+    $group->get('/audit/export',               [AuditController::class, 'export']);
+
     // Approved comments
     $group->get('/comments/approved',          [ModerationController::class, 'approvedComments']);
 
@@ -298,6 +304,8 @@ $app->group('/api', function ($group) {
     $group->get('/bans/stats',                 [ModerationController::class, 'banStats']);
     $group->get('/bans/{id}/comments',         [ModerationController::class, 'userBannedComments']);
 
-})->add($auth());
+// Solo gli admin vedono CHI ha agito: gli altri ruoli ricevono le risposte senza nomi/id degli operatori.
+// (Aggiunto prima di auth: gira dopo, quando 'auth_user' è già sulla richiesta.)
+})->add(new RedactActorsMiddleware())->add($auth());
 
 $app->run();

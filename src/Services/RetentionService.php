@@ -87,6 +87,8 @@ class RetentionService
             'moderation_log'  => $cutoff !== null ? $this->anonymiseModerationLog($cutoff) : 0,
             'appeal_records'  => $cutoff !== null ? $this->anonymiseAppealRecords($cutoff) : 0,
             'webhook_events'  => $cutoff !== null ? $this->anonymiseWebhookEvents($cutoff) : 0,
+            // Audit: stessa finestra delle violazioni; scaduta quella, le righe vengono ELIMINATE.
+            'audit_log'       => $violationCutoff !== null ? $this->purgeAuditLog($violationCutoff) : 0,
         ];
 
         $finishedAt = microtime(true);
@@ -231,6 +233,16 @@ class RetentionService
                 'appeal_text'   => null,
                 'reviewer_note' => null,
             ]);
+    }
+
+    /** Elimina le righe del registro di audit più vecchie della finestra di conservazione. */
+    private function purgeAuditLog(string $cutoff): int
+    {
+        try {
+            return (int) DB::table('audit_log')->where('created_at', '<', $cutoff)->delete();
+        } catch (\Throwable) {
+            return 0;   // tabella non ancora migrata
+        }
     }
 
     private function anonymiseWebhookEvents(string $cutoff): int

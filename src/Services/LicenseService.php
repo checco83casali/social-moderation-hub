@@ -41,6 +41,11 @@ use Monolog\Logger;
  *   advanced_stats      — 30-day dashboard, AI distribution charts, sub-call breakdown,
  *                         category trends. Basic counters (queue/hidden/active bans)
  *                         remain free.
+ *   advanced_audit      — audit log screen + CSV export (who did what on comments, bans,
+ *                         appeals, policy, settings). Admin-only. The log is ALWAYS written,
+ *                         free or not (so history exists when the license is activated);
+ *                         this key only gates reading/exporting it. Licenses with
+ *                         `advanced_stats` ("Advanced") get it too — see canViewAudit().
  *
  * NOTE: the pipeline still PRODUCES reportable comments on Free installs (the AI
  *       continues to hide illegal content automatically — that's a safety feature,
@@ -91,12 +96,14 @@ class LicenseService
         'multi_page',
         'reportable_queue',
         'advanced_stats',
+        'advanced_audit',
     ];
 
     /** Human-readable labels for display in the license panel (server-side only). */
     private const FEATURE_LABELS = [
         'reportable_queue'    => 'Coda segnalabili',
         'advanced_stats'      => 'Statistiche avanzate',
+        'advanced_audit'      => 'Registro audit',
         'fact_check'          => 'Fact check AI',
         'whataboutism'        => 'Whataboutism AI',
         'templates'           => 'Template personalizzabili',
@@ -173,6 +180,16 @@ class LicenseService
     {
         $state = $this->resolve();
         return in_array($feature, $state['features'], true);
+    }
+
+    /**
+     * Accesso al registro audit (schermata + export): licenza `advanced_audit`, oppure
+     * qualsiasi licenza "Advanced" (`advanced_stats`), così le licenze già emesse lo ottengono
+     * senza aspettare che il server di licenza conosca la nuova chiave.
+     */
+    public function canViewAudit(): bool
+    {
+        return $this->hasFeature('advanced_audit') || $this->hasFeature('advanced_stats');
     }
 
     /**

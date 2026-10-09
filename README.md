@@ -78,6 +78,7 @@ offline-mode setting for fully air-gapped installs).
 - **AI whataboutism detection** — rhetorical-deflection detection with educational draft reply that brings the discussion back on topic; auto-publish above threshold — *NEW*
 - **Dangerous reports queue** — dedicated lane to review auto-hidden potentially-illegal content and escalate to authorities, with legal-dossier PDF export
 - **Advanced statistics** — 30-day dashboard, AI stage distribution, decision charts, category trends
+- **Audit log** — who did what on comments, bans, appeals, policy and settings; admin-only screen + CSV export (included with the Advanced license; the log is always recorded, the license only unlocks reading it)
 - **Custom reply templates** — editable hide / reportable / ban reply templates
 - **Configurable data retention** — custom GDPR anonymisation window via nightly cron
 - **Moderation log export** — CSV / JSON export with date and decision filters
