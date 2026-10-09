@@ -17,6 +17,7 @@ class ModerationService
         private readonly ClaudeService    $claude,
         private readonly BanService       $ban,
         private readonly MetaGraphService $meta,
+        private readonly PostContextService $postContext,
         private ?Logger                   $logger = null,
     ) {}
 
@@ -351,11 +352,12 @@ class ModerationService
             ? $this->fetchAccountMeta($fromId, $page['page_access_token'])
             : [];
 
-        // 8. Build enriched context for Claude
+        // 8. Build enriched context for Claude (+ riassunto del post, feature Pro `post_context`)
         $commentContext = $this->buildCommentContext(
             $webhookComment['message'] ?? '',
             $socialUser,
             $accountMeta,
+            $this->postContext->forPost($page, (string) ($webhookComment['post_id'] ?? '')),
         );
 
         // 9. Run AI moderation pipeline
@@ -578,11 +580,16 @@ class ModerationService
      *   - The comment text itself may contain personal data typed by the user
      *     - that is inherent to content moderation and unavoidable.
      */
-    private function buildCommentContext(string $message, array $socialUser, array $meta): string
+    private function buildCommentContext(string $message, array $socialUser, array $meta, ?string $postContext = null): string
     {
         $pseudonym = $this->pseudonymizeUserId((string) ($socialUser['platform_user_id'] ?? ''));
 
         $lines   = [];
+        if ($postContext !== null && $postContext !== '') {
+            $lines[] = "POST CONTEXT (summary of the page post this comment was written under - background only, do not moderate the post itself):";
+            $lines[] = $postContext;
+            $lines[] = "";
+        }
         $lines[] = "COMMENT TO EVALUATE:";
         $lines[] = "\"{$message}\"";
         $lines[] = "";
@@ -618,7 +625,9 @@ class ModerationService
         }
 
         $lines[] = "";
-        $lines[] = "Evaluate only the comment text. User context is a supplementary risk signal.";
+        $lines[] = $postContext
+            ? "Evaluate only the comment text. Use the post context to judge relevance, irony and what the comment is replying to; user context is a supplementary risk signal."
+            : "Evaluate only the comment text. User context is a supplementary risk signal.";
 
         return implode("\n", $lines);
     }
@@ -1400,7 +1409,10 @@ class ModerationService
             $accountMeta = $this->fetchAccountMeta($socialUser->platform_user_id, $page['page_access_token']);
         }
 
-        $commentContext = $this->buildCommentContext($newText, (array) $socialUser, $accountMeta);
+        $commentContext = $this->buildCommentContext(
+            $newText, (array) $socialUser, $accountMeta,
+            $this->postContext->forPost($page, (string) ($existing->platform_post_id ?? '')),
+        );
 
         $reasonMaxWords = 40;
         try {

@@ -481,6 +481,32 @@
       <!-- ══ TAB: AI avanzata ══════════════════════════════════════════ -->
       <div id="stab-ai" style="display:none">
 
+        <!-- ── PRO: Contesto del post per l'AI ──────────────────────────── -->
+        <div data-pro-feature="post_context" style="max-width:900px;position:relative;margin-bottom:20px">
+          <div class="panel" style="border-color:rgba(99,102,241,.2)">
+            <div class="panel-head">
+              <div class="panel-title">🧭 Contesto del post <span style="font-size:11px;font-weight:400;color:var(--accent);background:rgba(99,102,241,.1);padding:2px 8px;border-radius:20px;margin-left:6px">PRO</span></div>
+            </div>
+            <!-- Lock overlay -->
+            <div class="pro-lock-overlay" style="position:absolute;inset:0;background:rgba(var(--bg-card-rgb),.85);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;gap:8px;backdrop-filter:blur(1px)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;color:var(--muted)"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <div style="font-size:12px;font-weight:500;color:var(--muted)">Funzionalità Pro</div>
+            </div>
+            <div class="policy-form">
+              <label class="whd-switch ok">
+                <input type="checkbox" id="set-post-context-enabled">
+                <span class="whd-track" aria-hidden="true"></span>
+                <span>Usa il contenuto del post per valutare i commenti</span>
+              </label>
+              <p class="whd-help" style="margin-bottom:0">
+                Al primo commento su un post, Haiku legge il post (testo, link condiviso e immagine) e ne scrive un breve riassunto.
+                Il riassunto accompagna ogni commento di quel post, così l'AI capisce a cosa si riferisce: ironia, risposte al tema, commenti fuori luogo.
+                Costa una sola chiamata Haiku per post. Se il post viene modificato il riassunto si aggiorna.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <!-- ── PRO: Fact-check auto-publish threshold ───────────────────── -->
         <div data-pro-feature="fact_check" style="max-width:900px;position:relative">
           <div class="panel" style="border-color:rgba(99,102,241,.2)">

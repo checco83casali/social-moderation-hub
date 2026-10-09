@@ -122,6 +122,10 @@ async function loadSettings() {
       if (violRetEl) violRetEl.value = parseInt(d.violation_retention_days ?? 0, 10);
       loadRetentionStatus();
 
+      // PRO: contesto del post
+      const pcEl = document.getElementById('set-post-context-enabled');
+      if (pcEl) pcEl.checked = !!d.post_context_enabled;
+
       // PRO: fact-check auto-publish threshold
       const fcEl = document.getElementById('set-fact-check-threshold');
       if (fcEl) {
@@ -355,6 +359,8 @@ async function saveSettings() {
     if (banNotifEl && !banNotifEl.disabled) payload.ban_notification_template = banNotifEl.value.trim();
     const banHideEl = document.getElementById('set-banned-user-hide-template');
     if (banHideEl && !banHideEl.disabled) payload.banned_user_hide_template = banHideEl.value.trim();
+    const pcEl = document.getElementById('set-post-context-enabled');
+    if (pcEl && !pcEl.disabled) payload.post_context_enabled = pcEl.checked;
     const fcThEl = document.getElementById('set-fact-check-threshold');
     if (fcThEl && !fcThEl.disabled) {
       const fcPct = parseInt(fcThEl.value, 10);

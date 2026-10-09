@@ -374,6 +374,27 @@ class MetaGraphService
         }
     }
 
+    /**
+     * Contenuto di un post della pagina (testo, link condiviso, immagine) per il
+     * contesto dei commenti. Never throws — null on any failure.
+     */
+    public function getPost(string $postId, string $pageToken): ?array
+    {
+        try {
+            $response = $this->http->get($postId, [
+                'query' => [
+                    'access_token' => $pageToken,
+                    'fields'       => 'id,message,story,created_time,updated_time,permalink_url,full_picture,'
+                                    . 'attachments{type,media_type,title,description,url,unshimmed_url}',
+                ],
+            ]);
+            $data = json_decode((string) $response->getBody(), true);
+            return is_array($data) && isset($data['id']) ? $data : null;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
     // ──────────────────────────────────────────────────────────────────
     // Account metadata (for context-aware moderation)
     // ──────────────────────────────────────────────────────────────────

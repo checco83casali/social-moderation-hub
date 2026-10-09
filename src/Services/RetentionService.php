@@ -89,6 +89,8 @@ class RetentionService
             'webhook_events'  => $cutoff !== null ? $this->anonymiseWebhookEvents($cutoff) : 0,
             // Audit: stessa finestra delle violazioni; scaduta quella, le righe vengono ELIMINATE.
             'audit_log'       => $violationCutoff !== null ? $this->purgeAuditLog($violationCutoff) : 0,
+            // Riassunti dei post (contesto per l'AI): eliminati con la finestra generale.
+            'post_contexts'   => $cutoff !== null ? $this->purgePostContexts($cutoff) : 0,
         ];
 
         $finishedAt = microtime(true);
@@ -240,6 +242,16 @@ class RetentionService
     {
         try {
             return (int) DB::table('audit_log')->where('created_at', '<', $cutoff)->delete();
+        } catch (\Throwable) {
+            return 0;   // tabella non ancora migrata
+        }
+    }
+
+    /** Elimina i riassunti dei post non più aggiornati entro la finestra di conservazione. */
+    private function purgePostContexts(string $cutoff): int
+    {
+        try {
+            return (int) DB::table('post_contexts')->where('updated_at', '<', $cutoff)->delete();
         } catch (\Throwable) {
             return 0;   // tabella non ancora migrata
         }

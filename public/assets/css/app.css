@@ -830,6 +830,9 @@ body.sidebar-open #mobile-menu-btn { display: none !important; }
 .whd-track::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--muted); transition: transform .15s, background .15s; }
 .whd-switch input:checked + .whd-track { background: var(--warn-bg); border-color: var(--warn); }
 .whd-switch input:checked + .whd-track::after { transform: translateX(16px); background: var(--warn); }
+.whd-switch.ok input:checked + .whd-track { background: var(--success-bg); border-color: var(--success); }
+.whd-switch.ok input:checked + .whd-track::after { background: var(--success); }
+.whd-switch input:disabled + .whd-track { opacity: .5; }
 .whd-switch input:focus-visible + .whd-track { outline: 2px solid var(--accent); outline-offset: 2px; }
 .whd-help { font-size: 11.5px; color: var(--muted); line-height: 1.5; margin: 8px 0 16px; }
 .whd-toolbar { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; margin-bottom: 12px; }

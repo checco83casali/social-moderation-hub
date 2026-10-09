@@ -82,6 +82,7 @@ offline-mode setting for fully air-gapped installs).
 - **Custom reply templates** — editable hide / reportable / ban reply templates
 - **Configurable data retention** — custom GDPR anonymisation window via nightly cron
 - **Moderation log export** — CSV / JSON export with date and decision filters
+- **Post context for the AI** — at the first comment on a post, Haiku summarises the post (text, shared link, image) and the summary is sent with every comment of that post, so the AI understands what people are replying to; toggle in Settings → AI (feature key `post_context`)
 
 ---
 

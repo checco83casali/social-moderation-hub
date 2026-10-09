@@ -1357,6 +1357,8 @@ class ModerationController
             'data_retention_days'          => '0',
             // Violation/ban identity retention (PRO — 0 = falls back to data_retention_days)
             'violation_retention_days'     => '0',
+            // Contesto del post per l'AI (PRO post_context — attivo di default)
+            'post_context_enabled'         => '1',
             // Ban escalation levels
             'ban_level_1_hours'            => '1',
             'ban_level_2_days'             => '7',
@@ -1379,6 +1381,7 @@ class ModerationController
         $merged['removal_reply_enabled'] = (bool)(int)($merged['removal_reply_enabled'] ?? 1);
         $merged['data_retention_days']      = (int)($merged['data_retention_days'] ?? 0);
         $merged['violation_retention_days'] = (int)($merged['violation_retention_days'] ?? 0);
+        $merged['post_context_enabled']     = (bool)(int)($merged['post_context_enabled'] ?? 1);
 
         // Moderators only receive the fields the dashboard strictly needs to function.
         if (!$isAdmin) {
@@ -1473,6 +1476,8 @@ class ModerationController
             'fact_check_auto_publish_threshold'  => fn($v) => (string) max(0.5, min(1.0, (float) $v)),
             // feature: whataboutism
             'whataboutism_auto_publish_threshold' => fn($v) => (string) max(0.5, min(1.0, (float) $v)),
+            // feature: post_context
+            'post_context_enabled'               => fn($v) => $v ? '1' : '0',
         ];
 
         // Check if any Pro field was sent without a Pro license

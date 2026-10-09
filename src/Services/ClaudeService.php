@@ -747,6 +747,82 @@ V;
         }
     }
 
+    /**
+     * Contesto del post (feature `post_context`): Haiku riassume il post su cui arrivano
+     * i commenti, così la moderazione capisce a cosa rispondono. Una chiamata per post.
+     *
+     * @param string      $postText    Testo del post (message/story)
+     * @param array       $link        Link condiviso: ['title','description','url'] (può essere vuoto)
+     * @param string      $articleText Testo estratto dalla pagina del link (può essere vuoto)
+     * @param string|null $imageUrl    Immagine del post (letta da Haiku se raggiungibile)
+     * @return string|null Riassunto, null se la chiamata fallisce
+     */
+    public function summarizePost(string $postText, array $link, string $articleText, ?string $imageUrl): ?string
+    {
+        $system = <<<'POSTCTX'
+You summarise a social media post published by a page, so that a moderation AI can understand the comments written under it.
+Write 3 to 6 short lines, in the same language as the post, plain text, no markdown, covering:
+- Topic: what the post is about (and the linked article, if any)
+- Stance: the position or claim the page takes, if any
+- People/organisations mentioned
+- Tone and sensitivity: e.g. news, opinion, promotional, satire; flag sensitive topics (politics, crime, health, minors, tragedy)
+Stick to what the content says: no opinions, no moderation advice. If there is almost no content (e.g. only an image without text), describe what is visible and say the context is limited.
+POSTCTX;
+
+        $parts = [];
+        $parts[] = "POST TEXT:\n" . ($postText !== '' ? mb_substr($postText, 0, 4000) : '(no text)');
+        if (!empty($link['title']) || !empty($link['description']) || !empty($link['url'])) {
+            $parts[] = "SHARED LINK:\n"
+                . (!empty($link['title'])       ? "Title: " . mb_substr((string) $link['title'], 0, 300) . "\n" : '')
+                . (!empty($link['description']) ? "Description: " . mb_substr((string) $link['description'], 0, 1000) . "\n" : '')
+                . (!empty($link['url'])         ? "URL: " . mb_substr((string) $link['url'], 0, 500) : '');
+        }
+        if ($articleText !== '') {
+            $parts[] = "LINKED PAGE TEXT (extract):\n" . mb_substr($articleText, 0, 6000);
+        }
+        $text = implode("\n\n", $parts);
+
+        $call = function (bool $withImage) use ($system, $text, $imageUrl): ?string {
+            $content = [];
+            if ($withImage && $imageUrl) {
+                $content[] = ['type' => 'image', 'source' => ['type' => 'url', 'url' => $imageUrl]];
+            }
+            $content[] = ['type' => 'text', 'text' => $text];
+            $response = $this->http->post(self::API_URL, [
+                'headers' => [
+                    'x-api-key'         => $this->apiKey,
+                    'anthropic-version' => self::API_VERSION,
+                    'content-type'      => 'application/json',
+                ],
+                'json' => [
+                    'model'      => self::MODEL_HAIKU,
+                    'max_tokens' => 400,
+                    'system'     => $system,
+                    'messages'   => [['role' => 'user', 'content' => $content]],
+                ],
+            ]);
+            $body = json_decode((string) $response->getBody(), true);
+            $out  = trim((string) ($body['content'][0]['text'] ?? ''));
+            return $out !== '' ? mb_substr($out, 0, 2000) : null;
+        };
+
+        try {
+            return $call(true);
+        } catch (GuzzleException $e) {
+            // Immagine non scaricabile da Anthropic (URL scaduto, formato…): riprova solo testo.
+            if ($imageUrl) {
+                try { return $call(false); } catch (GuzzleException $e) {}
+            }
+            $this->logger?->warning('Post context summary failed: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    public function postContextModel(): string
+    {
+        return self::MODEL_HAIKU;
+    }
+
     /** Scarica una pagina e ne estrae il testo (HTML ripulito), stringa vuota se non leggibile. */
     private function fetchUrlText(string $url): string
     {

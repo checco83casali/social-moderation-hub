@@ -46,6 +46,9 @@ use Monolog\Logger;
  *                         free or not (so history exists when the license is activated);
  *                         this key only gates reading/exporting it. Licenses with
  *                         `advanced_stats` ("Advanced") get it too — see canViewAudit().
+ *   post_context        — at the first comment on a post Haiku summarises the post (text,
+ *                         shared link, image); the summary is sent to the AI with every
+ *                         comment of that post. Admin toggle: app_settings.post_context_enabled.
  *
  * NOTE: the pipeline still PRODUCES reportable comments on Free installs (the AI
  *       continues to hide illegal content automatically — that's a safety feature,
@@ -97,6 +100,7 @@ class LicenseService
         'reportable_queue',
         'advanced_stats',
         'advanced_audit',
+        'post_context',
     ];
 
     /** Human-readable labels for display in the license panel (server-side only). */
@@ -111,6 +115,7 @@ class LicenseService
         'export_log'          => 'Export log',
         'per_page_thresholds' => 'Soglie AI per pagina',
         'multi_page'          => 'Pagine multiple',
+        'post_context'        => 'Contesto del post per l\'AI',
     ];
 
     // ── State ────────────────────────────────────────────────────────
