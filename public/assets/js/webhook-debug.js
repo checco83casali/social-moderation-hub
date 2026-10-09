@@ -161,7 +161,7 @@
     });
     $('whd-refresh').addEventListener('click', () => loadWebhookDebug());
     $('whd-clear').addEventListener('click', async () => {
-      if (!confirm('Eliminare tutti gli eventi webhook registrati?')) return;
+      if (!(await confirmDialog({ title: 'Eliminare gli eventi webhook?', message: 'Tutti gli eventi webhook registrati verranno eliminati.', confirmLabel: 'Elimina', danger: true }))) return;
       try {
         const d = await api('/webhook-debug', 'DELETE');
         setMsg(`Eliminati ${d.deleted} eventi.`, 'ok');

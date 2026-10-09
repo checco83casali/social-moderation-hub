@@ -593,8 +593,34 @@ class ModerationController
         $auth = $request->getAttribute('auth_user');
 
         $decision = $body['decision'] ?? '';
-        if (!in_array($decision, ['allow', 'hide', 'unhide', 'keep_hidden'], true)) {
+        if (!in_array($decision, ['allow', 'hide', 'unhide', 'keep_hidden', 'restore'], true)) {
             return $this->json($response, ['error' => 'Invalid decision.'], 422);
+        }
+
+        $isSupervisor  = in_array($auth->role ?? '', ['admin', 'supervisor'], true);
+        $commentStatus = (string) DB::table('comments')->where('id', (int) $args['id'])->value('status');
+
+        // "Approva (senza risposta)" su un commento NASCOSTO: ripristina e scala la violazione
+        // (stesso effetto di unhide). Riservato a supervisor e admin; solo commenti 'hidden'
+        // (segnalazioni legali e ricorsi hanno i loro flussi).
+        if ($decision === 'restore') {
+            if (!$isSupervisor) {
+                return $this->json($response, ['error' => 'Solo supervisor e admin possono ripristinare un commento nascosto.'], 403);
+            }
+            if ($commentStatus !== 'hidden') {
+                return $this->json($response, ['error' => 'Solo i commenti nascosti possono essere ripristinati da qui (segnalazioni e ricorsi hanno un flusso dedicato).'], 409);
+            }
+            $decision = 'unhide';
+        }
+
+        // Nascondere un commento GIÀ APPROVATO: solo supervisor e admin, e solo con avviso.
+        if ($decision === 'hide' && $commentStatus === 'approved') {
+            if (!$isSupervisor) {
+                return $this->json($response, ['error' => 'Solo supervisor e admin possono nascondere un commento già approvato.'], 403);
+            }
+            if (!empty($body['silent'])) {
+                return $this->json($response, ['error' => 'Un commento già approvato può essere nascosto solo con avviso.'], 422);
+            }
         }
 
         // Nascondimento silenzioso = override delle impostazioni di notifica:

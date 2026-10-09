@@ -107,17 +107,7 @@ async function loadStatsScreen() {
   }
 }
 
-// ── Riga della coda: chip valutazione AI + azioni rapide ───────────
-const ROW_ICON_ATTRS = 'width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"';
-const ROW_ICONS = {
-  check:   `<svg ${ROW_ICON_ATTRS}><path d="M20 6L9 17l-5-5"/></svg>`,
-  chat:    `<svg ${ROW_ICON_ATTRS}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
-  eyeOff:  `<svg ${ROW_ICON_ATTRS}><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>`,
-  volume:    `<svg ${ROW_ICON_ATTRS}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`,
-  volumeOff: `<svg ${ROW_ICON_ATTRS}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`,
-  bellOff: `<svg ${ROW_ICON_ATTRS}><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><path d="M1 1l22 22"/></svg>`,
-};
-
+// ── Riga della coda: chip valutazione AI (le azioni sono nel dettaglio) ──
 function queueUserChips(item) {
   const n = item.violation_count || 0;
   const statusMap = {
@@ -139,17 +129,6 @@ function queueAiChips(item) {
   const pct  = item.ai_confidence ? Math.round(item.ai_confidence * 100) + '%' : '';
   const cats = (item.ai_categories || []).slice(0, 2).map(cat => categoryChip(cat)).join(' ');
   return `<span class="chip chip-ai" title="Valutazione AI">AI: ${esc(label)}${pct ? ` · ${pct}` : ''}</span> ${cats}`;
-}
-
-// Azione rapida dalla riga: apre il commento nel dettaglio (così la nota e il
-// contesto sono quelli del commento su cui si agisce) e poi esegue l'azione.
-function rowAction(ev, id, action) {
-  ev.stopPropagation();
-  selectComment(id, { quiet: true });
-  if (!currentComment) return;
-  if (action === 'reply') { openApproveReply(); return; }
-  if (action === 'hide')  { openHideReply();    return; }
-  decide(action);
 }
 
 // ── Queue (uncertain AI decisions only) ──────────────────────────
@@ -179,12 +158,6 @@ async function loadQueue() {
           <div class="q-text">${esc(item.content)}</div>
           <div class="q-footer">
             <div class="q-ai">${queueAiChips(item)}</div>
-          <div class="row-actions" onclick="event.stopPropagation()">
-            <button class="btn btn-approve-solid" title="Approva" onclick="rowAction(event, ${item.id}, 'allow')">${ROW_ICONS.check}Approva</button>
-            <button class="btn btn-approve-reply" title="Approva e rispondi all'utente" onclick="rowAction(event, ${item.id}, 'reply')">${ROW_ICONS.chat}Rispondi</button>
-            <button class="btn btn-hide-notify" title="Nascondi e rispondi: rivedi l'avviso prima dell'invio" onclick="rowAction(event, ${item.id}, 'hide')">${ROW_ICONS.volume}Nascondi e rispondi</button>
-            ${['admin', 'supervisor'].includes(currentUserRole) ? `<button class="btn btn-hide-silent" title="Nascondi senza avviso (ignora le impostazioni)" onclick="rowAction(event, ${item.id}, 'hide_silent')">${ROW_ICONS.volumeOff}Senza avviso</button>` : ''}
-          </div>
           </div>
         </div>
       </div>`).join('');
@@ -254,7 +227,12 @@ async function resolveReportable(commentId, action) {
     keep:    'mantenere il commento nascosto',
     report:  'avviare l\'iter di segnalazione alle autorità',
   };
-  if (!confirm(`Confermi di voler ${labels[action]}?`)) return;
+  const dlg = {
+    approve: { title: 'Ripristinare il commento?',        confirmLabel: 'Ripristina',        danger: false },
+    keep:    { title: 'Mantenere il commento nascosto?',  confirmLabel: 'Mantieni nascosto', danger: false },
+    report:  { title: 'Avviare l\'iter di segnalazione?', confirmLabel: 'Avvia iter',        danger: true  },
+  }[action];
+  if (!(await confirmDialog({ ...dlg, message: `Confermi di voler ${labels[action]}?` }))) return;
 
   try {
     if (action === 'approve') {
@@ -472,7 +450,7 @@ async function decide(decision) {
   const note = document.getElementById('mod-note')?.value || '';
 
   // Disable all buttons and show spinner on the clicked one
-  const btns = document.querySelectorAll('.decision-actions .btn, .row-actions .btn');
+  const btns = document.querySelectorAll('.decision-actions .btn');
   const clickedBtn = (typeof event !== 'undefined' ? event?.target?.closest('.btn') : null);
   btns.forEach(b => { b.disabled = true; b.style.opacity = '.45'; });
   if (clickedBtn) {
@@ -620,17 +598,25 @@ async function confirmApproveReply() {
 // ── Nascondi e rispondi: avviso rivedibile prima dell'invio ───────────
 // Il server precompila il testo (nome utente + motivo pubblico dell'AI) SENZA link di
 // ricorso: il link viene accodato in fondo dal server all'invio.
-async function openHideReply() {
-  if (!currentComment) return;
-  const id    = currentComment.id;
+// target = { id, content, source: 'queue' | 'approved' }. Senza argomenti usa il commento aperto in coda.
+let hideReplyTarget = null;
+
+async function openHideReply(target) {
+  if (!target) {
+    if (!currentComment) return;
+    target = { id: currentComment.id, content: currentComment.content, source: 'queue' };
+  }
+  hideReplyTarget = target;
+  const id    = target.id;
   const ta    = document.getElementById('hide-reply-text');
   const errEl = document.getElementById('hide-reply-err');
   const btn   = document.getElementById('hide-reply-submit');
   ta.value = '';
   ta.disabled = true;
   errEl.style.display = 'none';
-  document.getElementById('hide-reply-quote').textContent = currentComment.content || '';
+  document.getElementById('hide-reply-quote').textContent = target.content || '';
   document.getElementById('hide-reply-appeal').textContent = '';
+  document.getElementById('hide-reply-approved-warn').style.display = target.source === 'approved' ? 'block' : 'none';
   btn.disabled = true;
   btn.textContent = 'Nascondi e pubblica avviso';
   updateHideReplyCount();
@@ -638,7 +624,7 @@ async function openHideReply() {
 
   try {
     const p = await api(`/comments/${id}/hide-reply-preview`);
-    if (currentComment && currentComment.id === id) {
+    if (hideReplyTarget && hideReplyTarget.id === id) {
       ta.value = p.text || '';
       document.getElementById('hide-reply-appeal').textContent = p.appeal_preview || '';
     }
@@ -658,11 +644,14 @@ function updateHideReplyCount() {
 }
 
 async function confirmHideReply() {
-  if (!currentComment) return;
+  if (!hideReplyTarget) return;
+  const target = hideReplyTarget;
   const text  = document.getElementById('hide-reply-text').value.trim();
   const errEl = document.getElementById('hide-reply-err');
   const btn   = document.getElementById('hide-reply-submit');
-  const note  = document.getElementById('mod-note')?.value || '';
+  const note  = target.source === 'queue'
+    ? (document.getElementById('mod-note')?.value || '')
+    : 'Nascosto dopo l\'approvazione (revisione manuale)';
   errEl.style.display = 'none';
 
   if (!text) {
@@ -678,7 +667,7 @@ async function confirmHideReply() {
   btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px"></span>Pubblicazione…';
 
   try {
-    const res = await api(`/comments/${currentComment.id}/decide`, 'POST', {
+    const res = await api(`/comments/${target.id}/decide`, 'POST', {
       decision: 'hide', note, reply_text: text,
     });
 
@@ -696,10 +685,15 @@ async function confirmHideReply() {
     closeModal('modal-hide-reply');
     if (res && res.dev_mode) toast('Dev mode attivo: nessuna azione reale su Facebook', 'err');
     else toast(res && res.fb_reply_sent === false ? 'Commento nascosto · avviso non inviato' : 'Commento nascosto · avviso pubblicato', 'ok');
-    currentComment = null;
-    document.getElementById('detail-content').style.display = 'none';
-    document.getElementById('detail-empty').style.display   = 'flex';
-    loadQueue(); loadStats();
+    if (target.source === 'queue') {
+      currentComment = null;
+      document.getElementById('detail-content').style.display = 'none';
+      document.getElementById('detail-empty').style.display   = 'flex';
+      loadQueue();
+    } else {
+      loadApprovedComments();
+    }
+    loadStats();
   } catch (e) {
     errEl.textContent = e.message || 'Errore durante l\'invio.';
     errEl.style.display = 'block';
@@ -947,7 +941,7 @@ function setBanViolationsFilter(val, el) {
 }
 
 async function doLiftBan(userId, name) {
-  if (!confirm(`Revocare il ban di ${name}?`)) return;
+  if (!(await confirmDialog({ title: 'Revocare il ban?', message: `Il ban di ${name} verrà revocato.`, confirmLabel: 'Revoca ban' }))) return;
   try {
     await api(`/users/${userId}/ban`, 'DELETE', { reason: 'Revoca manuale da dashboard' });
     toast('Ban revocato', 'ok');
@@ -1043,6 +1037,8 @@ async function loadApprovedComments() {
     countEl.textContent = `${d.total} commenti`;
     if (!d.items?.length) { list.innerHTML = '<div class="empty">Nessun commento approvato</div>'; return; }
     const stageLabel = { haiku:'Haiku', sonnet:'Sonnet', human:'Umano' };
+    const canHideApproved = ['admin', 'supervisor'].includes(currentUserRole);
+    d.items.forEach(c => { approvedMap[c.id] = c; });
     list.innerHTML = d.items.map(c => {
       const cats    = (c.ai_categories||[]).map(cat => categoryChip(cat)).join(' ');
       const conf    = c.ai_confidence ? Math.round(c.ai_confidence*100)+'%' : '—';
@@ -1086,12 +1082,21 @@ async function loadApprovedComments() {
             ${c.ai_reason ? `<span style="font-size:11px;color:var(--muted);flex-basis:100%;margin-top:4px">${esc(c.ai_reason)}</span>` : ''}
             ${c.human_note ? `<span style="font-size:11px;color:var(--muted);flex-basis:100%;margin-top:2px">📝 ${esc(c.human_note)}</span>` : ''}
             <span class="bc-conf">${conf}</span>
+            ${canHideApproved ? `<button class="btn btn-hide-notify" style="margin-left:auto;padding:5px 12px;font-size:12px" title="Nascondi con avviso: conta come violazione dell'utente" onclick="hideApprovedComment(${c.id})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>Nascondi con avviso</button>` : ''}
           </div>
         </div>`;
     }).join('');
   } catch (e) {
     list.innerHTML = '<div class="empty">Errore nel caricamento</div>';
   }
+}
+
+// Commento già approvato → nascondi con avviso (solo admin/supervisor; il server lo impone).
+const approvedMap = {};
+function hideApprovedComment(id) {
+  const c = approvedMap[id];
+  if (!c) return;
+  openHideReply({ id: c.id, content: c.content, source: 'approved' });
 }
 
 function setAcFilter(val, el) {
@@ -1338,11 +1343,29 @@ async function loadHiddenComments() {
           ${replyBlock}
           <div class="bc-footer" style="margin-top:10px">
             ${aiSignalChips(c)} ${cats}
+            ${(isAdminOrSupervisor && !c.pending_legal_review && !c.is_reportable && c.appeal_status !== 'pending') ? `<button class="btn btn-approve-solid" style="margin-left:auto;padding:5px 12px;font-size:12px" title="Torna visibile, nessuna risposta, scala 1 violazione all'utente" onclick="restoreHiddenComment(${c.id})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Approva (senza risposta)</button>` : ''}
           </div>
         </div>`;
     }).join('');
   } catch (e) {
     list.innerHTML = '<div class="empty">Errore nel caricamento</div>';
+  }
+}
+
+// Commento nascosto → approva senza risposta: torna visibile e scala 1 violazione (solo admin/supervisor).
+async function restoreHiddenComment(id) {
+  if (!(await confirmDialog({
+    title: 'Approvare il commento nascosto?',
+    message: 'Il commento tornerà visibile e all\'utente verrà scalata 1 violazione (l\'eventuale ban innescato da questo commento viene revocato).\n\nNessuna risposta verrà pubblicata.',
+    confirmLabel: 'Approva senza risposta',
+  }))) return;
+  try {
+    await api(`/comments/${id}/decide`, 'POST', { decision: 'restore', note: 'Approvato senza risposta da supervisore (ripristino)' });
+    toast('Commento approvato e ripristinato', 'ok');
+    document.getElementById(`hc-${id}`)?.remove();
+    loadStats();
+  } catch (e) {
+    toast('Errore: ' + e.message, 'err');
   }
 }
 

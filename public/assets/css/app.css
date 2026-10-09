@@ -293,10 +293,6 @@ nav { flex: 1; padding: 12px 10px; }
 .q-footer { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; margin-top: 6px; }
 .q-ai { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
 .chip-ai { background: var(--bg-hover); color: var(--text); border: 1px solid var(--border-hi); font-weight: 600; }
-.row-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
-.row-actions .btn { padding: 4px 10px; font-size: 11.5px; font-weight: 600; border-radius: 8px; gap: 5px; }
-.row-actions .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.row-actions .btn:disabled { cursor: not-allowed; }
 
 /* Modale "Approva e rispondi" */
 .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }

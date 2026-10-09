@@ -245,7 +245,12 @@ async function activateLicense() {
 
 // ── Deactivate license ────────────────────────────────────────────
 async function deactivateLicense() {
-  if (!confirm('Disattivare la licenza Pro? Le funzionalità Pro verranno disabilitate immediatamente.')) return;
+  if (!(await confirmDialog({
+    title: 'Disattivare la licenza Pro?',
+    message: 'Le funzionalità Pro verranno disabilitate immediatamente.',
+    confirmLabel: 'Disattiva',
+    danger: true,
+  }))) return;
   try {
     await api('/license', 'DELETE');
     toast('Licenza disattivata', 'ok');

@@ -216,3 +216,59 @@ function aiSignalChips(c) {
 // ── Modals ────────────────────────────────────────────────────────
 function openModal(id) { document.getElementById(id).style.display = 'flex'; }
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+// Modale di conferma: sostituisce window.confirm. Uso: if (!(await confirmDialog({...}))) return;
+// Esc / clic fuori / Annulla → false. Per le azioni "danger" il focus parte su Annulla.
+function confirmDialog({ title = 'Confermi?', message = '', confirmLabel = 'Conferma', cancelLabel = 'Annulla', danger = false } = {}) {
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:700;display:flex;align-items:center;justify-content:center;padding:16px';
+
+    const box = document.createElement('div');
+    box.style.cssText = 'background:var(--bg-card);border-radius:var(--radius-lg);padding:26px 30px;width:440px;max-width:100%;box-shadow:0 8px 32px rgba(0,0,0,.25)';
+
+    const h = document.createElement('div');
+    h.style.cssText = 'font-size:15px;font-weight:600;margin-bottom:8px';
+    h.textContent = title;
+
+    const p = document.createElement('div');
+    p.style.cssText = 'font-size:13px;color:var(--muted);line-height:1.6;white-space:pre-line';
+    p.textContent = message;
+
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:10px;justify-content:flex-end;margin-top:22px';
+
+    const cancel = document.createElement('button');
+    cancel.type = 'button'; cancel.className = 'btn-secondary'; cancel.textContent = cancelLabel;
+
+    const ok = document.createElement('button');
+    ok.type = 'button'; ok.className = 'btn-primary'; ok.textContent = confirmLabel;
+    if (danger) ok.style.cssText = 'background:var(--danger);border-color:var(--danger);color:#fff';
+
+    row.append(cancel, ok);
+    box.append(h, p, row);
+    overlay.append(box);
+
+    const done = (value) => {
+      document.removeEventListener('keydown', onKey, true);
+      overlay.remove();
+      resolve(value);
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); done(false); }
+      else if (e.key === 'Tab') {                       // focus intrappolato tra i due pulsanti
+        e.preventDefault();
+        (document.activeElement === ok ? cancel : ok).focus();
+      }
+    };
+    cancel.addEventListener('click', () => done(false));
+    ok.addEventListener('click', () => done(true));
+    overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) done(false); });
+    document.addEventListener('keydown', onKey, true);
+
+    document.body.appendChild(overlay);
+    (danger ? cancel : ok).focus();
+  });
+}

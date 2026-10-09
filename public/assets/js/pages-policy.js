@@ -39,7 +39,12 @@ async function loadPages() {
 }
 
 async function disconnectPage(id) {
-  if (!confirm('Disconnettere questa pagina?\n\nNon sarà più moderata e verrà tolta dall\'elenco, ma tutti i dati (coda di moderazione, log, ban) restano conservati per audit. Potrai ricollegarla in seguito.')) return;
+  if (!(await confirmDialog({
+    title: 'Disconnettere questa pagina?',
+    message: 'Non sarà più moderata e verrà tolta dall\'elenco, ma tutti i dati (coda di moderazione, log, ban) restano conservati per audit.\n\nPotrai ricollegarla in seguito.',
+    confirmLabel: 'Disconnetti',
+    danger: true,
+  }))) return;
   try {
     const r = await api(`/pages/${id}`, 'DELETE');
     toast(r.message || 'Pagina disconnessa', 'ok');
