@@ -130,6 +130,14 @@ button, .btn, .nav-item, .q-item, .chip-btn, .panel-action { touch-action: manip
 
   /* Niente scorrimento orizzontale della pagina: le parti larghe scorrono da sole */
   #content { overflow-x: hidden; }
+  /* Il documento non deve mai diventare più largo dello schermo (su iOS sposta la barra fissa in basso) */
+  html, body { max-width: 100%; overflow-x: clip; }
+  #main { max-width: 100%; }
+  /* Registro audit: filtri e testi lunghi restano nella larghezza dello schermo */
+  #screen-audit .filter-bar > * { min-width: 0; max-width: 100%; }
+  #screen-audit .filter-bar label { display: flex; flex-direction: column; gap: 3px; flex: 1 1 140px; }
+  #screen-audit .filter-bar input[type="date"] { width: 100%; min-width: 0; box-sizing: border-box; }
+  #screen-audit .bc-item { overflow-wrap: anywhere; }
   #screen-settings div[style*="grid-template-columns"],
   #screen-policy   div[style*="grid-template-columns"],
   #screen-pages    div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }

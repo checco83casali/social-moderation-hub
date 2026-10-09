@@ -13,10 +13,16 @@ async function loadStats() {
     document.getElementById('s-removed').textContent  = d.hidden_30d    ?? '—';
     document.getElementById('s-approved').textContent = d.approved_30d  ?? '—';
     document.getElementById('s-bans').textContent     = d.active_bans   ?? '—';
-    document.getElementById('nav-queue-count').textContent = d.queue_pending ?? '0';
+    // Badge del menu: visibili solo se c'è qualcosa in attesa
+    const queueBadge = document.getElementById('nav-queue-count');
+    queueBadge.textContent = d.queue_pending ?? '0';
+    queueBadge.style.display = (d.queue_pending ?? 0) > 0 ? '' : 'none';
 
     const appealsBadge = document.getElementById('nav-appeals-count');
-    if (appealsBadge) appealsBadge.textContent = d.appeals_pending ?? '0';
+    if (appealsBadge) {
+      appealsBadge.textContent = d.appeals_pending ?? '0';
+      appealsBadge.style.display = (d.appeals_pending ?? 0) > 0 ? '' : 'none';
+    }
 
     const reportEl = document.getElementById('s-reportable');
     if (reportEl) {
