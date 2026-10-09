@@ -63,6 +63,16 @@ async function togglePage(id) {
 // ── Soglie AI per pagina (feature Pro: per_page_thresholds) ─────────
 let _pageSettingsId = null;
 
+// Soglie per pagina: cursore e campo numerico restano allineati; campo vuoto = valore globale.
+function psSync(key, val, fromInput = false, globalVal = null) {
+  const num   = document.getElementById('ps-' + key);
+  const range = document.getElementById('ps-' + key + '-range');
+  if (!num || !range) return;
+  if (globalVal !== null) { num.value = ''; range.value = globalVal; return; }
+  if (!fromInput) { num.value = parseFloat(val).toFixed(2); return; }
+  if (val !== '' && !isNaN(parseFloat(val))) range.value = val;
+}
+
 async function openPageSettings(id) {
   _pageSettingsId = id;
   const body   = document.getElementById('page-settings-body');
@@ -82,10 +92,18 @@ async function openPageSettings(id) {
         Lascia un campo <strong>vuoto</strong> per usare il valore globale. I valori impostati qui sovrascrivono le soglie generali solo per questa pagina.
       </div>
       <label class="form-label">Soglia Haiku <span style="color:var(--muted);font-weight:400">(globale: ${d.global_haiku})</span></label>
-      <input class="form-input" type="number" id="ps-haiku" min="0.01" max="1.00" step="0.01" value="${d.haiku_confidence_threshold ? d.haiku_confidence_threshold : ''}" placeholder="${d.global_haiku}">
+      <div style="display:flex;align-items:center;gap:10px">
+        <input type="range" id="ps-haiku-range" min="0.01" max="1" step="0.01" value="${d.haiku_confidence_threshold || d.global_haiku}" style="flex:1;min-width:0;accent-color:var(--accent)" oninput="psSync('haiku', this.value)">
+        <input class="form-input" type="number" id="ps-haiku" min="0.01" max="1.00" step="0.01" value="${d.haiku_confidence_threshold ? d.haiku_confidence_threshold : ''}" placeholder="${d.global_haiku}" style="width:84px;flex:none;text-align:center" oninput="psSync('haiku', this.value, true)">
+        <button type="button" class="btn-sm" style="flex-shrink:0" onclick="psSync('haiku', '', true, ${d.global_haiku})">Globale</button>
+      </div>
       <div style="font-size:11px;color:var(--muted);margin:5px 0 14px">Se confidence ≥ soglia → Haiku decide da solo. Sotto → passa a Sonnet.</div>
       <label class="form-label">Soglia Sonnet <span style="color:var(--muted);font-weight:400">(globale: ${d.global_sonnet})</span></label>
-      <input class="form-input" type="number" id="ps-sonnet" min="0.01" max="1.00" step="0.01" value="${d.sonnet_confidence_threshold ? d.sonnet_confidence_threshold : ''}" placeholder="${d.global_sonnet}">
+      <div style="display:flex;align-items:center;gap:10px">
+        <input type="range" id="ps-sonnet-range" min="0.01" max="1" step="0.01" value="${d.sonnet_confidence_threshold || d.global_sonnet}" style="flex:1;min-width:0;accent-color:var(--accent)" oninput="psSync('sonnet', this.value)">
+        <input class="form-input" type="number" id="ps-sonnet" min="0.01" max="1.00" step="0.01" value="${d.sonnet_confidence_threshold ? d.sonnet_confidence_threshold : ''}" placeholder="${d.global_sonnet}" style="width:84px;flex:none;text-align:center" oninput="psSync('sonnet', this.value, true)">
+        <button type="button" class="btn-sm" style="flex-shrink:0" onclick="psSync('sonnet', '', true, ${d.global_sonnet})">Globale</button>
+      </div>
       <div style="font-size:11px;color:var(--muted);margin:5px 0 16px">Se confidence ≥ soglia → Sonnet decide da solo. Sotto → revisione umana. Deve essere inferiore alla soglia Haiku.</div>
       ${d.fact_check_available ? `
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-bottom:8px">
