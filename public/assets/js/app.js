@@ -24,7 +24,7 @@ document.querySelectorAll('.nav-item[data-screen]').forEach(item => {
       reportable:         '⚠️ Segnalazioni pericolose',
       stats:              'Statistiche',
       pages:              'Pagine Facebook',
-      policy:             'Policy AI',
+      policy:             'Prompt AI',
       bans:               'Utenti bannati',
       'banned-comments':  'Commenti nascosti',
       'hidden-comments':  'Commenti nascosti',

@@ -370,7 +370,7 @@ async function loadPolicies() {
   const wrap = document.getElementById('policy-list-wrap');
   try {
     const policies = await api('/policies');
-    if (!policies.length) { wrap.innerHTML = '<div class="empty">Nessuna policy.</div>'; return; }
+    if (!policies.length) { wrap.innerHTML = '<div class="empty">Nessun prompt.</div>'; return; }
     wrap.innerHTML = policies.map(p => `
       <div class="policy-row">
         <div class="policy-active-dot ${p.is_active ? 'active' : ''}"></div>
@@ -408,13 +408,13 @@ async function viewPolicy(id) {
     el.textContent = p.moderation_prompt || '(nessun prompt)';
     if (header) header.textContent = `${p.name} v${p.version}${p.is_active ? ' — ATTIVA' : ''} (sola lettura)`;
     el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  } catch(e) { toast('Errore caricamento policy', 'err'); }
+  } catch(e) { toast('Errore caricamento prompt', 'err'); }
 }
 
 async function activatePolicy(id) {
   try {
     const r = await api(`/policies/${id}/activate`, 'POST');
-    toast(r.message || 'Policy attivata', 'ok');
+    toast(r.message || 'Prompt attivato', 'ok');
     loadPolicies();
   } catch (e) { toast('Errore', 'err'); }
 }
@@ -426,7 +426,7 @@ async function createPolicy() {
   if (!name || !prompt) { toast('Nome e system prompt obbligatori', 'err'); return; }
   try {
     await api('/policies', 'POST', { name, description: desc, moderation_prompt: prompt });
-    toast('Policy creata', 'ok');
+    toast('Nuova versione del prompt creata', 'ok');
     document.getElementById('pname').value   = '';
     document.getElementById('pdesc').value   = '';
     document.getElementById('pprompt').value = '';

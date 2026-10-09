@@ -74,7 +74,7 @@
     <div class="nav-section">
       <div class="nav-label">Configurazione</div>
       <div class="nav-item" data-screen="pages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>Pagine Facebook</div>
-      <div class="nav-item" data-screen="policy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Policy AI</div>
+      <div class="nav-item" data-screen="policy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Prompt AI</div>
       <div class="nav-item" data-screen="audit" id="nav-audit" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>Registro audit<span id="nav-audit-pro-badge" style="display:none;font-size:9px;font-weight:600;padding:1px 6px;border-radius:10px;background:rgba(99,102,241,.2);color:var(--accent);margin-left:auto;flex-shrink:0">PRO</span></div>
       <div class="nav-item" data-screen="settings" id="nav-settings" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Impostazioni</div>
     </div>
@@ -209,10 +209,10 @@
 
     <!-- Policy -->
     <div class="screen" id="screen-policy">
-      <!-- Row 1: policy list (1/6) + active prompt viewer (5/6) -->
-      <div style="display:grid; grid-template-columns:1fr 5fr; gap:20px; align-items:start">
+      <!-- Row 1: versioni del prompt (colonna stretta ma leggibile) + prompt attivo -->
+      <div style="display:grid; grid-template-columns:minmax(300px,1fr) 2fr; gap:20px; align-items:start">
         <div class="panel">
-          <div class="panel-head"><div class="panel-title">Policy attive</div></div>
+          <div class="panel-head"><div class="panel-title">Versioni del prompt</div></div>
           <div id="policy-list-wrap"><div class="loading">Caricamento…</div></div>
         </div>
         <div class="panel">
@@ -222,7 +222,7 @@
           <div style="padding:20px">
             <p style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5">
               Il prompt viene mostrato così come viene inviato a Claude (senza le istruzioni runtime aggiunte automaticamente dal sistema).
-              Per modificarlo crea una nuova versione della policy.
+              Per modificarlo crea una nuova versione del prompt.
             </p>
             <pre id="active-prompt-viewer" style="
               background:var(--bg-hover);
@@ -243,13 +243,13 @@
         </div>
       </div>
 
-      <!-- Row 2: nuova policy (full width) -->
+      <!-- Row 2: nuova versione del prompt (full width) -->
       <div style="margin-top:20px">
         <div class="panel">
-          <div class="panel-head"><div class="panel-title">Nuova policy</div></div>
+          <div class="panel-head"><div class="panel-title">Nuova versione del prompt</div></div>
           <div class="policy-form" style="max-width:none">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-              <div class="form-group" style="margin:0"><label class="form-label">Nome</label><input class="form-input" id="pname" type="text" placeholder="es. Policy Italiana 2025" style="width:100%;box-sizing:border-box"></div>
+              <div class="form-group" style="margin:0"><label class="form-label">Nome</label><input class="form-input" id="pname" type="text" placeholder="es. Prompt italiano 2025" style="width:100%;box-sizing:border-box"></div>
               <div class="form-group" style="margin:0"><label class="form-label">Descrizione</label><input class="form-input" id="pdesc" type="text" placeholder="Breve descrizione" style="width:100%;box-sizing:border-box"></div>
             </div>
             <div class="form-group" style="margin-top:16px"><label class="form-label">System Prompt per Claude</label><textarea class="form-textarea" id="pprompt" placeholder="Sei un moderatore AI…" style="width:100%;box-sizing:border-box;min-height:180px"></textarea></div>
@@ -1190,7 +1190,7 @@
           <span style="position:absolute;left:22px;top:50%;transform:translateY(-50%);width:260px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:11px;font-weight:400;color:var(--text);box-shadow:0 4px 16px rgba(0,0,0,.18);z-index:10;display:none;line-height:1.5" class="role-tip-box">
             <strong>Moderatore</strong> — revisione commenti, approvazioni, rimozioni e ban utenti.<br><br>
             <strong>Supervisore</strong> — come Moderatore, più segnalazioni legali, dossier, export log e registro trattamenti (DPIA). Non può bannare utenti.<br><br>
-            <strong>Admin</strong> — accesso completo: include tutto del Supervisore più impostazioni, policy AI, pagine Facebook, licenza e gestione utenti.
+            <strong>Admin</strong> — accesso completo: include tutto del Supervisore più impostazioni, prompt AI, pagine Facebook, licenza e gestione utenti.
           </span>
         </span>
       </label>
