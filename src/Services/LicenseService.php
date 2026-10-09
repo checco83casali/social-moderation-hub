@@ -72,7 +72,12 @@ class LicenseService
      */
     private function licenseServer(): string
     {
-        return rtrim((string) ($_ENV['LICENSE_SERVER_URL'] ?? ''), '/');
+        $url = trim((string) ($_ENV['LICENSE_SERVER_URL'] ?? ''));
+        // Senza schema PHP tratterebbe l'URL come un percorso di file locale
+        if ($url !== '' && !preg_match('#^https?://#i', $url)) {
+            $url = 'https://' . $url;
+        }
+        return rtrim($url, '/');
     }
 
     /** Re-validate against remote server every N hours (normal operation). */
