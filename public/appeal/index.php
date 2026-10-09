@@ -130,7 +130,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $comment && !$alreadyAppealed && !$
             ->where('id', $decoded['comment_id'])
             ->update(['status' => 'appeal_pending']);
 
+        // Avviso ai moderatori (best-effort: non deve mai rompere l'invio del ricorso).
+        try {
+            \ModerationHub\Services\PushService::notifyLater('appeal', $appealText);
+        } catch (\Throwable) {}
+
         $success = 'Il tuo ricorso è stato inviato. I nostri moderatori lo esamineranno al più presto.';
+
         $alreadyAppealed = true;
     }
 }

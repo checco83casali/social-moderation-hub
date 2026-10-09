@@ -736,7 +736,7 @@ class ModerationService
         }
 
         DB::table('comments')->where('id', $commentId)->update(['status' => $status]);
-        PushService::notifyLater($reportable ? 'reportable' : 'queue');
+        PushService::notifyLater($reportable ? 'reportable' : 'queue', (string) DB::table('comments')->where('id', $commentId)->value('content'));
 
         return [
             'action'     => $reportable ? 'escalated_reportable' : 'escalated_human',
@@ -868,7 +868,7 @@ class ModerationService
                 'status'       => 'escalated_human',
                 'processed_at' => date('Y-m-d H:i:s'),
             ]);
-            PushService::notifyLater('queue');
+            PushService::notifyLater('queue', (string) DB::table('comments')->where('id', $commentId)->value('content'));
             if ($logId) {
                 DB::table('moderation_log')->where('id', $logId)->update(['final_action' => 'pending_human']);
             }
@@ -955,7 +955,7 @@ class ModerationService
                 'status'       => 'escalated_human',
                 'processed_at' => date('Y-m-d H:i:s'),
             ]);
-            PushService::notifyLater('queue');
+            PushService::notifyLater('queue', (string) DB::table('comments')->where('id', $commentId)->value('content'));
             if ($logId) {
                 DB::table('moderation_log')->where('id', $logId)->update(['final_action' => 'pending_human']);
             }

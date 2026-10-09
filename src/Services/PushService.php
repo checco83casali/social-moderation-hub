@@ -12,8 +12,17 @@ use Illuminate\Database\Capsule\Manager as DB;
  */
 final class PushService
 {
+    /** Etichette davanti all'inizio del testo. */
+    private const TAGS = ['queue' => 'Revisione', 'reportable' => 'Segnalazione', 'appeal' => 'Ricorso'];
+
+    /** Lunghezza massima dell'inizio del testo mostrato nella notifica. */
+    private const EXCERPT_CHARS = 90;
+
     /** @var array<string, true> */
     private static array $pending = [];
+
+    /** @var array<string, string> inizio del testo dell'ultimo elemento per tipo */
+    private static array $excerpts = [];
     private static bool $hooked = false;
 
     /** @var list<array{host:string,status:int}> esito dell'ultimo invio, per la diagnostica */
@@ -31,9 +40,12 @@ final class PushService
      * Accoda la notifica e la invia a risposta già consegnata: il webhook di Meta
      * deve rispondere subito e non aspettare i push service dei browser.
      */
-    public static function notifyLater(string $kind): void
+    public static function notifyLater(string $kind, ?string $text = null): void
     {
         self::$pending[$kind] = true;
+        if ($text !== null && trim($text) !== '') {
+            self::$excerpts[$kind] = $text;
+        }
         if (self::$hooked) {
             return;
         }
@@ -45,10 +57,15 @@ final class PushService
                 litespeed_finish_request();
             }
             $svc = new self();
-            // La segnalazione ha la precedenza: se ci sono entrambe, un solo avviso.
-            foreach (isset(self::$pending['reportable']) ? ['reportable'] : array_keys(self::$pending) as $kind) {
+            // La segnalazione ha la precedenza sulla coda: se ci sono entrambe, un solo avviso.
+            // I ricorsi hanno un avviso a parte.
+            $kinds = array_keys(self::$pending);
+            if (isset(self::$pending['reportable'])) {
+                $kinds = array_values(array_diff($kinds, ['queue']));
+            }
+            foreach ($kinds as $kind) {
                 try {
-                    $svc->notify($kind);
+                    $svc->notify($kind, self::$excerpts[$kind] ?? null);
                 } catch (\Throwable) {
                     // Il push è best-effort: non deve mai rompere la moderazione.
                 }
@@ -64,26 +81,46 @@ final class PushService
         return ['queue' => $q, 'reportable' => $r, 'total' => $q + $r];
     }
 
+    /** Titolo di tutte le notifiche: il nome dell'applicazione. */
+    private function appName(): string
+    {
+        $name = trim((string) ($_ENV['SITE_NAME'] ?? ''));
+        return $name !== '' ? $name : 'Moderation Hub';
+    }
+
+    /** "Revisione: inizio del testo…" (una sola riga), oppure solo l'etichetta se il testo manca. */
+    private function line(string $kind, ?string $text): string
+    {
+        $tag  = self::TAGS[$kind] ?? 'Revisione';
+        $text = trim((string) preg_replace('/\s+/u', ' ', (string) $text));
+        if ($text === '') {
+            return $tag;
+        }
+        if (mb_strlen($text) > self::EXCERPT_CHARS) {
+            $text = rtrim(mb_substr($text, 0, self::EXCERPT_CHARS)) . '…';
+        }
+        return $tag . ': ' . $text;
+    }
+
     /** Invia a tutti i dispositivi idonei; ritorna quanti push sono stati accettati. */
-    public function notify(string $kind): int
+    public function notify(string $kind, ?string $text = null): int
     {
         $c = $this->counts();
+        $payload = [
+            'title'  => $this->appName(),
+            'tag'    => $kind,
+            'urgent' => $kind === 'reportable',
+        ];
         if ($kind === 'reportable') {
-            $payload = [
-                'title' => '⚠ Nuova segnalazione',
-                'body'  => 'Contenuto potenzialmente illegale da valutare. In attesa: ' . $c['reportable'] . ' segnalazioni, ' . $c['queue'] . ' in coda.',
-                'tag'   => 'reportable',
-                'url'   => '/dashboard.html?screen=reportable',
-                'urgent' => true,
-            ];
+            $payload['body'] = $this->line($kind, $text) . "\n" . $c['reportable'] . ' segnalazioni · ' . $c['queue'] . ' in coda';
+            $payload['url']  = '/dashboard.html?screen=reportable';
+        } elseif ($kind === 'appeal') {
+            $pending = DB::table('appeal_records')->where('status', 'pending')->count();
+            $payload['body'] = $this->line($kind, $text) . "\n" . $pending . ' ricorsi in attesa';
+            $payload['url']  = '/dashboard.html?screen=appeals';
         } else {
-            $payload = [
-                'title' => 'Nuovo commento da rivedere',
-                'body'  => $c['queue'] . ' in coda' . ($c['reportable'] ? ' · ' . $c['reportable'] . ' segnalazioni' : ''),
-                'tag'   => 'queue',
-                'url'   => '/dashboard.html?screen=queue',
-                'urgent' => false,
-            ];
+            $payload['body'] = $this->line('queue', $text) . "\n" . $c['queue'] . ' in coda' . ($c['reportable'] ? ' · ' . $c['reportable'] . ' segnalazioni' : '');
+            $payload['url']  = '/dashboard.html?screen=queue';
         }
         $payload['badge'] = $c['total'];
         return $this->sendToAll($payload, $kind === 'reportable');
@@ -95,7 +132,7 @@ final class PushService
         $c = $this->counts();
         return $this->sendPayload(
             DB::table('push_subscriptions')->where('user_id', $userId)->get()->all(),
-            ['title' => 'Notifiche attive ✓', 'body' => 'Riceverai avvisi per commenti in coda e segnalazioni.', 'tag' => 'test', 'url' => '/dashboard.html', 'urgent' => false, 'badge' => $c['total']],
+            ['title' => $this->appName(), 'body' => 'Notifiche attive ✓' . "\n" . 'Riceverai avvisi per commenti da rivedere, segnalazioni e ricorsi.', 'tag' => 'test', 'url' => '/dashboard.html', 'urgent' => false, 'badge' => $c['total']],
         );
     }
 
