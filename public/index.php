@@ -97,7 +97,6 @@ $errorMiddleware->setErrorHandler(
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>404 — Pagina non trovata</title>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="icon" type="image/png" sizes="192x192" href="/pwa/icon/192.png">
 <link rel="apple-touch-icon" href="/pwa/icon/apple.png">
 <style>

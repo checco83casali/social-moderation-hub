@@ -172,7 +172,8 @@ class AccessGuardMiddleware implements MiddlewareInterface
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow, noarchive">
 <title>{$status} — {$label}</title>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="/pwa/icon/192.png">
+<link rel="apple-touch-icon" href="/pwa/icon/apple.png">
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'DM Sans',system-ui,sans-serif;background:#0e0f11;color:#e8eaf0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}

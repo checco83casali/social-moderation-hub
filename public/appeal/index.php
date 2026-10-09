@@ -144,7 +144,8 @@ $siteName = $_ENV['SITE_NAME'] ?? 'Moderation Hub';
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ricorso commento – <?= h($siteName) ?></title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="/pwa/icon/192.png">
+<link rel="apple-touch-icon" href="/pwa/icon/apple.png">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 

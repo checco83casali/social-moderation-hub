@@ -5,17 +5,20 @@ declare(strict_types=1);
 namespace ModerationHub\Controllers;
 
 use Illuminate\Database\Capsule\Manager as DB;
+use ModerationHub\Services\LicenseService;
 use ModerationHub\Services\WebhookDebug;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Psr7\Response;
 
 /**
- * Debug del webhook Meta (solo admin): attiva/disattiva l'acquisizione estesa e
+ * Debug del webhook Meta (solo admin, licenza advanced_audit): attiva/disattiva l'acquisizione estesa e
  * mostra gli ultimi eventi ricevuti con payload grezzo e diagnostica.
  */
 class WebhookDebugController
 {
+    public function __construct(private readonly LicenseService $license) {}
+
     // ── GET /api/webhook-debug ──────────────────────────────────────
     public function status(ServerRequestInterface $request, Response $response): ResponseInterface
     {
@@ -73,6 +76,10 @@ class WebhookDebugController
         $auth = $request->getAttribute('auth_user');
         if (($auth->role ?? '') !== 'admin') {
             return $this->json($response, ['error' => 'Admin required'], 403);
+        }
+        // Stessa licenza del registro audit (advanced_audit, o Advanced)
+        if (!$this->license->canViewAudit()) {
+            return $this->json($response, ['error' => 'Pro license required', 'feature' => 'advanced_audit'], 403);
         }
         return null;
     }

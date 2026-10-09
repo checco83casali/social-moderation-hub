@@ -85,8 +85,11 @@ async function loadSettings() {
     if (brandingPanel) brandingPanel.style.display = isAdmin ? 'block' : 'none';
     if (brandingPanel && isAdmin && typeof loadBranding === 'function') loadBranding();
     const whdPanel = document.getElementById('webhook-debug-panel');
-    if (whdPanel) whdPanel.style.display = isAdmin ? 'block' : 'none';
-    if (whdPanel && isAdmin && typeof loadWebhookDebug === 'function') loadWebhookDebug();
+    // Debug webhook: admin + licenza del registro audit (come LicenseService::canViewAudit())
+    const lf = d.license?.features ?? [];
+    const canDebug = isAdmin && (lf.includes('advanced_audit') || lf.includes('advanced_stats'));
+    if (whdPanel) whdPanel.style.display = canDebug ? 'block' : 'none';
+    if (whdPanel && canDebug && typeof loadWebhookDebug === 'function') loadWebhookDebug();
 
     if (!isAdmin) {
       document.getElementById('settings-save-btn').style.opacity = '.4';
