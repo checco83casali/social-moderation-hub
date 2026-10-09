@@ -63,13 +63,16 @@ async function togglePage(id) {
 // ── Soglie AI per pagina (feature Pro: per_page_thresholds) ─────────
 let _pageSettingsId = null;
 
-// Soglie per pagina: cursore e campo numerico restano allineati; campo vuoto = valore globale.
+// Soglie per pagina: l'API usa frazioni (0.85), l'interfaccia percentuali intere (85%).
+const psPct = f => Math.round(parseFloat(f) * 100);
+
+// Cursore e campo numerico (in %) restano allineati; campo vuoto = valore globale.
 function psSync(key, val, fromInput = false, globalVal = null) {
   const num   = document.getElementById('ps-' + key);
   const range = document.getElementById('ps-' + key + '-range');
   if (!num || !range) return;
   if (globalVal !== null) { num.value = ''; range.value = globalVal; return; }
-  if (!fromInput) { num.value = parseFloat(val).toFixed(2); return; }
+  if (!fromInput) { num.value = Math.round(parseFloat(val)); return; }
   if (val !== '' && !isNaN(parseFloat(val))) range.value = val;
 }
 
@@ -91,29 +94,31 @@ async function openPageSettings(id) {
       <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6">
         Lascia un campo <strong>vuoto</strong> per usare il valore globale. I valori impostati qui sovrascrivono le soglie generali solo per questa pagina.
       </div>
-      <label class="form-label">Soglia Haiku <span style="color:var(--muted);font-weight:400">(globale: ${d.global_haiku})</span></label>
+      <label class="form-label">Soglia Haiku <span style="color:var(--muted);font-weight:400">(globale: ${psPct(d.global_haiku)}%)</span></label>
       <div style="display:flex;align-items:center;gap:10px">
-        <input type="range" id="ps-haiku-range" min="0.01" max="1" step="0.01" value="${d.haiku_confidence_threshold || d.global_haiku}" style="flex:1;min-width:0;accent-color:var(--accent)" oninput="psSync('haiku', this.value)">
-        <input class="form-input" type="number" id="ps-haiku" min="0.01" max="1.00" step="0.01" value="${d.haiku_confidence_threshold ? d.haiku_confidence_threshold : ''}" placeholder="${d.global_haiku}" style="width:84px;flex:none;text-align:center" oninput="psSync('haiku', this.value, true)">
-        <button type="button" class="btn-sm" style="flex-shrink:0" onclick="psSync('haiku', '', true, ${d.global_haiku})">Globale</button>
+        <input type="range" id="ps-haiku-range" min="1" max="100" step="1" value="${psPct(d.haiku_confidence_threshold || d.global_haiku)}" style="flex:1;min-width:0;accent-color:var(--accent)" oninput="psSync('haiku', this.value)">
+        <input class="form-input" type="number" id="ps-haiku" min="1" max="100" step="1" value="${d.haiku_confidence_threshold ? psPct(d.haiku_confidence_threshold) : ''}" placeholder="${psPct(d.global_haiku)}" style="width:72px;flex:none;text-align:center" oninput="psSync('haiku', this.value, true)"><span style="font-size:13px;color:var(--muted);flex:none">%</span>
+        <button type="button" class="btn-sm" style="flex-shrink:0" onclick="psSync('haiku', '', true, ${psPct(d.global_haiku)})">Globale</button>
       </div>
       <div style="font-size:11px;color:var(--muted);margin:5px 0 14px">Se confidence ≥ soglia → Haiku decide da solo. Sotto → passa a Sonnet.</div>
-      <label class="form-label">Soglia Sonnet <span style="color:var(--muted);font-weight:400">(globale: ${d.global_sonnet})</span></label>
+      <label class="form-label">Soglia Sonnet <span style="color:var(--muted);font-weight:400">(globale: ${psPct(d.global_sonnet)}%)</span></label>
       <div style="display:flex;align-items:center;gap:10px">
-        <input type="range" id="ps-sonnet-range" min="0.01" max="1" step="0.01" value="${d.sonnet_confidence_threshold || d.global_sonnet}" style="flex:1;min-width:0;accent-color:var(--accent)" oninput="psSync('sonnet', this.value)">
-        <input class="form-input" type="number" id="ps-sonnet" min="0.01" max="1.00" step="0.01" value="${d.sonnet_confidence_threshold ? d.sonnet_confidence_threshold : ''}" placeholder="${d.global_sonnet}" style="width:84px;flex:none;text-align:center" oninput="psSync('sonnet', this.value, true)">
-        <button type="button" class="btn-sm" style="flex-shrink:0" onclick="psSync('sonnet', '', true, ${d.global_sonnet})">Globale</button>
+        <input type="range" id="ps-sonnet-range" min="1" max="100" step="1" value="${psPct(d.sonnet_confidence_threshold || d.global_sonnet)}" style="flex:1;min-width:0;accent-color:var(--accent)" oninput="psSync('sonnet', this.value)">
+        <input class="form-input" type="number" id="ps-sonnet" min="1" max="100" step="1" value="${d.sonnet_confidence_threshold ? psPct(d.sonnet_confidence_threshold) : ''}" placeholder="${psPct(d.global_sonnet)}" style="width:72px;flex:none;text-align:center" oninput="psSync('sonnet', this.value, true)"><span style="font-size:13px;color:var(--muted);flex:none">%</span>
+        <button type="button" class="btn-sm" style="flex-shrink:0" onclick="psSync('sonnet', '', true, ${psPct(d.global_sonnet)})">Globale</button>
       </div>
       <div style="font-size:11px;color:var(--muted);margin:5px 0 16px">Se confidence ≥ soglia → Sonnet decide da solo. Sotto → revisione umana. Deve essere inferiore alla soglia Haiku.</div>
       ${d.fact_check_available ? `
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-bottom:8px">
-        <input type="checkbox" id="ps-factcheck" ${d.fact_check_enabled ? 'checked' : ''} style="width:16px;height:16px">
-        Fact-check AI attivo su questa pagina
+      <label class="whd-switch ok" style="margin-bottom:12px">
+        <input type="checkbox" id="ps-factcheck" ${d.fact_check_enabled ? 'checked' : ''}>
+        <span class="whd-track" aria-hidden="true"></span>
+        <span>Fact-check AI attivo su questa pagina</span>
       </label>` : ''}
       ${d.whataboutism_available ? `
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
-        <input type="checkbox" id="ps-whataboutism" ${d.whataboutism_enabled ? 'checked' : ''} style="width:16px;height:16px">
-        Whataboutism AI attivo su questa pagina
+      <label class="whd-switch ok">
+        <input type="checkbox" id="ps-whataboutism" ${d.whataboutism_enabled ? 'checked' : ''}>
+        <span class="whd-track" aria-hidden="true"></span>
+        <span>Whataboutism AI attivo su questa pagina</span>
       </label>` : ''}`;
   } catch (e) {
     if ((e.message || '').toLowerCase().includes('pro license')) {
@@ -152,8 +157,8 @@ async function savePageSettings() {
   }
 
   const payload = {
-    haiku_confidence_threshold:  haiku  === '' ? null : parseFloat(haiku),
-    sonnet_confidence_threshold: sonnet === '' ? null : parseFloat(sonnet),
+    haiku_confidence_threshold:  haiku  === '' ? null : Math.round(parseFloat(haiku))  / 100,
+    sonnet_confidence_threshold: sonnet === '' ? null : Math.round(parseFloat(sonnet)) / 100,
   };
   // Invia i toggle solo se la feature è attiva (checkbox presente),
   // altrimenti non tocchiamo il valore salvato.
