@@ -13,7 +13,7 @@ use Illuminate\Database\Capsule\Manager as DB;
 final class PushService
 {
     /** Etichette davanti all'inizio del testo. */
-    private const TAGS = ['queue' => 'Revisione', 'reportable' => 'Segnalazione', 'appeal' => 'Ricorso'];
+    private const TAGS = ['queue' => 'Revisione', 'reportable' => 'Segnalazione', 'appeal' => 'Ricorso', 'test' => 'Prova'];
 
     /** Lunghezza massima dell'inizio del testo mostrato nella notifica. */
     private const EXCERPT_CHARS = 90;
@@ -132,7 +132,7 @@ final class PushService
         $c = $this->counts();
         return $this->sendPayload(
             DB::table('push_subscriptions')->where('user_id', $userId)->get()->all(),
-            ['title' => $this->appName(), 'body' => 'Notifiche attive ✓' . "\n" . 'Riceverai avvisi per commenti da rivedere, segnalazioni e ricorsi.', 'tag' => 'test', 'url' => '/dashboard.html', 'urgent' => false, 'badge' => $c['total']],
+            ['title' => $this->appName(), 'body' => $this->line('test', 'Notifiche attive ✓') . "\n" . 'Riceverai avvisi per revisioni, segnalazioni e ricorsi', 'tag' => 'test', 'url' => '/dashboard.html', 'urgent' => false, 'badge' => $c['total']],
         );
     }
 
