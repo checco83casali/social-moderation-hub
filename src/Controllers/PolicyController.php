@@ -197,7 +197,7 @@ class PolicyController
             return $this->json($response, ['error' => 'No active policy'], 404);
         }
 
-        $moderationPrompt = $policy->moderation_prompt;
+        $moderationPrompt = \ModerationHub\Services\ClaudeService::stripComments($policy->moderation_prompt);
 
         $payload = [
             'policy' => [

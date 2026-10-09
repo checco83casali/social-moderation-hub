@@ -165,6 +165,17 @@ INST;
     }
 
     /**
+     * Removes operator comments from a moderation prompt: every line whose first
+     * non-blank character is "#". Comments are never sent to the AI nor published.
+     * Inline "#" (e.g. hashtags inside a sentence) is left untouched.
+     */
+    public static function stripComments(string $text): string
+    {
+        $text = preg_replace('/^[ \t]*#.*(?:\R|\z)/m', '', $text);
+        return trim(preg_replace('/(?:\R[ \t]*){3,}/', "\n\n", $text));
+    }
+
+    /**
      * Composes the full system prompt from the two layers:
      *   moderation_prompt (operator-editable) + technical block (hardcoded).
      *
@@ -173,7 +184,7 @@ INST;
      */
     public function composeSystemPrompt(string $moderationPrompt, int $reasonMaxWords = 40): string
     {
-        return trim($moderationPrompt) . "\n\n" . $this->technicalBlock($reasonMaxWords);
+        return self::stripComments($moderationPrompt) . "\n\n" . $this->technicalBlock($reasonMaxWords);
     }
 
     private Client $http;

@@ -195,6 +195,23 @@ Create new policy version.
 
 Activate a policy (deactivates all others).
 
+### Formatting of the public policy page (`/public/policy`)
+
+Display-only parsing done by `promptToHtml()` in `public/policy.php`. Nothing is added to the prompt sent to Claude.
+
+| Syntax in the prompt | Effect |
+|---|---|
+| `# comment` (line starting with `#`) | Discarded: not sent to Claude, not shown on the page, not in the JSON |
+| `= Title` | Section title (blue, uppercase) |
+| `== Subtitle` | Subtitle (amber, uppercase) |
+| Line fully UPPERCASE before any `(` (colon optional) | Subtitle (legacy); text from `(` on becomes a grey note |
+| Line between two `════` lines | Section title (legacy) |
+| `- item` | Bullet (dash hidden, dot drawn by CSS) |
+| Line containing `\|` | Monospace routing row |
+| Blank line | New paragraph |
+
+Comments are stripped by `ClaudeService::stripComments()` (also used by `composeSystemPrompt()`), so they cost no tokens.
+
 ---
 
 ## Pages

@@ -100,11 +100,9 @@ SELECT 'Default Policy', 'Standard community moderation policy with scam and thr
 Your task is to evaluate a single comment and decide if it violates community guidelines,
 or if it requires fact-checking, or if it falls under editorial/journalist criticism that needs human review.
 
-════════════════════════════════════════
-RULES TO ENFORCE
-════════════════════════════════════════
+= Rules to enforce
 
-BASIC VIOLATIONS:
+== Basic violations
 - Hate speech, racism, sexism, homophobia, or discrimination of any kind
 - Threats or incitement to violence against individuals or groups
 - Harassment or targeted bullying
@@ -112,13 +110,13 @@ BASIC VIOLATIONS:
 - Explicit sexual content
 - Misinformation that could cause real-world harm
 
-SPAM & COORDINATED BEHAVIOUR:
+== Spam & coordinated behaviour
 - Unsolicited advertising or promotional links
 - Repetitive or copy-paste comments (likely bot/coordinated)
 - Fake urgency to drive clicks ("Limited time!", "Act now!", suspicious shortened URLs)
 - Off-topic link drops with no relation to the post
 
-FINANCIAL SCAM PATTERNS (flag as "scam"):
+== Financial scam patterns (flag as "scam")
 - Investment opportunities promising guaranteed or unusually high returns
 - Cryptocurrency solicitation, wallet addresses, or "send crypto to receive more"
 - "Pig butchering" patterns: building rapport then pushing investment platforms
@@ -128,24 +126,22 @@ FINANCIAL SCAM PATTERNS (flag as "scam"):
 - Urgency combined with financial request ("You won! Claim in 24h by sending...")
 - Recovery scams targeting people who lost money ("We can get your money back")
 
-GROOMING & PREDATORY BEHAVIOUR (flag as "grooming"):
+== Grooming & predatory behaviour (flag as "grooming")
 - Unsolicited romantic or sexual contact directed at users who appear to be minors
 - Requests to move conversation off-platform combined with personal/emotional language
 - Excessive personal compliments from unknown accounts followed by requests for contact info
 - Language designed to isolate a user from others ("Don''t tell anyone", "This is just between us")
 
-════════════════════════════════════════
-EDITORIAL CONTENT — ALWAYS ESCALATE TO HUMAN
-════════════════════════════════════════
+= Editorial content — always escalate to human
 Some comment types must ALWAYS be escalated to human review regardless of tone or apparent intent.
 For these, set decision="uncertain" and populate the editorial_category field.
 
-JOURNALIST CRITICISM (editorial_category = "journalist_criticism"):
+== Journalist criticism (editorial_category = "journalist_criticism")
 - Direct criticism of a journalist by name, style, method, or professional conduct
 - Accusations of bias, incompetence, or dishonesty targeting a specific journalist
 - Personal attacks on a journalist that are not yet insults (those go to Sonnet)
 
-OUTLET CRITICISM (editorial_category = "outlet_criticism"):
+== Outlet criticism (editorial_category = "outlet_criticism")
 - Criticism of the news outlet, editorial line, ownership, or general bias
 - Comments questioning the outlet''s credibility or independence
 - Accusations of propaganda, censorship, or politically motivated coverage
@@ -154,9 +150,7 @@ Note: pure insults or harassment directed at a journalist (with no substantive c
 do NOT need editorial escalation — classify them as harassment and let Sonnet decide.
 Note: commercial spam in comments is handled by Haiku autonomously without escalation.
 
-════════════════════════════════════════
-FACT-CHECK SUGGESTIONS
-════════════════════════════════════════
+= Fact-check suggestions
 When a comment contains a verifiable factual claim that appears dubious or partially false
 but is NOT clearly malicious (i.e. it seems like a genuine misunderstanding or contested fact):
 - Set fact_check_suggested = true
@@ -171,9 +165,7 @@ Do NOT suggest fact-check for:
 - Obvious satire or jokes
 - Pure opinions with no verifiable factual claim
 
-════════════════════════════════════════
-WHATABOUTISM SUGGESTIONS
-════════════════════════════════════════
+= Whataboutism suggestions
 Whataboutism (logical fallacy: deflection by counter-accusation) is when a commenter
 responds to the article topic by deflecting attention to an unrelated grievance,
 typically with "e allora le foibe?", "ma X ha fatto peggio", "perché non parlate di Y?",
@@ -194,18 +186,14 @@ Do NOT flag whataboutism for:
 If a comment qualifies for BOTH fact_check AND whataboutism, prefer fact_check —
 factual correction takes editorial priority over rhetorical labelling.
 
-════════════════════════════════════════
-CONTEXT TO CONSIDER
-════════════════════════════════════════
+= Context to consider
 - Irony and sarcasm exist: evaluate intent, not just surface words
 - Criticism of a product or brand is NOT a violation — protect free expression
 - A comment with a link is not automatically spam — evaluate the context
 - When the violation is ambiguous or borderline, use "uncertain" to escalate to human review
 - Always respond in the same language as the comment
 
-════════════════════════════════════════
-ROUTING SUMMARY
-════════════════════════════════════════
+= Routing summary
 Type                                    | Who decides
 ----------------------------------------|---------------------------
 Spam / commercial advertising           | Haiku (autonomous)
@@ -218,12 +206,10 @@ Criticism of outlet / editorial line    | Human (outlet_criticism)
 Truly ambiguous                         | Human (uncertain)
 Potentially illegal content             | Human (reportable) — auto-hidden immediately
 
--- ════════════════════════════════════════════════════════════════════
--- MODERATION_PROMPT ends here.
--- The OUTPUT FORMAT / Decision guide / Severity guide / Language rules
--- are appended automatically at runtime by ClaudeService::composeSystemPrompt()
--- and are NOT stored in this column.
--- ════════════════════════════════════════════════════════════════════',
+# MODERATION_PROMPT ends here.
+# The OUTPUT FORMAT / Decision guide / Severity guide / Language rules
+# are appended automatically at runtime by ClaudeService::composeSystemPrompt()
+# and are NOT stored in this column.',
 1
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM `policies`);

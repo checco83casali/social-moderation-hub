@@ -54,7 +54,7 @@ if (!empty($jsonMode)) {
             'version'      => $policy->version,
             'activated_at' => $policy->updated_at,
         ],
-        'moderation_rules' => $policy->moderation_prompt,
+        'moderation_rules' => \ModerationHub\Services\ClaudeService::stripComments($policy->moderation_prompt),
         'pipeline' => [
             'stage_1' => 'Claude Haiku — fast initial analysis',
             'stage_2' => 'Claude Sonnet — deep analysis (when Haiku confidence is below threshold)',
@@ -70,7 +70,7 @@ if (!$policy) {
     return;
 }
 
-$promptRaw     = $policy->moderation_prompt;
+$promptRaw     = \ModerationHub\Services\ClaudeService::stripComments($policy->moderation_prompt);
 $policyName    = htmlspecialchars($policy->name        ?? '', ENT_QUOTES, 'UTF-8');
 $policyDesc    = htmlspecialchars($policy->description ?? '', ENT_QUOTES, 'UTF-8');
 $policyVersion = (int) ($policy->version ?? 1);
@@ -80,54 +80,83 @@ $privacyUrl    = $appUrl . '/privacy';
 $jsonUrl       = $appUrl . '/public/policy.json';
 
 // ── Converte il testo del prompt in HTML leggibile ────────────────
+// Regole di riconoscimento:
+//  • COMMENTO   = riga che inizia con "#": già rimossa da stripComments(), mai mostrata né inviata all'AI
+//  • TITOLO     = "= Titolo" (consigliato) oppure riga tra due righe di separatori "════"
+//  • SOTTOTITOLO = "== Sottotitolo" oppure riga la cui parte prima di un'eventuale "(" è tutta MAIUSCOLA
+//                 (con o senza ":" finale; la parentesi è mostrata come nota)
+//  • ELENCO     = riga che inizia con "-" (il trattino viene sostituito da un pallino CSS)
+//  • riga con "|" = tabella di routing (monospace)
 function promptToHtml(string $raw): string
 {
-    $lines    = explode("\n", $raw);
-    $out      = '';
-    $inBlock  = false;
+    $e     = fn(string $t): string => htmlspecialchars($t, ENT_QUOTES, 'UTF-8');
+    $lines = explode("\n", $raw);
+    $n     = count($lines);
+    $isSep = fn(string $l): bool => str_starts_with(trim($l), '════');
+    $out   = '';
+    $open  = false;
 
-    foreach ($lines as $line) {
-        $esc = htmlspecialchars($line, ENT_QUOTES, 'UTF-8');
+    for ($i = 0; $i < $n; $i++) {
+        $line = $lines[$i];
+        $t    = trim($line);
 
-        // Separatori ════ → chiude il blocco corrente, non viene mostrato
-        if (str_starts_with(trim($line), '════')) {
-            if ($inBlock) { $out .= '</p>'; $inBlock = false; }
+        if ($isSep($line)) { $out .= $open ? '</p>' : ''; $open = false; continue; }
+        if ($t === '')     { $out .= $open ? '</p>' : ''; $open = false; continue; }
+
+        // Sintassi leggera: "= Titolo" e "== Sottotitolo" (maiuscolo via CSS)
+        if (preg_match('/^(={1,2})\s+(.+)$/u', $t, $m)) {
+            $out .= $open ? '</p>' : ''; $open = false;
+            $out .= strlen($m[1]) === 1
+                ? '<h2 class="pt">' . $e(rtrim($m[2], ': ')) . '</h2>'
+                : '<h3 class="ps">' . $e(rtrim($m[2], ': ')) . '</h3>';
             continue;
         }
 
-        // Riga vuota → interruzione di paragrafo
-        if (trim($line) === '') {
-            if ($inBlock) { $out .= '</p>'; $inBlock = false; }
+        // Titolo principale: riga tra due separatori
+        if (($i > 0 && $isSep($lines[$i - 1])) && ($i + 1 < $n && $isSep($lines[$i + 1]))) {
+            $out .= $open ? '</p>' : ''; $open = false;
+            $out .= '<h2 class="pt">' . $e(rtrim($t, ': ')) . '</h2>';
             continue;
         }
 
-        // Titoli di sezione: tutto maiuscolo (es. "BASIC VIOLATIONS:")
-        if (preg_match('/^[A-Z][A-Z\s&\(\)\/\-–]+:?\s*$/', trim($line))) {
-            if ($inBlock) { $out .= '</p>'; $inBlock = false; }
-            $out .= '<h3 class="ps">' . $esc . '</h3>';
-            continue;
+        // Sottotitolo: parte prima della "(" tutta maiuscola, almeno 3 lettere
+        if (!str_starts_with($t, '-')) {
+            $paren = mb_strpos($t, '(');
+            $head  = rtrim($paren === false ? $t : mb_substr($t, 0, $paren), ': ');
+            $note  = $paren === false ? '' : trim(mb_substr($t, $paren));
+            if (preg_match_all('/\p{L}/u', $head) >= 3 && $head === mb_strtoupper($head)
+                && !str_contains($head, '|')) {
+                $out .= $open ? '</p>' : ''; $open = false;
+                $out .= '<h3 class="ps">' . $e($head)
+                      . ($note !== '' ? ' <span class="psn">' . $e(rtrim($note, ': ')) . '</span>' : '')
+                      . '</h3>';
+                continue;
+            }
         }
+
+        // Separatore di tabella (es. "-----|-----"): non mostrato
+        if (str_contains($t, '|') && preg_match('/^[-|:\s]+$/', $t)) { continue; }
 
         // Riga tabella routing (contiene |)
-        if (str_contains($line, '|') && !str_starts_with(trim($line), '-')) {
-            if (!$inBlock) { $out .= '<p class="pp">'; $inBlock = true; }
-            $out .= '<code class="ptr">' . $esc . '</code><br>';
+        if (str_contains($line, '|') && !str_starts_with($t, '-')) {
+            if (!$open) { $out .= '<p class="pp">'; $open = true; }
+            $out .= '<code class="ptr">' . $e($line) . '</code>';
             continue;
         }
 
-        // Bullet point
-        if (str_starts_with(trim($line), '-')) {
-            if (!$inBlock) { $out .= '<p class="pp">'; $inBlock = true; }
-            $out .= '<span class="pb">' . $esc . '</span><br>';
+        // Elenco puntato: via il trattino, il pallino lo disegna il CSS
+        if (str_starts_with($t, '-')) {
+            if (!$open) { $out .= '<p class="pp">'; $open = true; }
+            $out .= '<span class="pb">' . $e(preg_replace('/^[\s\-–•]+/u', '', $line)) . '</span>';
             continue;
         }
 
         // Testo normale
-        if (!$inBlock) { $out .= '<p class="pp">'; $inBlock = true; }
-        $out .= $esc . '<br>';
+        if (!$open) { $out .= '<p class="pp">'; $open = true; }
+        $out .= $e($line) . '<br>';
     }
 
-    if ($inBlock) $out .= '</p>';
+    $out .= $open ? '</p>' : ''; $open = false;
     return $out;
 }
 
@@ -198,13 +227,18 @@ $promptHtml = promptToHtml($promptRaw);
     .p-body    { padding:1.25rem; }
 
     /* Prompt rendering */
-    .ps  { font-size:11px; font-weight:600; color:var(--accent); letter-spacing:.6px;
-            text-transform:uppercase; margin:1.6rem 0 .6rem; }
-    .ps:first-child { margin-top:0; }
+    .pt  { font-size:12px; font-weight:700; color:var(--accent); letter-spacing:.9px;
+            text-transform:uppercase; margin:2.2rem 0 .8rem; padding-bottom:.45rem;
+            border-bottom:1px solid rgba(79,142,247,.3); }
+    .pt:first-child { margin-top:0; }
+    .ps  { font-size:11.5px; font-weight:600; color:var(--warn); letter-spacing:.6px;
+            text-transform:uppercase; margin:1.4rem 0 .5rem; }
+    .psn { font-weight:400; text-transform:none; letter-spacing:0; color:var(--muted); font-size:11.5px; }
     .pp  { font-size:13.5px; color:#c8ccd8; line-height:1.8; margin-bottom:.25rem; }
     .pb  { display:block; font-size:13px; color:#b0b5c4; padding-left:1.2rem;
             position:relative; line-height:1.65; }
-    .pb::before { content:'–'; position:absolute; left:0; color:var(--muted); }
+    .pb::before { content:''; position:absolute; left:.35rem; top:.65em; width:5px; height:5px;
+                   border-radius:50%; background:var(--accent); }
     .ptr { display:block; font-family:var(--mono); font-size:11.5px; color:#7a8494;
             padding:1px 0; white-space:pre; overflow-x:auto; }
 

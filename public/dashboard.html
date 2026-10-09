@@ -253,6 +253,27 @@
               <div class="form-group" style="margin:0"><label class="form-label">Descrizione</label><input class="form-input" id="pdesc" type="text" placeholder="Breve descrizione" style="width:100%;box-sizing:border-box"></div>
             </div>
             <div class="form-group" style="margin-top:16px"><label class="form-label">System Prompt per Claude</label><textarea class="form-textarea" id="pprompt" placeholder="Sei un moderatore AI…" style="width:100%;box-sizing:border-box;min-height:180px"></textarea></div>
+            <details open style="margin-top:10px;font-size:12px;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:10px 14px">
+              <summary style="cursor:pointer;font-weight:600;color:var(--text)">Mini guida alla formattazione</summary>
+              <div style="margin-top:8px;line-height:1.75">
+                Il prompt è testo libero: queste convenzioni servono solo a impaginare la
+                <b>pagina pubblica</b>. Per l'AI sono testo normale, tranne i commenti che vengono rimossi.
+                <table style="margin:8px 0;border-collapse:collapse;width:100%">
+                  <tr><td style="padding:2px 12px 2px 0;white-space:nowrap"><code># nota</code></td><td>Commento: riga scartata, <b>non</b> inviata all'AI e <b>non</b> pubblicata</td></tr>
+                  <tr><td style="padding:2px 12px 2px 0;white-space:nowrap"><code>= Titolo</code></td><td>Titolo di sezione (blu, maiuscolo)</td></tr>
+                  <tr><td style="padding:2px 12px 2px 0;white-space:nowrap"><code>== Sottotitolo (nota)</code></td><td>Sottotitolo (ambra, maiuscolo); il testo tra parentesi diventa una nota grigia</td></tr>
+                  <tr><td style="padding:2px 12px 2px 0;white-space:nowrap"><code>- voce</code></td><td>Elenco puntato (il trattino non è mostrato)</td></tr>
+                  <tr><td style="padding:2px 12px 2px 0;white-space:nowrap"><code>a | b</code></td><td>Riga di tabella (monospace)</td></tr>
+                  <tr><td style="padding:2px 12px 2px 0;white-space:nowrap">riga vuota</td><td>Nuovo paragrafo</td></tr>
+                </table>
+                <pre style="margin:6px 0 0;padding:8px 10px;background:var(--bg,#0e0f11);border-radius:6px;font-size:11.5px;line-height:1.5;overflow-x:auto;white-space:pre"># revisione 2025-10: aggiunto blocco scam
+= Rules to enforce
+== Financial scam patterns (flag as "scam")
+- Guaranteed returns or crypto solicitation
+- Requests to move to Telegram or WhatsApp</pre>
+                <div style="margin-top:6px">Formati vecchi ancora supportati: riga <b>TUTTA MAIUSCOLA</b> → sottotitolo; riga tra due righe <code>════</code> → titolo.</div>
+              </div>
+            </details>
             <button class="btn-primary" onclick="createPolicy()">Crea versione</button>
           </div>
         </div>
