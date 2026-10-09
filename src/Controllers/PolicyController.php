@@ -212,19 +212,6 @@ class PolicyController
                     . 'and not stored in the database. It defines the JSON contract (fields, '
                     . 'decision vocabulary, severity scale) that the application depends on. '
                     . 'It is intentionally excluded from this public endpoint.',
-                'output_fields' => [
-                    'decision'              => 'allow | hide | remove | uncertain | reportable',
-                    'confidence'            => '0.0–1.0 float',
-                    'reason'               => 'internal explanation for moderators (Italian)',
-                    'public_reason'        => 'user-facing explanation published on Facebook (Italian)',
-                    'categories'           => 'array of matched violation categories',
-                    'severity'             => 'low | medium | high',
-                    'editorial_category'   => 'null | journalist_criticism | outlet_criticism',
-                    'fact_check_suggested'   => 'boolean',
-                    'fact_check_sources'     => 'array of {title, url, summary}',
-                    'fact_check_draft'       => 'ready-to-publish reply text or null',
-                    'whataboutism_suggested' => 'boolean — comment is a topical deflection',
-                ],
             ],
             'pipeline' => [
                 'stage_1' => 'Claude Haiku — fast initial analysis',

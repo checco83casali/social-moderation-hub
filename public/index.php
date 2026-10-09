@@ -197,6 +197,7 @@ $app->group('/api', function ($group) {
     $group->get('/queue/reportable/archive',   [ModerationController::class, 'reportableArchive']);
     $group->get('/queue',                      [ModerationController::class, 'queue']);
     $group->post('/comments/{id}/decide',      [ModerationController::class, 'decide']);
+    $group->get('/comments/{id}/hide-reply-preview', [ModerationController::class, 'hideReplyPreview']);
     $group->post('/comments/{id}/report-legal',[ModerationController::class, 'reportLegal']);
     $group->get('/comments/{id}/legal-dossier',[ModerationController::class, 'legalDossier']);
     $group->post('/comments/{id}/reply',       [ModerationController::class, 'reply']);

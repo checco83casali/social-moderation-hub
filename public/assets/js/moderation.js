@@ -113,6 +113,8 @@ const ROW_ICONS = {
   check:   `<svg ${ROW_ICON_ATTRS}><path d="M20 6L9 17l-5-5"/></svg>`,
   chat:    `<svg ${ROW_ICON_ATTRS}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
   eyeOff:  `<svg ${ROW_ICON_ATTRS}><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>`,
+  volume:    `<svg ${ROW_ICON_ATTRS}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`,
+  volumeOff: `<svg ${ROW_ICON_ATTRS}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`,
   bellOff: `<svg ${ROW_ICON_ATTRS}><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><path d="M1 1l22 22"/></svg>`,
 };
 
@@ -146,6 +148,7 @@ function rowAction(ev, id, action) {
   selectComment(id, { quiet: true });
   if (!currentComment) return;
   if (action === 'reply') { openApproveReply(); return; }
+  if (action === 'hide')  { openHideReply();    return; }
   decide(action);
 }
 
@@ -179,8 +182,8 @@ async function loadQueue() {
           <div class="row-actions" onclick="event.stopPropagation()">
             <button class="btn btn-approve-solid" title="Approva" onclick="rowAction(event, ${item.id}, 'allow')">${ROW_ICONS.check}Approva</button>
             <button class="btn btn-approve-reply" title="Approva e rispondi all'utente" onclick="rowAction(event, ${item.id}, 'reply')">${ROW_ICONS.chat}Rispondi</button>
-            <button class="btn btn-hide-notify" title="Nascondi (avvisa l'utente se l'avviso automatico è attivo)" onclick="rowAction(event, ${item.id}, 'hide')">${ROW_ICONS.eyeOff}Nascondi</button>
-            ${['admin', 'supervisor'].includes(currentUserRole) ? `<button class="btn btn-hide-silent" title="Nascondi senza avviso (ignora le impostazioni)" onclick="rowAction(event, ${item.id}, 'hide_silent')">${ROW_ICONS.bellOff}Senza avviso</button>` : ''}
+            <button class="btn btn-hide-notify" title="Nascondi e rispondi: rivedi l'avviso prima dell'invio" onclick="rowAction(event, ${item.id}, 'hide')">${ROW_ICONS.volume}Nascondi e rispondi</button>
+            ${['admin', 'supervisor'].includes(currentUserRole) ? `<button class="btn btn-hide-silent" title="Nascondi senza avviso (ignora le impostazioni)" onclick="rowAction(event, ${item.id}, 'hide_silent')">${ROW_ICONS.volumeOff}Senza avviso</button>` : ''}
           </div>
           </div>
         </div>
@@ -417,7 +420,7 @@ function renderDetail(c) {
           </div>`).join('')}
         </div>` : `
         <div style="font-size:11px;color:var(--muted);padding-top:8px;border-top:1px solid rgba(79,142,247,.15)">Nessuna fonte allegata da Sonnet.</div>`}
-        <button class="btn" style="width:100%;background:var(--accent);color:#fff;font-weight:600;padding:12px;font-size:14px" onclick="openFactcheckReply()">📣 Pubblica risposta fact-check su Facebook →</button>
+        <div style="font-size:11px;color:var(--muted)">Per modificarla e pubblicarla usa «Approva e rispondi»: si apre una finestra «Fact-check» con la bozza e le fonti in fondo al testo.</div>
       </div>` : ''}
       ${c.ai_whataboutism_suggested && !c.ai_whataboutism_draft ? `
       <div style="background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.25);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:12.5px;line-height:1.6">
@@ -431,11 +434,9 @@ function renderDetail(c) {
           ${c.ai_whataboutism_confidence ? `<span style="font-size:11px;padding:2px 7px;border-radius:20px;background:rgba(168,85,247,.15);color:#a855f7">confidenza ${Math.round(c.ai_whataboutism_confidence * 100)}%</span>` : ''}
         </div>
         <div style="color:var(--text);margin-bottom:10px;white-space:pre-wrap">${esc(c.ai_whataboutism_draft)}</div>
-        <button class="btn" style="width:100%;background:#a855f7;color:#fff;font-weight:600;padding:12px;font-size:14px" onclick="openWhataboutismReply()">📣 Pubblica risposta su Facebook →</button>
+        <div style="font-size:11px;color:var(--muted)">Per modificarla e pubblicarla usa «Approva e rispondi»: si apre una finestra «Whataboutism» con la bozza, e la risposta va sotto il commento.</div>
       </div>` : ''}
       <textarea class="note-input" id="mod-note" rows="2" placeholder="Nota interna opzionale (visibile solo ai moderatori)…"></textarea>
-      ${c.ai_fact_check_draft ? `
-      <div style="font-size:11px;color:var(--muted);margin:4px 0 8px;text-transform:uppercase;letter-spacing:.05em">Azioni alternative</div>` : ''}
 
       <div class="decision-actions">
         <div class="decision-group-label">Il commento è ok</div>
@@ -446,19 +447,19 @@ function renderDetail(c) {
           </button>
           <button class="btn btn-approve-reply" onclick="openApproveReply()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            <span class="btn-text"><span class="btn-title">Approva e rispondi</span><span class="btn-hint">Pubblica una risposta all'utente</span></span>
+            <span class="btn-text"><span class="btn-title">Approva e rispondi${c.ai_fact_check_draft ? ' · fact-check' : c.ai_whataboutism_draft ? ' · whataboutism' : ''}</span><span class="btn-hint">${(c.ai_fact_check_draft || c.ai_whataboutism_draft) ? 'Apre la finestra con la bozza dell’AI da rivedere' : 'Pubblica una risposta all’utente'}</span></span>
           </button>
         </div>
 
         <div class="decision-group-label decision-group-hide">Il commento va nascosto</div>
         <div class="decision-row${canHideSilently ? '' : ' decision-row-single'}">
-          <button class="btn btn-hide-notify" onclick="decide('hide')">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>
-            <span class="btn-text"><span class="btn-title">Nascondi</span><span class="btn-hint">Avvisa l'utente con link di ricorso, se l'avviso automatico è attivo</span></span>
+          <button class="btn btn-hide-notify" onclick="openHideReply()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            <span class="btn-text"><span class="btn-title">Nascondi e rispondi</span><span class="btn-hint">Rivedi l'avviso prima dell'invio · il link di ricorso è aggiunto in automatico</span></span>
           </button>
           ${canHideSilently ? `
           <button class="btn btn-hide-silent" onclick="decide('hide_silent')" title="Ignora le impostazioni: nessun avviso, nessun link di ricorso">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><path d="M1 1l22 22"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
             <span class="btn-text"><span class="btn-title">Nascondi senza avviso</span><span class="btn-hint">Ignora le impostazioni · nessun messaggio</span></span>
           </button>` : ''}
         </div>
@@ -530,6 +531,10 @@ const APPROVE_REPLY_TEMPLATES = [
 
 function openApproveReply() {
   if (!currentComment) return;
+  // Bozza AI (fact-check o whataboutism): stesso pulsante, modale dedicato con bozza precompilata.
+  // Il fact-check ha la precedenza (collision policy: se c'è, il whataboutism non ha bozza).
+  if (currentComment.ai_fact_check_draft)   { openFactcheckReply();   return; }
+  if (currentComment.ai_whataboutism_draft) { openWhataboutismReply(); return; }
   approveReplyPosted = false;
   const ta = document.getElementById('approve-reply-text');
   ta.value = '';
@@ -612,7 +617,103 @@ async function confirmApproveReply() {
   }
 }
 
+// ── Nascondi e rispondi: avviso rivedibile prima dell'invio ───────────
+// Il server precompila il testo (nome utente + motivo pubblico dell'AI) SENZA link di
+// ricorso: il link viene accodato in fondo dal server all'invio.
+async function openHideReply() {
+  if (!currentComment) return;
+  const id    = currentComment.id;
+  const ta    = document.getElementById('hide-reply-text');
+  const errEl = document.getElementById('hide-reply-err');
+  const btn   = document.getElementById('hide-reply-submit');
+  ta.value = '';
+  ta.disabled = true;
+  errEl.style.display = 'none';
+  document.getElementById('hide-reply-quote').textContent = currentComment.content || '';
+  document.getElementById('hide-reply-appeal').textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Nascondi e pubblica avviso';
+  updateHideReplyCount();
+  openModal('modal-hide-reply');
+
+  try {
+    const p = await api(`/comments/${id}/hide-reply-preview`);
+    if (currentComment && currentComment.id === id) {
+      ta.value = p.text || '';
+      document.getElementById('hide-reply-appeal').textContent = p.appeal_preview || '';
+    }
+  } catch (e) {
+    errEl.textContent = 'Impossibile precompilare l\'avviso (' + (e.message || 'errore') + '). Scrivilo a mano.';
+    errEl.style.display = 'block';
+  }
+  ta.disabled = false;
+  btn.disabled = false;
+  updateHideReplyCount();
+  setTimeout(() => ta.focus(), 50);
+}
+
+function updateHideReplyCount() {
+  const len = document.getElementById('hide-reply-text').value.length;
+  document.getElementById('hide-reply-count').textContent = len + ' caratteri';
+}
+
+async function confirmHideReply() {
+  if (!currentComment) return;
+  const text  = document.getElementById('hide-reply-text').value.trim();
+  const errEl = document.getElementById('hide-reply-err');
+  const btn   = document.getElementById('hide-reply-submit');
+  const note  = document.getElementById('mod-note')?.value || '';
+  errEl.style.display = 'none';
+
+  if (!text) {
+    errEl.textContent = ['admin', 'supervisor'].includes(currentUserRole)
+      ? 'Scrivi l\'avviso da inviare, oppure usa «Nascondi senza avviso».'
+      : 'Scrivi l\'avviso da inviare all\'utente.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px"></span>Pubblicazione…';
+
+  try {
+    const res = await api(`/comments/${currentComment.id}/decide`, 'POST', {
+      decision: 'hide', note, reply_text: text,
+    });
+
+    // Esito REALE su Facebook: l'avviso parte prima del nascondimento, quindi se FB rifiuta
+    // il nascondimento l'avviso potrebbe essere già visibile sotto il commento.
+    if (res && res.fb_hidden === false) {
+      errEl.textContent = (res.fb_error || 'Facebook ha rifiutato il nascondimento.')
+        + ' L\'avviso potrebbe essere già stato pubblicato sotto il commento: controlla prima di riprovare.';
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = originalLabel;
+      return;
+    }
+
+    closeModal('modal-hide-reply');
+    if (res && res.dev_mode) toast('Dev mode attivo: nessuna azione reale su Facebook', 'err');
+    else toast(res && res.fb_reply_sent === false ? 'Commento nascosto · avviso non inviato' : 'Commento nascosto · avviso pubblicato', 'ok');
+    currentComment = null;
+    document.getElementById('detail-content').style.display = 'none';
+    document.getElementById('detail-empty').style.display   = 'flex';
+    loadQueue(); loadStats();
+  } catch (e) {
+    errEl.textContent = e.message || 'Errore durante l\'invio.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
+}
+
 // ── Fact-check reply (punto 6) ────────────────────────────────────
+// Stato dei modali di risposta: se la risposta è già stata pubblicata ma l'approvazione
+// è fallita, un secondo click ritenta SOLO l'approvazione (niente doppia risposta).
+let factcheckReplyPosted   = false;
+let whataboutismReplyPosted = false;
+
 function openFactcheckReply() {
   if (!currentComment) return;
 
@@ -624,8 +725,16 @@ function openFactcheckReply() {
   // Il moderatore può editare la bozza prima di pubblicare. Gli URL sono ammessi
   // sia inline nel testo sia tramite il pannello fonti sotto (lasciato come
   // riferimento visivo, utile quando preferisce citarle per nome nel reply).
-  document.getElementById('factcheck-reply-text').value = draft;
+  // Le fonti vengono accodate in fondo al testo (la bozza AI non contiene URL).
+  const sourcesText = sources.length
+    ? '\n\nFonti:\n' + sources.map(src => `- ${src.title}: ${src.url}`).join('\n')
+    : '';
+  document.getElementById('factcheck-reply-text').value = draft + sourcesText;
   document.getElementById('factcheck-reply-err').style.display = 'none';
+  factcheckReplyPosted = false;
+  const fcBtn = document.querySelector('#modal-factcheck-reply .btn-primary');
+  fcBtn.disabled = false;
+  fcBtn.textContent = 'Approva e pubblica risposta';
 
   // Pannello fonti in sola lettura — riferimento visivo per il moderatore
   const sourcesRef  = document.getElementById('factcheck-sources-ref');
@@ -652,39 +761,42 @@ function openFactcheckReply() {
 
 async function confirmFactcheckReply() {
   if (!currentComment) return;
-  const text    = document.getElementById('factcheck-reply-text').value.trim();
-  const errEl   = document.getElementById('factcheck-reply-err');
-  const btn     = document.querySelector('#modal-factcheck-reply .btn-primary');
+  const text  = document.getElementById('factcheck-reply-text').value.trim();
+  const errEl = document.getElementById('factcheck-reply-err');
+  const btn   = document.querySelector('#modal-factcheck-reply .btn-primary');
+  const note  = document.getElementById('mod-note')?.value || '';
   errEl.style.display = 'none';
 
-  if (!text) {
+  if (!factcheckReplyPosted && !text) {
     errEl.textContent = 'Il testo non può essere vuoto.';
     errEl.style.display = 'block';
     return;
   }
 
-  // Show spinner
   const originalLabel = btn.textContent;
   btn.disabled = true;
   btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px"></span>Pubblicazione…';
 
   try {
-    // 1. Pubblica la risposta su Facebook (reply() ritorna 502 se FB rifiuta → throw).
-    const r = await api(`/comments/${currentComment.id}/reply`, 'POST', { text });
+    // 1. Pubblica la risposta sotto il commento (reply() ritorna 502 se FB rifiuta → throw).
+    if (!factcheckReplyPosted) {
+      const r = await api(`/comments/${currentComment.id}/reply`, 'POST', { text });
 
-    // Dev mode: nulla è stato inviato davvero → non approvare né dichiarare pubblicato.
-    if (r && r.dev_mode) {
-      closeModal('modal-factcheck-reply');
-      toast('Dev mode attivo: la risposta NON è stata inviata su Facebook', 'err');
-      btn.disabled = false;
-      btn.textContent = originalLabel;
-      return;
+      // Dev mode: nulla è stato inviato davvero → non approvare né dichiarare pubblicato.
+      if (r && r.dev_mode) {
+        closeModal('modal-factcheck-reply');
+        toast('Dev mode attivo: la risposta NON è stata inviata su Facebook', 'err');
+        btn.disabled = false;
+        btn.textContent = originalLabel;
+        return;
+      }
+      factcheckReplyPosted = true;
     }
 
     // 2. Approva il commento — esce dalla coda (solo se la risposta è stata pubblicata).
     await api(`/comments/${currentComment.id}/decide`, 'POST', {
       decision: 'allow',
-      note:     'Approvato dopo risposta fact-check inviata dal moderatore',
+      note:     note || 'Approvato dopo risposta fact-check inviata dal moderatore',
     });
 
     closeModal('modal-factcheck-reply');
@@ -697,10 +809,12 @@ async function confirmFactcheckReply() {
     loadStats();
 
   } catch(e) {
-    errEl.textContent = e.message || 'Errore durante l\'invio.';
+    errEl.textContent = factcheckReplyPosted
+      ? 'La risposta è stata pubblicata, ma l\'approvazione non è riuscita: ' + (e.message || 'errore') + '. Premi di nuovo il pulsante per ritentare solo l\'approvazione.'
+      : (e.message || 'Errore durante l\'invio.');
     errEl.style.display = 'block';
     btn.disabled = false;
-    btn.textContent = originalLabel;
+    btn.textContent = factcheckReplyPosted ? 'Riprova approvazione' : originalLabel;
   }
 }
 
@@ -710,6 +824,10 @@ function openWhataboutismReply() {
   const draft = currentComment.ai_whataboutism_draft || '';
   document.getElementById('whataboutism-reply-text').value = draft;
   document.getElementById('whataboutism-reply-err').style.display = 'none';
+  whataboutismReplyPosted = false;
+  const wbBtn = document.querySelector('#modal-whataboutism-reply .btn-primary');
+  wbBtn.disabled = false;
+  wbBtn.textContent = 'Approva e pubblica risposta';
   openModal('modal-whataboutism-reply');
 }
 
@@ -718,9 +836,10 @@ async function confirmWhataboutismReply() {
   const text  = document.getElementById('whataboutism-reply-text').value.trim();
   const errEl = document.getElementById('whataboutism-reply-err');
   const btn   = document.querySelector('#modal-whataboutism-reply .btn-primary');
+  const note  = document.getElementById('mod-note')?.value || '';
   errEl.style.display = 'none';
 
-  if (!text) {
+  if (!whataboutismReplyPosted && !text) {
     errEl.textContent = 'Il testo non può essere vuoto.';
     errEl.style.display = 'block';
     return;
@@ -731,19 +850,25 @@ async function confirmWhataboutismReply() {
   btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px"></span>Pubblicazione…';
 
   try {
-    const r = await api(`/comments/${currentComment.id}/reply`, 'POST', { text });
+    // 1. Pubblica la risposta sotto il commento (reply() ritorna 502 se FB rifiuta → throw).
+    if (!whataboutismReplyPosted) {
+      const r = await api(`/comments/${currentComment.id}/reply`, 'POST', { text });
 
-    if (r && r.dev_mode) {
-      closeModal('modal-whataboutism-reply');
-      toast('Dev mode attivo: la risposta NON è stata inviata su Facebook', 'err');
-      btn.disabled = false;
-      btn.textContent = originalLabel;
-      return;
+      // Dev mode: nulla è stato inviato davvero → non approvare né dichiarare pubblicato.
+      if (r && r.dev_mode) {
+        closeModal('modal-whataboutism-reply');
+        toast('Dev mode attivo: la risposta NON è stata inviata su Facebook', 'err');
+        btn.disabled = false;
+        btn.textContent = originalLabel;
+        return;
+      }
+      whataboutismReplyPosted = true;
     }
 
+    // 2. Approva il commento — esce dalla coda (solo se la risposta è stata pubblicata).
     await api(`/comments/${currentComment.id}/decide`, 'POST', {
       decision: 'allow',
-      note:     'Approvato dopo risposta whataboutism inviata dal moderatore',
+      note:     note || 'Approvato dopo risposta whataboutism inviata dal moderatore',
     });
 
     closeModal('modal-whataboutism-reply');
@@ -756,10 +881,12 @@ async function confirmWhataboutismReply() {
     loadStats();
 
   } catch(e) {
-    errEl.textContent = e.message || 'Errore durante l\'invio.';
+    errEl.textContent = whataboutismReplyPosted
+      ? 'La risposta è stata pubblicata, ma l\'approvazione non è riuscita: ' + (e.message || 'errore') + '. Premi di nuovo il pulsante per ritentare solo l\'approvazione.'
+      : (e.message || 'Errore durante l\'invio.');
     errEl.style.display = 'block';
     btn.disabled = false;
-    btn.textContent = originalLabel;
+    btn.textContent = whataboutismReplyPosted ? 'Riprova approvazione' : originalLabel;
   }
 }
 

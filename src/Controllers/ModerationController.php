@@ -625,15 +625,42 @@ class ModerationController
             ]);
         }
 
+        // Testo dell'avviso scritto dal moderatore (solo nascondimento con avviso).
+        // Il link di ricorso viene accodato dal server: qui NON va incluso.
+        $replyText = null;
+        if ($decision === 'hide' && empty($body['silent']) && isset($body['reply_text'])) {
+            if (!is_string($body['reply_text'])) {
+                return $this->json($response, ['error' => 'reply_text must be a string.'], 422);
+            }
+            $replyText = trim($body['reply_text']);
+            if (mb_strlen($replyText) > 2000) {
+                return $this->json($response, ['error' => 'reply_text too long (max 2000 characters).'], 422);
+            }
+            if ($replyText === '') $replyText = null;
+        }
+
         $result = $this->moderation->applyHumanDecision(
             commentId:   (int) $args['id'],
             decision:    $decision,
             adminUserId: $auth->sub,
             note:        $body['note'] ?? '',
             silent:      (bool) ($body['silent'] ?? false),
+            replyText:   $replyText,
         );
 
         return $this->json($response, $result);
+    }
+
+    // ── GET /api/comments/{id}/hide-reply-preview  ──────────────────
+    /**
+     * Testo precompilato dell'avviso per il modale "Nascondi e rispondi" (senza link di ricorso).
+     *
+     * @param array<string,string> $args
+     */
+    public function hideReplyPreview(ServerRequestInterface $request, Response $response, array $args): ResponseInterface
+    {
+        $preview = $this->moderation->hideReplyPreview((int) $args['id']);
+        return $this->json($response, $preview, isset($preview['error']) ? 404 : 200);
     }
 
     // ── POST /api/comments/{id}/reply  ──────────────────────────────

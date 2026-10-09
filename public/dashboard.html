@@ -1343,18 +1343,46 @@
   </div>
 </div>
 
+<!-- Modal: Nascondi e rispondi all'utente -->
+<div id="modal-hide-reply" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center">
+  <div style="background:var(--bg-card);border-radius:var(--radius-lg);padding:28px 32px;width:560px;max-width:94vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.25)">
+    <div style="font-size:15px;font-weight:600;margin-bottom:6px">Nascondi e rispondi all'utente</div>
+    <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.5">Il commento viene nascosto e l'utente riceve questo avviso come risposta, a nome della Pagina. Il testo è precompilato con il motivo suggerito dall'AI: puoi correggerlo, aggiungere o togliere frasi.</p>
+    <div class="detail-section-title" style="margin-bottom:6px">Commento dell'utente</div>
+    <div class="quote-box" id="hide-reply-quote"></div>
+    <div class="form-group">
+      <label class="form-label" for="hide-reply-text">Avviso all'utente</label>
+      <textarea class="form-textarea" id="hide-reply-text" rows="6" placeholder="Scrivi l'avviso…" oninput="updateHideReplyCount()"
+        onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){confirmHideReply()}"
+        style="width:100%;box-sizing:border-box;resize:vertical"></textarea>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px">
+        <span>Ctrl/⌘ + Invio per inviare</span><span id="hide-reply-count">0 caratteri</span>
+      </div>
+    </div>
+    <div style="margin-top:12px;padding:10px 14px;background:rgba(79,142,247,.06);border:1px solid rgba(79,142,247,.15);border-radius:var(--radius);font-size:12px;line-height:1.6">
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Aggiunto in automatico in fondo</div>
+      <div id="hide-reply-appeal" style="color:var(--muted)"></div>
+    </div>
+    <div id="hide-reply-err" style="display:none;font-size:12px;color:var(--danger);margin-top:10px;padding:7px 10px;background:var(--danger-bg);border-radius:var(--radius)"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+      <button class="btn-secondary" onclick="closeModal('modal-hide-reply')">Annulla</button>
+      <button class="btn-primary" id="hide-reply-submit" onclick="confirmHideReply()">Nascondi e pubblica avviso</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: Risposta fact-check -->
 <div id="modal-factcheck-reply" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center">
   <div style="background:var(--bg-card);border-radius:var(--radius-lg);padding:28px 32px;width:560px;max-width:94vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.25)">
-    <div style="font-size:15px;font-weight:600;margin-bottom:6px">Risposta fact-check</div>
-    <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.5">Modifica la risposta proposta dall'AI. Le fonti vengono accodate automaticamente al testo — puoi rimuoverle o modificarle prima di pubblicare.</p>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap"><span style="font-size:11px;font-weight:700;letter-spacing:.06em;color:#fff;background:var(--accent);padding:3px 10px;border-radius:20px">🔍 FACT-CHECK</span><span style="font-size:15px;font-weight:600">Risposta al commento</span></div>
+    <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.5">Modifica la risposta proposta dall'AI. Viene pubblicata come risposta sotto il commento, a nome della Pagina; il commento resta visibile. Le fonti sono accodate in fondo al testo: puoi rimuoverle o modificarle.</p>
     <div style="font-size:11.5px;color:var(--warn);background:rgba(247,178,68,.08);border:1px solid rgba(247,178,68,.2);border-radius:var(--radius);padding:8px 12px;margin-bottom:14px;line-height:1.5">
       ⚠️ <strong>Verifica i link delle fonti prima di pubblicare</strong> — i link generati dall'AI potrebbero non essere precisi. Aprili in una nuova scheda e correggili se necessario.
     </div>
     <div class="form-group">
       <label class="form-label">Testo risposta (modificabile)</label>
       <textarea class="form-textarea" id="factcheck-reply-text" rows="6" placeholder="Risposta fact-check…" style="width:100%;box-sizing:border-box;resize:vertical"></textarea>
-      <div style="font-size:11px;color:var(--muted);margin-top:6px">Puoi inserire URL nel testo o lasciare le fonti come riferimento qui sotto.</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">Controlla i link nell'elenco qui sotto prima di pubblicare.</div>
     </div>
     <div id="factcheck-sources-ref" style="display:none;margin-top:14px;padding:12px 14px;background:rgba(79,142,247,.06);border:1px solid rgba(79,142,247,.15);border-radius:var(--radius)">
       <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">📎 Fonti di riferimento (sola lettura)</div>
@@ -1363,7 +1391,7 @@
     <div id="factcheck-reply-err" style="display:none;font-size:12px;color:var(--danger);margin-top:10px;padding:7px 10px;background:var(--danger-bg);border-radius:var(--radius)"></div>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
       <button class="btn-secondary" onclick="closeModal('modal-factcheck-reply')">Annulla</button>
-      <button class="btn-primary" onclick="confirmFactcheckReply()">Pubblica risposta</button>
+      <button class="btn-primary" onclick="confirmFactcheckReply()">Approva e pubblica risposta</button>
     </div>
   </div>
 </div>
@@ -1371,8 +1399,8 @@
 <!-- Modal: Risposta whataboutism (riporta in-topic) -->
 <div id="modal-whataboutism-reply" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center">
   <div style="background:var(--bg-card);border-radius:var(--radius-lg);padding:28px 32px;width:560px;max-width:94vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.25)">
-    <div style="font-size:15px;font-weight:600;margin-bottom:6px">Risposta whataboutism — riporta in-topic</div>
-    <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.5">Il commento devia il tema della discussione. La bozza dell'AI invita gentilmente a tornare sul punto, senza accuse né etichette.</p>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap"><span style="font-size:11px;font-weight:700;letter-spacing:.06em;color:#fff;background:#a855f7;padding:3px 10px;border-radius:20px">↩️ WHATABOUTISM</span><span style="font-size:15px;font-weight:600">Risposta — riporta in-topic</span></div>
+    <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.5">Il commento devia il tema della discussione. La bozza dell'AI invita gentilmente a tornare sul punto, senza accuse né etichette. Il commento resta visibile e la risposta viene pubblicata come risposta sotto di esso, a nome della Pagina.</p>
     <div style="font-size:11.5px;color:var(--warn);background:rgba(247,178,68,.08);border:1px solid rgba(247,178,68,.2);border-radius:var(--radius);padding:8px 12px;margin-bottom:14px;line-height:1.5">
       ⚠️ <strong>Tono molto delicato</strong> — etichettare un commento come fallacia retorica è editorialmente sensibile. Rileggi con attenzione prima di pubblicare.
     </div>
@@ -1383,7 +1411,7 @@
     <div id="whataboutism-reply-err" style="display:none;font-size:12px;color:var(--danger);margin-top:10px;padding:7px 10px;background:var(--danger-bg);border-radius:var(--radius)"></div>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
       <button class="btn-secondary" onclick="closeModal('modal-whataboutism-reply')">Annulla</button>
-      <button class="btn-primary" onclick="confirmWhataboutismReply()">Pubblica risposta</button>
+      <button class="btn-primary" onclick="confirmWhataboutismReply()">Approva e pubblica risposta</button>
     </div>
   </div>
 </div>

@@ -55,6 +55,17 @@ class ModerationService
     }
 
     /**
+     * Revisione manuale ("Nascondi e rispondi"): il nome visualizzato NON entra nel testo
+     * (pseudonimizzazione). Rimuove il segnaposto {nome}, anche dai template personalizzati
+     * ("Ciao {nome}, ..." → "Ciao, ..."). Gli avvisi AUTOMATICI continuano a usare il nome.
+     */
+    private function stripName(string $template): string
+    {
+        $out = (string) preg_replace('/[ \t]*@?\{nome\}/u', '', $template);
+        return ltrim($out, " \t,;:");
+    }
+
+    /**
      * Avviso "ban imminente": inviato quando l'utente RAGGIUNGE la soglia di
      * violazioni (set-recid) — il commento è nascosto ma il ban non è ancora
      * scattato. Va in aggiunta alla notifica di rimozione (con appello).
@@ -425,6 +436,7 @@ class ModerationService
         int    $adminUserId,
         string $note   = '',
         bool   $silent = false,
+        ?string $replyText = null,
     ): array {
         $comment    = DB::table('comments')->find($commentId);
         if (!$comment) return ['error' => 'Comment not found'];
@@ -470,7 +482,7 @@ class ModerationService
             return $this->executeHide(
                 $commentId, (array) $socialUser, (array) $page,
                 $result, $log->id, decidedBy: 'human', adminUserId: $adminUserId,
-                silent: $silent,
+                silent: $silent, replyText: $replyText,
             );
         }
 
@@ -982,6 +994,7 @@ class ModerationService
         ?int             $adminUserId = null,
         bool             $reportable  = false,
         bool             $silent      = false,
+        ?string          $replyText   = null,
     ): array {
         $devMode = $this->isDevMode();
 
@@ -1013,6 +1026,7 @@ class ModerationService
                 pageToken:         $page['page_access_token'],
                 reportable:        $reportable,
                 logId:             $logId,
+                customText:        $replyText,
             );
         }
 
@@ -1141,11 +1155,16 @@ class ModerationService
         string $pageToken,
         bool   $reportable,
         int    $logId,
+        ?string $customText = null,
     ): bool {
+        // Testo scritto dal moderatore (modale "Nascondi e rispondi"): azione esplicita,
+        // quindi non dipende dall'impostazione dell'avviso automatico.
+        $custom = trim((string) $customText);
+
         // Respect admin setting — default ON (GDPR recommended)
         try {
             $enabled = DB::table('app_settings')->where('key', 'removal_reply_enabled')->value('value');
-            if ($enabled !== null && !(bool)(int)$enabled) {
+            if ($custom === '' && $enabled !== null && !(bool)(int)$enabled) {
                 DB::table('moderation_log')->where('id', $logId)->update([
                     'removal_reply_sent' => 0,
                     'removal_reply_text' => null,
@@ -1162,7 +1181,10 @@ class ModerationService
         );
         $appealUrl = "{$baseUrl}/appeal?token={$appealToken}";
         $reason    = rtrim($publicReason ?: 'non rispetta le linee guida della nostra community', '.');
-        $message   = $this->buildHideReply($displayName, $reason, $appealUrl, $reportable);
+        // Testo del moderatore: il link di ricorso viene sempre accodato in fondo.
+        $message   = $custom !== ''
+            ? $custom . "\n\n" . str_replace('{appeal_url}', $appealUrl, $this->splitHideTemplate($reportable)[1])
+            : $this->buildHideReply($displayName, $reason, $appealUrl, $reportable);
 
         $sent = $this->meta->replyToComment($platformCommentId, $message, $pageToken);
 
@@ -1185,17 +1207,27 @@ class ModerationService
         string $appealUrl,
         bool   $reportable,
     ): string {
+        return str_replace(
+            ['{nome}', '{reason}', '{appeal_url}'],
+            [$displayName, $reason, $appealUrl],
+            $this->hideReplyTemplate($reportable),
+        );
+    }
+
+    /** Template dell'avviso di nascondimento (DB se personalizzato, altrimenti default). */
+    private function hideReplyTemplate(bool $reportable): string
+    {
         $settingKey = $reportable
             ? 'hide_reportable_reply_template'
             : 'hide_reply_template';
 
         $defaultNormal =
-            "Ciao {nome}, il tuo commento \u00e8 stato temporaneamente nascosto perch\u00e9 {reason}.\n\n" .
+            "Ciao {nome}, il tuo commento \u{00e8} stato temporaneamente nascosto perch\u{00e9} {reason}.\n\n" .
             "Se ritieni che ci sia un errore, puoi richiedere una revisione: {appeal_url}";
 
         $defaultReportable =
-            "Ciao {nome}, il tuo commento \u00e8 stato temporaneamente nascosto perch\u00e9 {reason}.\n\n" .
-            "\u26a0\ufe0f Il contenuto \u00e8 stato segnalato per valutazione legale da parte della redazione.\n\n" .
+            "Ciao {nome}, il tuo commento \u{00e8} stato temporaneamente nascosto perch\u{00e9} {reason}.\n\n" .
+            "\u{26a0}\u{fe0f} Il contenuto \u{00e8} stato segnalato per valutazione legale da parte della redazione.\n\n" .
             "Se ritieni che ci sia un errore, puoi richiedere una revisione: {appeal_url}";
 
         $template = $reportable ? $defaultReportable : $defaultNormal;
@@ -1207,11 +1239,60 @@ class ModerationService
             }
         } catch (\Throwable) {}
 
-        return str_replace(
-            ['{nome}', '{reason}', '{appeal_url}'],
-            [$displayName, $reason, $appealUrl],
-            $template,
-        );
+        return $template;
+    }
+
+    /**
+     * Separa il template in [corpo modificabile, blocco con il link di ricorso],
+     * senza il segnaposto {nome} (solo per "Nascondi e rispondi").
+     * Le righe che contengono {appeal_url} formano il blocco ricorso (accodato in fondo
+     * al testo del moderatore); il resto è il corpo mostrato nel modale.
+     *
+     * @return array{0:string,1:string}
+     */
+    private function splitHideTemplate(bool $reportable): array
+    {
+        $body   = [];
+        $appeal = [];
+        foreach (preg_split('/\R/', $this->hideReplyTemplate($reportable)) ?: [] as $line) {
+            if (str_contains($line, '{appeal_url}')) { $appeal[] = $line; } else { $body[] = $line; }
+        }
+        $appealText = trim(implode("\n", $appeal));
+        if ($appealText === '') {
+            $appealText = 'Se ritieni che ci sia un errore, puoi richiedere una revisione: {appeal_url}';
+        }
+        // Usato solo dalla revisione manuale: niente nome utente nel testo.
+        return [$this->stripName(trim(implode("\n", $body))), $this->stripName($appealText)];
+    }
+
+    /**
+     * Anteprima dell'avviso per il modale "Nascondi e rispondi": template già compilato
+     * (nome utente + motivo pubblico dell'AI), SENZA link di ricorso, che viene accodato
+     * all'invio.
+     *
+     * @return array<string,mixed>
+     */
+    public function hideReplyPreview(int $commentId): array
+    {
+        $comment = DB::table('comments')->find($commentId);
+        if (!$comment) return ['error' => 'Comment not found'];
+
+        $log = DB::table('moderation_log')
+            ->where('comment_id', $commentId)
+            ->orderByDesc('id')
+            ->first();
+
+        $reason      = rtrim(trim((string) ($log->ai_public_reason ?? '')), '. ');
+        if ($reason === '') {
+            $reason = 'non rispetta le linee guida della nostra community';
+        }
+
+        [$body, $appeal] = $this->splitHideTemplate(false);
+
+        return [
+            'text'           => str_replace('{reason}', $reason, $body),
+            'appeal_preview' => str_replace('{appeal_url}', '[link per il ricorso]', $appeal),
+        ];
     }
 
     /**
