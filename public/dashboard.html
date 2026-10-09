@@ -1045,12 +1045,12 @@
       <div class="panel">
         <div class="panel-head"><div class="panel-title">Utenti bannati</div><button class="panel-action" onclick="loadBans()">↺ Aggiorna</button></div>
         <div class="filter-bar">
-          <span style="font-size:11px;color:var(--muted);margin-right:6px">Violazioni:</span>
+          <span style="font-size:11px;color:var(--muted);margin-right:6px">Numero ban:</span>
           <button class="filter-btn active" data-ban-violations="all" onclick="setBanViolationsFilter('all',this)">Tutte</button>
-          <button class="filter-btn"        data-ban-violations="1"   onclick="setBanViolationsFilter('1',this)">1ª</button>
-          <button class="filter-btn"        data-ban-violations="2"   onclick="setBanViolationsFilter('2',this)">2ª</button>
-          <button class="filter-btn"        data-ban-violations="3"   onclick="setBanViolationsFilter('3',this)">3ª</button>
-          <button class="filter-btn"        data-ban-violations="4+"  onclick="setBanViolationsFilter('4+',this)">4+</button>
+          <button class="filter-btn"        data-ban-violations="1"   onclick="setBanViolationsFilter('1',this)" title="Primo ban dell'utente">1°</button>
+          <button class="filter-btn"        data-ban-violations="2"   onclick="setBanViolationsFilter('2',this)" title="Secondo ban">2°</button>
+          <button class="filter-btn"        data-ban-violations="3"   onclick="setBanViolationsFilter('3',this)" title="Terzo ban">3°</button>
+          <button class="filter-btn"        data-ban-violations="4+"  onclick="setBanViolationsFilter('4+',this)" title="Quarto ban o successivi">4°+</button>
           <span class="filter-count" id="ban-count"></span>
         </div>
         <div class="ban-table-wrap">

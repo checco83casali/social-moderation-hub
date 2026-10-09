@@ -902,7 +902,7 @@ async function loadBans() {
   try {
     const url = currentBanViolations === 'all'
       ? '/bans?limit=50'
-      : `/bans?limit=50&violations=${currentBanViolations}`;
+      : `/bans?limit=50&ban_level=${encodeURIComponent(currentBanViolations)}`;
     const d = await api(url);
     countEl.textContent = `${d.total} utenti`;
     if (!d.items?.length) {
@@ -916,7 +916,7 @@ async function loadBans() {
             <div class="ban-avatar">${(b.display_name||'?')[0].toUpperCase()}</div>
             <div>
               <div class="ban-name">${esc(b.display_name || 'Anonimo')}</div>
-              <div class="ban-meta">${b.violation_count} violaz. · <a href="#" onclick="openDrawer(${b.social_user_id});return false" style="color:var(--accent);text-decoration:none">storico →</a></div>
+              <div class="ban-meta">${b.violation_count} violaz. · ${b.ban_level || 1}° ban · <a href="#" onclick="openDrawer(${b.social_user_id});return false" style="color:var(--accent);text-decoration:none">storico →</a></div>
             </div>
           </div>
         </td>
@@ -1129,6 +1129,16 @@ function setAcCategoryFilter(val) {
 }
 
 // ── User drawer (drill-down) ──────────────────────────────────────
+// Stato dei commenti nel drawer "storico" utente.
+const DRAWER_STATUS = {
+  hidden:            { label: 'Nascosto',               cls: 'badge-perm' },
+  hidden_reportable: { label: 'Nascosto · segnalabile', cls: 'badge-perm' },
+  appeal_pending:    { label: 'Ricorso in attesa',      cls: 'badge-temp' },
+  reported_legal:    { label: 'Segnalato',              cls: 'badge-perm' },
+  removed:           { label: 'Rimosso',                cls: 'badge-perm' },
+  escalated_human:   { label: 'In coda',                cls: 'badge-temp' },
+};
+
 async function openDrawer(userId) {
   document.getElementById('drawer-overlay').classList.add('open');
   document.getElementById('user-drawer').classList.add('open');
@@ -1151,7 +1161,7 @@ async function openDrawer(userId) {
         <div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)">
           <div style="font-size:12px;color:var(--muted);margin-bottom:6px">
             ${esc(c.page_name)} · ${relTime(c.received_at)}
-            · <span class="${c.status==='removed'?'badge-perm':'badge-temp'}">${c.status==='removed'?'Rimosso':'In coda'}</span>${decider}
+            · <span class="${DRAWER_STATUS[c.status]?.cls || 'badge-temp'}">${DRAWER_STATUS[c.status]?.label || esc(c.status)}</span>${decider}
           </div>
           <div class="bc-content">${esc(c.content)}</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
@@ -1159,7 +1169,7 @@ async function openDrawer(userId) {
             ${c.ai_reason ? `<span style="font-size:11px;color:var(--muted)">${esc(c.ai_reason)}</span>` : ''}
           </div>
         </div>`;
-    }).join('') || '<div class="empty" style="padding:20px 0">Nessun commento rimosso</div>';
+    }).join('') || '<div class="empty" style="padding:20px 0">Nessun commento nascosto</div>';
 
     document.getElementById('drawer-body').innerHTML = `
       <div class="drawer-section">
@@ -1185,7 +1195,7 @@ async function openDrawer(userId) {
           </button>` : ''}
       </div>
       <div class="drawer-section">
-        <div class="drawer-section-title">Commenti rimossi (${comments.total||0})</div>
+        <div class="drawer-section-title">Commenti nascosti e in coda (${comments.total||0})</div>
         ${commentHtml}
       </div>`;
   } catch (e) {

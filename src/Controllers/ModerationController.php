@@ -928,6 +928,12 @@ class ModerationController
         $limit      = min((int) ($params['limit'] ?? 25), 100);
         $page       = max(1, (int) ($params['page'] ?? 1));
         $violations = $params['violations'] ?? 'all';
+        // Filtro per NUMERO DEL BAN (1°, 2°, 3°, 4°+): quanti ban ha avuto l'utente, come per
+        // l'escalation della durata (countUserBans). Un utente bannato ha sempre più violazioni
+        // della soglia, quindi filtrare per violazioni non permetteva di distinguere nulla.
+        $banLevel   = trim((string) ($params['ban_level'] ?? 'all'));
+        $levelSql   = "(SELECT COUNT(*) FROM ban_records bl WHERE bl.social_user_id = b.social_user_id "
+                    . "AND bl.ban_scope = 'user' AND bl.ban_type != 'comment_removed')";
 
         $query = DB::table('ban_records as b')
             ->join('social_users as su', 'su.id', '=', 'b.social_user_id')
@@ -946,6 +952,14 @@ class ModerationController
                 $query->where('su.violation_count', '>=', 4);
             } else {
                 $query->where('su.violation_count', (int) $violations);
+            }
+        }
+
+        if ($banLevel !== 'all' && $banLevel !== '') {
+            if ($banLevel === '4' || $banLevel === '4+') {
+                $query->whereRaw("{$levelSql} >= 4");
+            } else {
+                $query->whereRaw("{$levelSql} = ?", [(int) $banLevel]);
             }
         }
 
@@ -969,6 +983,7 @@ class ModerationController
                 'cp.page_id as facebook_page_id',
                 'au.name as banned_by_name',
                 'c.content as trigger_comment',
+                DB::raw("{$levelSql} AS ban_level"),
             ])
             ->orderByDesc('su.violation_count')
             ->orderByDesc('b.created_at')
@@ -1175,7 +1190,10 @@ class ModerationController
     }
 
     // ── GET /api/bans/{id}/comments  ────────────────────────────────
-    /** All flagged/removed comments for a specific banned user (drill-down). */
+    /**
+     * Commenti segnalati di un utente (drill-down "storico"): nascosti (anche segnalabili,
+     * in ricorso o segnalati alle autorità), eventuali rimossi e quelli ancora in coda.
+     */
     public function userBannedComments(ServerRequestInterface $request, Response $response, array $args): ResponseInterface
     {
         $userId = (int) $args['id'];
@@ -1193,7 +1211,7 @@ class ModerationController
             })
             ->leftJoin('admin_users as au', 'au.id', '=', 'ml.human_user_id')
             ->where('c.social_user_id', $userId)
-            ->whereIn('c.status', ['removed', 'escalated_human'])
+            ->whereIn('c.status', ['hidden', 'hidden_reportable', 'appeal_pending', 'reported_legal', 'removed', 'escalated_human'])
             ->select([
                 'c.id', 'c.content', 'c.status', 'c.received_at', 'cp.page_name',
                 'ml.stage as ai_stage', 'ml.ai_decision', 'ml.ai_confidence',
