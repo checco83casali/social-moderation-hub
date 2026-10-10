@@ -151,9 +151,11 @@ final class AiTrainingService
     /**
      * La decisione che sta per essere applicata richiede una nota di addestramento?
      *
+     * @param bool $isReview true per i ricorsi: la decisione è sempre una revisione del verdetto,
+     *                       anche se lo stato del commento ('appeal_pending') non lo dice.
      * @return array{kind:string}|null  null = nessuna nota richiesta
      */
-    public function requirementFor(int $commentId, string $decision, string $role): ?array
+    public function requirementFor(int $commentId, string $decision, string $role, bool $isReview = false): ?array
     {
         $session = $this->activeSession();
         if (!$session || !in_array($role, ['admin', 'supervisor', 'moderator'], true)) return null;
@@ -167,7 +169,7 @@ final class AiTrainingService
 
         $outcome = in_array($decision, ['allow', 'unhide', 'restore'], true) ? 'visible' : 'hidden';
         $before  = in_array($status, self::HIDDEN_STATUSES, true) ? 'hidden' : 'visible';
-        $isReview = in_array($status, self::ESCALATED_STATUSES, true);
+        $isReview = $isReview || in_array($status, self::ESCALATED_STATUSES, true);
         if (!$isReview && $outcome === $before) return null;   // nessun cambio di stato
 
         return ['kind' => $this->classify((string) $verdict->ai_decision, $this->categories($verdict), $outcome)];

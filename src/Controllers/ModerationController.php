@@ -476,6 +476,26 @@ class ModerationController
             return $this->json($response, ['error' => 'Appeal already reviewed.'], 409);
         }
 
+        // Training AI (Pro): un ricorso è sempre una revisione del verdetto dell'AI → serve una nota
+        // di addestramento (campo separato dalla motivazione, che va all'utente).
+        $trainingNote = null;
+        try {
+            $need = $this->training->requirementFor((int) $appeal->comment_id, $decision === 'accept' ? 'unhide' : 'hide', (string) ($auth->role ?? ''), true);
+        } catch (\Throwable) {
+            $need = null;   // tabelle non ancora migrate
+        }
+        if ($need !== null) {
+            $trainingNote = trim((string) ($body['training_note'] ?? ''));
+            if (mb_strlen($trainingNote) < AiTrainingService::MIN_NOTE_CHARS) {
+                return $this->json($response, [
+                    'error'     => 'Serve una nota di addestramento (almeno ' . AiTrainingService::MIN_NOTE_CHARS . ' caratteri): spiega perché rinforzi o correggi la decisione dell\'AI.',
+                    'code'      => 'training_note_required',
+                    'kind'      => $need['kind'],
+                    'min_chars' => AiTrainingService::MIN_NOTE_CHARS,
+                ], 422);
+            }
+        }
+
         DB::table('appeal_records')->where('id', $appeal->id)->update([
             'status'        => $decision === 'accept' ? 'accepted' : 'rejected',
             'reviewed_by'   => $auth->sub,
@@ -497,7 +517,7 @@ class ModerationController
                 note:        $body['note'] ?? 'Appeal accepted',
             );
             // applyHumanDecision sets status = 'approved' — already correct
-            return $this->json($response, array_merge($result, ['appeal_decision' => 'accepted']));
+            return $this->json($response, array_merge($result, ['appeal_decision' => 'accepted'], $this->recordAppealTraining($auth, (int) $appeal->comment_id, $trainingNote, 'visible')));
         }
 
         // Reject: comment stays hidden — restore status from appeal_pending → hidden
@@ -536,7 +556,29 @@ class ModerationController
             'created_at'        => date('Y-m-d H:i:s'),
         ]);
 
-        return $this->json($response, ['action' => 'appeal_rejected', 'comment_id' => $appeal->comment_id]);
+        return $this->json($response, ['action' => 'appeal_rejected', 'comment_id' => $appeal->comment_id]
+            + $this->recordAppealTraining($auth, (int) $appeal->comment_id, $trainingNote, 'hidden'));
+    }
+
+    /**
+     * Registra la nota di addestramento di un ricorso già deciso. Mai bloccante: la decisione è
+     * applicata, una nota non registrata non deve far fallire la risposta.
+     *
+     * @param 'hidden'|'visible' $outcome
+     * @return array{training?:array{count:int,target:int,completed:bool}}
+     */
+    private function recordAppealTraining(?object $auth, int $commentId, ?string $note, string $outcome): array
+    {
+        if ($note === null) return [];
+        try {
+            $rec = $this->training->record($commentId, isset($auth->sub) ? (int) $auth->sub : null, $note, $outcome, false);
+            AuditService::log($auth, 'ai_training.note', [
+                'comment_id' => $commentId, 'note' => $note, 'details' => ['kind' => $rec['kind'], 'posthumous' => false, 'appeal' => true],
+            ]);
+            return ['training' => ['count' => $rec['count'], 'target' => $rec['target'], 'completed' => $rec['completed']]];
+        } catch (\Throwable) {
+            return [];
+        }
     }
 
     // ── GET /api/comments/hidden  ────────────────────────────────────

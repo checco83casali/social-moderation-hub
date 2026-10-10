@@ -1375,7 +1375,21 @@ async function confirmAppealDecision() {
   </span>`;
 
   try {
-    await api(`/appeals/${appealId}/decide`, 'POST', { decision, note });
+    // Training AI: se il server chiede la nota di addestramento, la si raccoglie e si rinvia la decisione.
+    const payload = { decision, note };
+    let res;
+    try {
+      res = await api(`/appeals/${appealId}/decide`, 'POST', payload);
+    } catch (err) {
+      if (err.code !== 'training_note_required') throw err;
+      const tn = await askTrainingNote({ kind: err.data?.kind, min: err.data?.min_chars });
+      if (tn === null) throw new Error('Decisione non applicata: nota di addestramento non inserita');
+      res = await api(`/appeals/${appealId}/decide`, 'POST', Object.assign({}, payload, { training_note: tn }));
+    }
+    if (res && res.training) {
+      TRAINING.count = res.training.count; TRAINING.target = res.training.target;
+      if (res.training.completed) { TRAINING.active = false; toast('Training AI: raccolta completata, analisi in corso', 'ok'); }
+    }
     closeModal('modal-appeal-decision');
     toast(decision === 'accept'
       ? 'Ricorso accettato · commento ripristinato'
