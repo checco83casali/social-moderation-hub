@@ -54,6 +54,7 @@ async function initApp() {
   try {
     const me = await api('/me');
     currentUserRole = me.role || 'moderator';
+    currentUserId   = Number(me.id) || 0;
     const initials = (me.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
     document.getElementById('user-avatar').textContent = initials;
     document.getElementById('user-name').textContent   = me.name || me.email;

@@ -733,7 +733,7 @@ V;
                 ],
                 'json' => [
                     'model'      => self::MODEL_SONNET,
-                    'max_tokens' => 400,
+                    'max_tokens' => 300,
                     'system'     => $system,
                     'messages'   => [['role' => 'user', 'content' => $userMsg]],
                 ],
@@ -775,12 +775,10 @@ V;
     {
         $system = <<<'POSTCTX'
 You summarise a social media post published by a page, so that a moderation AI can understand the comments written under it.
-Write 3 to 6 short lines, in the same language as the post, plain text, no markdown, covering:
-- Topic: what the post is about (and the linked article, if any)
-- Stance: the position or claim the page takes, if any
-- People/organisations mentioned
-- Tone and sensitivity: e.g. news, opinion, promotional, satire; flag sensitive topics (politics, crime, health, minors, tragedy)
-Stick to what the content says: no opinions, no moderation advice. If there is almost no content (e.g. only an image without text), describe what is visible and say the context is limited.
+Write EXACTLY 2 short lines (at most 600 characters in total), in the same language as the post, plain text, no markdown, no bullet points:
+- Line 1: what the post is about (and the linked article, if any), the position the page takes, and the key people/organisations mentioned.
+- Line 2: tone and sensitivity: e.g. news, opinion, promotional, satire; flag sensitive topics (politics, crime, health, minors, tragedy).
+Stick to what the content says: no opinions, no moderation advice. If there is almost no content (e.g. only an image without text), say what is visible and that the context is limited.
 POSTCTX;
 
         $parts = [];
@@ -817,7 +815,7 @@ POSTCTX;
             ]);
             $body = json_decode((string) $response->getBody(), true);
             $out  = trim((string) ($body['content'][0]['text'] ?? ''));
-            return $out !== '' ? mb_substr($out, 0, 2000) : null;
+            return $out !== '' ? mb_substr($out, 0, 1000) : null;
         };
 
         try {

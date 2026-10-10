@@ -2,6 +2,7 @@
 const HUB_URL = window.MH_URL || '';
 let TOKEN = localStorage.getItem('mh_token') || '';
 let currentUserRole = '';   // set after login — drives admin-only UI
+let currentUserId   = 0;    // id dell'utente connesso (serve a non proporre il reset della propria password)
 let currentComment  = null; // comment currently selected in queue
 const queueMap = {};        // id → comment object
 

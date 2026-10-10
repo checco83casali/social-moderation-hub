@@ -1277,8 +1277,8 @@
 <!-- Modal: Password temporanea (mostrata dopo creazione utente) -->
 <div id="modal-temp-password" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:700;align-items:center;justify-content:center">
   <div style="background:var(--bg-card);border-radius:var(--radius);padding:28px 32px;width:420px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.2)">
-    <div style="font-size:15px;font-weight:600;margin-bottom:6px">Utente creato</div>
-    <p style="font-size:13px;color:var(--muted);margin:0 0 18px">Condividi queste credenziali con l'utente. La password è temporanea: verrà richiesto di cambiarla al primo accesso.</p>
+    <div style="font-size:15px;font-weight:600;margin-bottom:6px" id="tp-title">Utente creato</div>
+    <p style="font-size:13px;color:var(--muted);margin:0 0 18px" id="tp-text">Condividi queste credenziali con l'utente. La password è temporanea: verrà richiesto di cambiarla al primo accesso.</p>
     <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px;font-size:13px;display:flex;flex-direction:column;gap:8px">
       <div><span style="color:var(--muted)">Email:</span> <strong id="tp-email"></strong></div>
       <div style="display:flex;align-items:center;gap:10px">

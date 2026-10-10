@@ -209,6 +209,7 @@ $app->group('/api', function ($group) {
     // User management
     $group->get('/users/local',                [AuthController::class, 'listLocalUsers']);  // admin
     $group->post('/users/local',               [AuthController::class, 'createLocalUser']); // admin
+    $group->post('/users/local/{id}/reset-password', [AuthController::class, 'resetLocalUserPassword']); // admin
     $group->get('/users/{id}',                 [ModerationController::class, 'userDetail']);
     $group->post('/users/{id}/ban',            [ModerationController::class, 'banUser']);
     $group->delete('/users/{id}/ban',          [ModerationController::class, 'liftBan']);

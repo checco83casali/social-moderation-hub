@@ -195,6 +195,49 @@ class AuthController
         return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
     }
 
+    // ── POST /api/users/local/{id}/reset-password  ───────────────────
+    /**
+     * Admin: genera una password temporanea per un altro utente locale. L'utente dovrà
+     * cambiarla al primo accesso. La password è mostrata una sola volta, mai salvata in chiaro.
+     *
+     * @param array<string,string> $args
+     */
+    public function resetLocalUserPassword(ServerRequestInterface $request, Response $response, array $args): ResponseInterface
+    {
+        $auth = $request->getAttribute('auth_user');
+        if ($auth->role !== 'admin') {
+            return $this->error($response, 'Accesso negato.', 403);
+        }
+
+        $targetId = (int) $args['id'];
+        if ($targetId === (int) $auth->sub) {
+            return $this->error($response, 'Per la tua password usa «Cambia password» dal menù del profilo.', 409);
+        }
+
+        $target = \Illuminate\Database\Capsule\Manager::table('admin_users')
+            ->where('id', $targetId)
+            ->whereNotNull('password_hash')
+            ->first(['id', 'name', 'email', 'role']);
+        if (!$target) {
+            return $this->error($response, 'Utente locale non trovato.', 404);
+        }
+
+        try {
+            $result = $this->oauth->resetPasswordWithTemp($targetId);
+        } catch (\Throwable $e) {
+            return $this->error($response, $e->getMessage(), 422);
+        }
+
+        AuditService::log($auth, 'user.password_reset', ['details' => ['user_id' => $targetId, 'email' => $target->email, 'role' => $target->role]]);
+
+        $response->getBody()->write(json_encode([
+            'ok'            => true,
+            'email'         => $target->email,
+            'temp_password' => $result['temp_password'],
+        ]));
+        return $response->withHeader('Content-Type', 'application/json')->withHeader('Cache-Control', 'no-store');
+    }
+
     // ── GET /auth/providers  ─────────────────────────────────────────
     /** Public: returns which OAuth providers are configured (no credentials exposed). */
     public function providers(ServerRequestInterface $request, Response $response): ResponseInterface

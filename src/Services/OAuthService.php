@@ -239,6 +239,30 @@ class OAuthService
     }
 
     /**
+     * Admin: assegna a un utente locale una NUOVA password temporanea (16 caratteri, 128 bit di
+     * entropia) e lo obbliga a cambiarla al prossimo accesso. Ritorna la password in chiaro una
+     * sola volta: nel database resta solo l'hash.
+     *
+     * @return array{temp_password: string}
+     */
+    public function resetPasswordWithTemp(int $userId): array
+    {
+        $tempPassword = bin2hex(random_bytes(8));
+        $affected = DB::table('admin_users')
+            ->where('id', $userId)
+            ->whereNotNull('password_hash')
+            ->update([
+                'password_hash'        => password_hash($tempPassword, PASSWORD_BCRYPT),
+                'must_change_password' => 1,
+                'updated_at'           => date('Y-m-d H:i:s'),
+            ]);
+        if (!$affected) {
+            throw new \RuntimeException('Utente locale non trovato.');
+        }
+        return ['temp_password' => $tempPassword];
+    }
+
+    /**
      * Returns true if the given user already has a local password set.
      */
     public function hasPassword(int $userId): bool

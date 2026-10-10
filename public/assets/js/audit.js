@@ -9,6 +9,7 @@ const AUDIT_ACTIONS = {
   'comment.report_legal':{ label: 'Segnalazione legale',  tone: 'warn' },
   'user.ban':            { label: 'Ban manuale',          tone: 'warn' },
   'user.unban':          { label: 'Ban revocato',         tone: 'ok'   },
+  'user.password_reset': { label: 'Password reimpostata', tone: 'warn' },
   'appeal.accept':       { label: 'Ricorso accolto',      tone: 'ok'   },
   'appeal.reject':       { label: 'Ricorso respinto',     tone: 'warn' },
   'ai_training.start':   { label: 'Training AI avviato',  tone: ''     },

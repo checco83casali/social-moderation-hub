@@ -599,13 +599,38 @@ async function createLocalUser() {
     const res = await api('/users/local', 'POST', { name, email, role });
     closeModal('modal-create-user');
     loadLocalUsers();
-    document.getElementById('tp-email').textContent    = email;
-    document.getElementById('tp-password').textContent = res.temp_password;
-    document.getElementById('tp-copy-btn').textContent = 'Copia';
-    openModal('modal-temp-password');
+    showTempPassword(email, res.temp_password, false);
   } catch (e) {
     errEl.textContent = e.message || 'Errore nella creazione.';
     errEl.style.display = 'block';
+  }
+}
+
+// Finestra con la password temporanea (creazione utente o reset): mostrata una sola volta.
+function showTempPassword(email, password, isReset) {
+  document.getElementById('tp-title').textContent = isReset ? 'Password reimpostata' : 'Utente creato';
+  document.getElementById('tp-text').textContent  = isReset
+    ? 'Comunica questa password temporanea all\'utente. Quella vecchia non funziona più: al prossimo accesso gli verrà chiesto di sceglierne una nuova.'
+    : 'Condividi queste credenziali con l\'utente. La password è temporanea: verrà richiesto di cambiarla al primo accesso.';
+  document.getElementById('tp-email').textContent    = email;
+  document.getElementById('tp-password').textContent = password;
+  document.getElementById('tp-copy-btn').textContent = 'Copia';
+  openModal('modal-temp-password');
+}
+
+async function resetUserPassword(id, name, email) {
+  if (!(await confirmDialog({
+    title: 'Reimpostare la password?',
+    message: `Verrà generata una nuova password temporanea per ${name || email} (${email}).\n\nLa password attuale smette di funzionare e all'accesso successivo l'utente dovrà sceglierne una nuova.`,
+    confirmLabel: 'Genera password temporanea',
+    danger: true,
+  }))) return;
+  try {
+    const res = await api(`/users/local/${id}/reset-password`, 'POST');
+    showTempPassword(res.email || email, res.temp_password, true);
+    loadLocalUsers();
+  } catch (e) {
+    toast('Errore: ' + e.message, 'err');
   }
 }
 
@@ -634,13 +659,15 @@ async function loadLocalUsers() {
           <th style="text-align:left;padding:6px 8px;color:var(--muted);font-weight:500">Email</th>
           <th style="text-align:left;padding:6px 8px;color:var(--muted);font-weight:500">Ruolo</th>
           <th style="text-align:left;padding:6px 8px;color:var(--muted);font-weight:500">Ultimo accesso</th>
+          <th style="padding:6px 8px"></th>
         </tr></thead>
         <tbody>${users.map(u => `
           <tr style="border-bottom:1px solid var(--border)">
             <td style="padding:8px">${esc(u.name)}</td>
             <td style="padding:8px;color:var(--muted)">${esc(u.email)}</td>
-            <td style="padding:8px">${u.role === 'admin' ? 'Admin' : 'Moderatore'}</td>
+            <td style="padding:8px">${{ admin: 'Admin', supervisor: 'Supervisore' }[u.role] || 'Moderatore'}</td>
             <td style="padding:8px;color:var(--muted)">${u.last_login_at ? new Date(u.last_login_at).toLocaleDateString('it-IT') : '—'}</td>
+            <td style="padding:8px;text-align:right;white-space:nowrap">${Number(u.id) === currentUserId ? '' : `<button class="btn-sm" data-uid="${Number(u.id)}" data-uname="${esc(u.name)}" data-uemail="${esc(u.email)}" onclick="resetUserPassword(Number(this.dataset.uid), this.dataset.uname, this.dataset.uemail)">Reset password</button>`}</td>
           </tr>`).join('')}
         </tbody>
       </table>`;
