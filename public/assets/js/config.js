@@ -86,7 +86,12 @@ async function api(path, method = 'GET', body = null) {
   const r = await fetch(HUB_URL + '/api' + path, opts);
   if (r.status === 401) { logout(); throw new Error('Non autorizzato'); }
   const data = await r.json();
-  if (!r.ok) throw new Error(data?.error || `Errore HTTP ${r.status}`);
+  if (!r.ok) {
+    const err = new Error(data?.error || `Errore HTTP ${r.status}`);
+    err.code = data?.code;
+    err.data = data;
+    throw err;
+  }
   return data;
 }
 

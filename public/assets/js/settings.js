@@ -122,6 +122,9 @@ async function loadSettings() {
       if (violRetEl) violRetEl.value = parseInt(d.violation_retention_days ?? 0, 10);
       loadRetentionStatus();
 
+      // PRO: training AI
+      loadAiTraining();
+
       // PRO: contesto del post
       const pcEl = document.getElementById('set-post-context-enabled');
       if (pcEl) pcEl.checked = !!d.post_context_enabled;
@@ -227,6 +230,70 @@ function applyProFieldLocks(lic) {
     if (lockEl) lockEl.style.display = unlocked ? 'none' : 'flex';
     inputs.forEach(el => { el.disabled = !unlocked; });
   });
+}
+
+// ── Training AI (Pro) ─────────────────────────────────────────────
+async function loadAiTraining() {
+  const tg = document.getElementById('set-ai-training-enabled');
+  if (!tg) return;
+  let d;
+  try { d = await api('/ai-training'); } catch (_) { return; }
+  const limitEl = document.getElementById('set-ai-training-limit');
+  tg.checked = !!d.active;
+  document.getElementById('ai-training-label').textContent = d.active ? 'Training AI attivo' : 'Training AI disattivo';
+  if (limitEl) { limitEl.value = d.active ? d.target : (d.limit || 30); limitEl.disabled = !!d.active || !d.licensed; }
+  const prog = document.getElementById('ai-training-progress');
+  prog.style.display = d.active ? 'block' : 'none';
+  if (d.active) {
+    document.getElementById('ai-training-count').textContent = `${d.count} / ${d.target}`;
+    document.getElementById('ai-training-bar').style.width = Math.min(100, d.target ? (d.count / d.target) * 100 : 0) + '%';
+  }
+  renderAiTrainingLast(d.last);
+}
+
+function renderAiTrainingLast(l) {
+  const box = document.getElementById('ai-training-last');
+  if (!box) return;
+  if (!l) { box.style.display = 'none'; return; }
+  const states = { active: 'in corso', analyzing: 'analisi in corso…', done: 'completata', stopped: 'fermata', failed: 'analisi non riuscita' };
+  let h = `<div style="font-weight:600;margin-bottom:6px">Ultima raccolta: ${esc(states[l.status] || l.status)}</div>
+    <div style="color:var(--muted)">${l.count} note (${l.reinforce} rinforzi · ${l.correct} correzioni)</div>`;
+  if (l.status === 'done' && l.summary) {
+    h += `<div style="margin-top:10px;white-space:pre-wrap">${esc(l.summary)}</div>`;
+    if (l.proposed_policy_id) h += `<button class="btn-primary" style="margin-top:12px" onclick="openProposedPrompt(${l.proposed_policy_id})">Apri la proposta di prompt</button>`;
+  }
+  if (l.status === 'failed' && l.error) h += `<div style="margin-top:8px;color:var(--danger)">${esc(l.error)}</div>`;
+  if (['failed', 'stopped', 'done'].includes(l.status) && l.count >= 3) h += `<button class="btn-secondary" style="margin-top:12px;margin-left:${l.status === 'done' && l.proposed_policy_id ? '8px' : '0'}" onclick="retryAiTraining()">${l.status === 'done' ? 'Rigenera la proposta' : 'Analizza ora'}</button>`;
+  if (l.status === 'analyzing') { setTimeout(loadAiTraining, 8000); }
+  box.innerHTML = h;
+  box.style.display = 'block';
+}
+
+async function toggleAiTraining(on) {
+  const tg = document.getElementById('set-ai-training-enabled');
+  try {
+    const limit = parseInt(document.getElementById('set-ai-training-limit').value, 10) || 30;
+    await api('/ai-training', 'POST', { enabled: on, limit });
+    toast(on ? 'Training AI attivato' : 'Training AI fermato', 'ok');
+  } catch (e) {
+    if (tg) tg.checked = !on;
+    toast('Errore: ' + e.message, 'err');
+  }
+  loadAiTraining();
+  if (typeof loadTrainingStatus === 'function') loadTrainingStatus();
+}
+
+async function retryAiTraining() {
+  try {
+    await api('/ai-training/analyze', 'POST');
+    toast('Analisi avviata: ci vuole circa un minuto', 'ok');
+  } catch (e) { toast('Errore: ' + e.message, 'err'); }
+  setTimeout(loadAiTraining, 1500);
+}
+
+function openProposedPrompt(policyId) {
+  document.querySelector('[data-screen="policy"]')?.click();
+  setTimeout(() => { if (typeof viewPolicy === 'function') viewPolicy(policyId); }, 400);
 }
 
 // ── Activate license ──────────────────────────────────────────────

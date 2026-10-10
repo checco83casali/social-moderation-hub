@@ -12,6 +12,7 @@ use ModerationHub\Controllers\WebhookController;
 use ModerationHub\Controllers\DeployController;
 use ModerationHub\Controllers\GdprController;
 use ModerationHub\Controllers\BrandingController;
+use ModerationHub\Controllers\AiTrainingController;
 use ModerationHub\Controllers\WebhookDebugController;
 use ModerationHub\Controllers\PushController;
 use ModerationHub\Middleware\AuthMiddleware;
@@ -274,6 +275,12 @@ $app->group('/api', function ($group) {
     $group->post('/push/subscribe',            [PushController::class, 'subscribe']);
     $group->post('/push/unsubscribe',          [PushController::class, 'unsubscribe']);
     $group->post('/push/test',                 [PushController::class, 'test']);
+
+    // Training AI (Pro): stato, avvio/arresto (admin), rilancio analisi (admin), nota postuma
+    $group->get('/ai-training',                [AiTrainingController::class, 'status']);
+    $group->post('/ai-training',               [AiTrainingController::class, 'toggle']);
+    $group->post('/ai-training/analyze',       [AiTrainingController::class, 'analyze']);
+    $group->post('/comments/{id}/training-note', [AiTrainingController::class, 'addNote']);
 
     // Debug webhook Meta (admin): stato + ultimi eventi, attiva/disattiva, svuota
     $group->get('/webhook-debug',              [WebhookDebugController::class, 'status']);

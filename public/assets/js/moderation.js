@@ -6,7 +6,85 @@ function devChip(x) {
 }
 
 // ── Stats (quick bar in queue screen) ────────────────────────────
+
+// ── Training AI (Pro) ───────────────────────────────────────────────
+// Con la raccolta attiva il server chiede una nota quando una decisione rinforza o corregge il
+// verdetto dell'AI (422 + code 'training_note_required'): qui si apre la finestra della nota e si
+// rinvia la stessa decisione con `training_note`.
+let TRAINING = { active: false, count: 0, target: 0, min_note_chars: 15 };
+
+async function loadTrainingStatus() {
+  try {
+    const d = await api('/ai-training');
+    TRAINING = Object.assign({ active: false, count: 0, target: 0, min_note_chars: 15 }, d);
+  } catch (_) { TRAINING = { active: false, count: 0, target: 0, min_note_chars: 15 }; }
+}
+
+async function decideCall(id, payload) {
+  try {
+    const res = await api(`/comments/${id}/decide`, 'POST', payload);
+    if (res && res.training) { TRAINING.count = res.training.count; TRAINING.target = res.training.target; if (res.training.completed) { TRAINING.active = false; toast('Training AI: raccolta completata, analisi in corso', 'ok'); } }
+    return res;
+  } catch (e) {
+    if (e.code !== 'training_note_required') throw e;
+    const note = await askTrainingNote({ kind: e.data?.kind, min: e.data?.min_chars });
+    if (note === null) throw new Error('Decisione non applicata: nota di addestramento non inserita');
+    return decideCall(id, Object.assign({}, payload, { training_note: note }));
+  }
+}
+
+let _trainingResolve = null;
+function askTrainingNote({ kind, min, title } = {}) {
+  return new Promise(resolve => {
+    _trainingResolve = resolve;
+    const need = min || TRAINING.min_note_chars || 15;
+    document.getElementById('training-note-min').textContent = need;
+    document.getElementById('training-note-title').textContent = title || 'Nota di addestramento';
+    const kindEl = document.getElementById('training-note-kind');
+    kindEl.textContent = kind === 'rinforzo' ? 'Stai rinforzando la valutazione dell\'AI'
+      : kind === 'correzione' ? 'Stai correggendo la valutazione dell\'AI' : 'L\'AI non aveva indicato una direzione';
+    kindEl.style.display = kind ? '' : 'none';
+    document.getElementById('training-note-text').value = '';
+    document.getElementById('training-note-err').style.display = 'none';
+    openModal('modal-training-note');
+    setTimeout(() => document.getElementById('training-note-text').focus(), 80);
+  });
+}
+
+function submitTrainingNote() {
+  const v = document.getElementById('training-note-text').value.trim();
+  const need = parseInt(document.getElementById('training-note-min').textContent, 10) || 15;
+  if (v.length < need) {
+    const err = document.getElementById('training-note-err');
+    err.textContent = `Scrivi almeno ${need} caratteri: spiega perché la decisione dell'AI era giusta o sbagliata.`;
+    err.style.display = 'block';
+    return;
+  }
+  closeModal('modal-training-note');
+  const r = _trainingResolve; _trainingResolve = null; if (r) r(v);
+}
+
+function cancelTrainingNote() {
+  closeModal('modal-training-note');
+  const r = _trainingResolve; _trainingResolve = null; if (r) r(null);
+}
+
+// Nota "postuma" dal menù del commento (con la raccolta attiva).
+async function addTrainingNote(commentId) {
+  const note = await askTrainingNote({ title: 'Nota di addestramento' });
+  if (note === null) return;
+  try {
+    const r = await api(`/comments/${commentId}/training-note`, 'POST', { note });
+    TRAINING.count = r.count; TRAINING.target = r.target;
+    toast(r.completed ? 'Nota salvata: raccolta completata, analisi in corso' : `Nota salvata (${r.count}/${r.target})`, 'ok');
+    if (r.completed) TRAINING.active = false;
+  } catch (e) {
+    toast('Errore: ' + e.message, 'err');
+  }
+}
+
 async function loadStats() {
+  loadTrainingStatus();
   try {
     const d = await api('/stats');
     document.getElementById('s-queue').textContent    = d.queue_pending  ?? '—';
@@ -242,10 +320,10 @@ async function resolveReportable(commentId, action) {
 
   try {
     if (action === 'approve') {
-      await api(`/comments/${commentId}/decide`, 'POST', { decision: 'unhide', note: 'Falso positivo — ripristinato da moderatore' });
+      await decideCall(commentId, { decision: 'unhide', note: 'Falso positivo — ripristinato da moderatore' });
       toast('Commento ripristinato', 'ok');
     } else if (action === 'keep') {
-      await api(`/comments/${commentId}/decide`, 'POST', { decision: 'keep_hidden', note: 'Confermato nascosto — iter segnalazione non avviato' });
+      await decideCall(commentId, { decision: 'keep_hidden', note: 'Confermato nascosto — iter segnalazione non avviato' });
       toast('Commento mantenuto nascosto', 'ok');
     } else if (action === 'report') {
       await api(`/comments/${commentId}/report-legal`, 'POST', { note: 'Iter segnalazione avviato — in attesa di ufficio legale' });
@@ -478,7 +556,7 @@ async function decide(decision) {
     const payload = decision === 'hide_silent'
       ? { decision: 'hide', note, silent: true }
       : { decision, note };
-    const res = await api(`/comments/${currentComment.id}/decide`, 'POST', payload);
+    const res = await decideCall(currentComment.id, payload);
 
     // Per i nascondimenti: verifica l'esito REALE su Facebook, non assumere successo.
     if ((decision === 'hide' || decision === 'hide_silent') && res && res.fb_hidden === false) {
@@ -585,7 +663,7 @@ async function confirmApproveReply() {
     }
 
     // 2. Approva il commento (esce dalla coda).
-    await api(`/comments/${currentComment.id}/decide`, 'POST', {
+    await decideCall(currentComment.id, {
       decision: 'allow',
       note:     note || 'Approvato con risposta all\'utente inviata dal moderatore',
     });
@@ -679,7 +757,7 @@ async function confirmHideReply() {
   btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px"></span>Pubblicazione…';
 
   try {
-    const res = await api(`/comments/${target.id}/decide`, 'POST', {
+    const res = await decideCall(target.id, {
       decision: 'hide', note, reply_text: text,
     });
 
@@ -800,7 +878,7 @@ async function confirmFactcheckReply() {
     }
 
     // 2. Approva il commento — esce dalla coda (solo se la risposta è stata pubblicata).
-    await api(`/comments/${currentComment.id}/decide`, 'POST', {
+    await decideCall(currentComment.id, {
       decision: 'allow',
       note:     note || 'Approvato dopo risposta fact-check inviata dal moderatore',
     });
@@ -872,7 +950,7 @@ async function confirmWhataboutismReply() {
     }
 
     // 2. Approva il commento — esce dalla coda (solo se la risposta è stata pubblicata).
-    await api(`/comments/${currentComment.id}/decide`, 'POST', {
+    await decideCall(currentComment.id, {
       decision: 'allow',
       note:     note || 'Approvato dopo risposta whataboutism inviata dal moderatore',
     });
@@ -1111,6 +1189,7 @@ function openApprovedMenu(ev, id) {
   if (['admin', 'supervisor'].includes(currentUserRole)) {
     items.push({ label: 'Nascondi con avviso…', icon: MENU_ICONS.hide, tone: 'warn', onClick: () => hideApprovedComment(id) });
   }
+  if (TRAINING.active) items.push({ label: 'Inserisci nota addestramento…', icon: MENU_ICONS.check, onClick: () => addTrainingNote(id) });
   openRowMenu(ev.currentTarget, items);
 }
 
@@ -1393,6 +1472,7 @@ function openHiddenMenu(ev, id) {
   const items = [];
   if (c._fbLink) items.push({ label: 'Vedi su Facebook', icon: MENU_ICONS.link, href: c._fbLink });
   if (c._canRestore) items.push({ label: 'Approva (senza risposta)…', icon: MENU_ICONS.check, tone: 'ok', onClick: () => restoreHiddenComment(id) });
+  if (TRAINING.active) items.push({ label: 'Inserisci nota addestramento…', icon: MENU_ICONS.check, onClick: () => addTrainingNote(id) });
   openRowMenu(ev.currentTarget, items);
 }
 
@@ -1404,7 +1484,7 @@ async function restoreHiddenComment(id) {
     confirmLabel: 'Approva senza risposta',
   }))) return;
   try {
-    const res = await api(`/comments/${id}/decide`, 'POST', { decision: 'restore', note: 'Approvato senza risposta da supervisore (ripristino)' });
+    const res = await decideCall(id, { decision: 'restore', note: 'Approvato senza risposta da supervisore (ripristino)' });
     if (res && res.dev_mode) toast('Dev mode attivo: nessuna azione reale su Facebook', 'err');
     else toast('Commento approvato e ripristinato', 'ok');
     document.getElementById(`hc-${id}`)?.remove();

@@ -91,6 +91,8 @@ class RetentionService
             'audit_log'       => $violationCutoff !== null ? $this->purgeAuditLog($violationCutoff) : 0,
             // Riassunti dei post (contesto per l'AI): eliminati con la finestra generale.
             'post_contexts'   => $cutoff !== null ? $this->purgePostContexts($cutoff) : 0,
+            // Note di addestramento AI e relative sessioni: eliminate con la finestra generale.
+            'ai_training'     => $cutoff !== null ? $this->purgeAiTraining($cutoff) : 0,
         ];
 
         $finishedAt = microtime(true);
@@ -244,6 +246,19 @@ class RetentionService
             return (int) DB::table('audit_log')->where('created_at', '<', $cutoff)->delete();
         } catch (\Throwable) {
             return 0;   // tabella non ancora migrata
+        }
+    }
+
+    /** Elimina note e sessioni di training AI più vecchie della finestra di conservazione. */
+    private function purgeAiTraining(string $cutoff): int
+    {
+        try {
+            $n = (int) DB::table('ai_training_notes')->where('created_at', '<', $cutoff)->delete();
+            // Sessioni chiuse da prima della soglia: il riassunto può citare casi reali.
+            DB::table('ai_training_sessions')->where('status', '!=', 'active')->where('started_at', '<', $cutoff)->delete();
+            return $n;
+        } catch (\Throwable) {
+            return 0;   // tabelle non ancora migrate
         }
     }
 

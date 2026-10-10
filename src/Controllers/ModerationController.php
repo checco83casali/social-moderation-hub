@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ModerationHub\Controllers;
 
+use ModerationHub\Services\AiTrainingService;
 use ModerationHub\Services\ModerationService;
 use ModerationHub\Services\BanService;
 use ModerationHub\Services\MetaGraphService;
@@ -29,6 +30,7 @@ class ModerationController
         private readonly BanService        $ban,
         private readonly MetaGraphService  $meta,
         private readonly LicenseService    $license,
+        private readonly AiTrainingService $training,
     ) {}
 
     // ── GET /api/queue  ─────────────────────────────────────────────
@@ -676,6 +678,28 @@ class ModerationController
             return $this->json($response, ['error' => 'Solo supervisor e admin possono nascondere senza avviso.'], 403);
         }
 
+        // Training AI (Pro): se la raccolta è attiva e questa decisione rinforza o corregge il
+        // verdetto dell'AI serve una nota. Controllo PRIMA di applicare qualsiasi cosa.
+        $trainingNote = null;
+        if (!$this->isDevMode()) {
+            try {
+                $need = $this->training->requirementFor((int) $args['id'], $decision, (string) ($auth->role ?? ''));
+            } catch (\Throwable) {
+                $need = null;   // tabelle non ancora migrate: nessun obbligo
+            }
+            if ($need !== null) {
+                $trainingNote = trim((string) ($body['training_note'] ?? ''));
+                if (mb_strlen($trainingNote) < AiTrainingService::MIN_NOTE_CHARS) {
+                    return $this->json($response, [
+                        'error'     => 'Serve una nota di addestramento (almeno ' . AiTrainingService::MIN_NOTE_CHARS . ' caratteri): spiega perché rinforzi o correggi la decisione dell\'AI.',
+                        'code'      => 'training_note_required',
+                        'kind'      => $need['kind'],
+                        'min_chars' => AiTrainingService::MIN_NOTE_CHARS,
+                    ], 422);
+                }
+            }
+        }
+
         if ($this->isDevMode()) {
             // Solo valori presenti nell'ENUM comments.status: 'dev_approved' non esiste e
             // faceva fallire la query (Data truncated). Approvare non tocca Facebook,
@@ -722,6 +746,19 @@ class ModerationController
         );
 
         $this->auditDecision($auth, $requested, (int) $args['id'], $auditUserId, $commentStatus, $violBefore, $body, $replyText, $result, false);
+
+        if ($trainingNote !== null && !isset($result['error'])) {
+            try {
+                $outcome = in_array($decision, ['allow', 'unhide', 'restore'], true) ? 'visible' : 'hidden';
+                $rec = $this->training->record((int) $args['id'], isset($auth->sub) ? (int) $auth->sub : null, $trainingNote, $outcome, false);
+                AuditService::log($auth, 'ai_training.note', [
+                    'comment_id' => (int) $args['id'], 'note' => $trainingNote, 'details' => ['kind' => $rec['kind'], 'posthumous' => false],
+                ]);
+                $result['training'] = ['count' => $rec['count'], 'target' => $rec['target'], 'completed' => $rec['completed']];
+            } catch (\Throwable $e) {
+                // La decisione è già applicata: una nota non registrata non deve far fallire la risposta.
+            }
+        }
 
         return $this->json($response, $result);
     }

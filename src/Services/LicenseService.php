@@ -46,6 +46,9 @@ use Monolog\Logger;
  *                         free or not (so history exists when the license is activated);
  *                         this key only gates reading/exporting it. Licenses with
  *                         `advanced_stats` ("Advanced") get it too — see canViewAudit().
+ *   ai_training         — "Training AI": per N decisioni umane i moderatori scrivono una nota che
+ *                         spiega perché rinforzano o correggono il verdetto dell'AI; raggiunto N
+ *                         Sonnet propone una nuova versione (inattiva) del prompt di moderazione.
  *   post_context        — at the first comment on a post Haiku summarises the post (text,
  *                         shared link, image); the summary is sent to the AI with every
  *                         comment of that post. Admin toggle: app_settings.post_context_enabled.
@@ -106,6 +109,7 @@ class LicenseService
         'advanced_stats',
         'advanced_audit',
         'post_context',
+        'ai_training',
     ];
 
     /** Human-readable labels for display in the license panel (server-side only). */
@@ -121,6 +125,7 @@ class LicenseService
         'per_page_thresholds' => 'Soglie AI per pagina',
         'multi_page'          => 'Pagine multiple',
         'post_context'        => 'Contesto del post per l\'AI',
+        'ai_training'         => 'Training AI',
     ];
 
     // ── State ────────────────────────────────────────────────────────

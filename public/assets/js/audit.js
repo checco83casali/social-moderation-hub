@@ -11,6 +11,10 @@ const AUDIT_ACTIONS = {
   'user.unban':          { label: 'Ban revocato',         tone: 'ok'   },
   'appeal.accept':       { label: 'Ricorso accolto',      tone: 'ok'   },
   'appeal.reject':       { label: 'Ricorso respinto',     tone: 'warn' },
+  'ai_training.start':   { label: 'Training AI avviato',  tone: ''     },
+  'ai_training.stop':    { label: 'Training AI fermato',  tone: ''     },
+  'ai_training.note':    { label: 'Nota di addestramento', tone: ''    },
+  'ai_training.analysis':{ label: 'Proposta di prompt generata', tone: 'ok' },
 };
 const AUDIT_ROLES = { admin: 'Admin', supervisor: 'Supervisore', moderator: 'Moderatore' };
 const AUDIT_STATUS = {

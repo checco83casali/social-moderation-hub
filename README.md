@@ -82,6 +82,7 @@ offline-mode setting for fully air-gapped installs).
 - **Custom reply templates** — editable hide / reportable / ban reply templates
 - **Configurable data retention** — custom GDPR anonymisation window via nightly cron
 - **Moderation log export** — CSV / JSON export with date and decision filters
+- **AI training** — when enabled in Settings → AI, moderators must write a note whenever a decision reinforces or corrects the AI verdict (escalations, hiding an approved comment, restoring a hidden one); notes can also be added afterwards from the comment menu. After N notes collection stops by itself and Sonnet proposes a revised (inactive) moderation prompt to review in the Prompt AI screen (feature key `ai_training`)
 - **Post context for the AI** — at the first comment on a post, Haiku summarises the post (text, shared link, image) and the summary is sent with every comment of that post, so the AI understands what people are replying to; toggle in Settings → AI (feature key `post_context`)
 
 ---
