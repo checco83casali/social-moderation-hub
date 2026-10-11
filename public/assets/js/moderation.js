@@ -36,9 +36,12 @@ async function reevaluateComment(id) {
 }
 
 async function loadTrainingStatus() {
+  const before = REEVALUATE;
   try {
     REEVALUATE = !!(await api('/reevaluate/status')).available;
   } catch (_) { REEVALUATE = false; }
+  // La coda può essere già disegnata prima che lo stato arrivi: ridisegna per mostrare/nascondere il ⋯
+  if (before !== REEVALUATE && document.getElementById('queue-list')?.children.length) loadQueue();
   try {
     const d = await api('/ai-training');
     TRAINING = Object.assign({ active: false, count: 0, target: 0, min_note_chars: 15 }, d);
@@ -241,6 +244,14 @@ function queueAiChips(item) {
 }
 
 // ── Queue (uncertain AI decisions only) ──────────────────────────
+// ⋯ della coda di revisione: il clic non deve aprire il dettaglio del commento
+function openQueueMenu(ev, id) {
+  ev.stopPropagation();
+  const items = [];
+  if (REEVALUATE) items.push({ label: 'Rivaluta con AI…', icon: MENU_ICONS.check, onClick: () => reevaluateComment(id) });
+  openRowMenu(ev.currentTarget, items);
+}
+
 async function loadQueue() {
   const list = document.getElementById('queue-list');
   try {
@@ -263,6 +274,7 @@ async function loadQueue() {
             ${item.ai_severity==='medium' ? '<span class="chip chip-warn">medio</span>' : ''}
             ${queueUserChips(item)}
             <span class="q-time">${relTime(item.received_at)}</span>
+            ${REEVALUATE ? rowMenuButton(`openQueueMenu(event, ${item.id})`) : ''}
           </div>
           <div class="q-text">${esc(item.content)}</div>
           <div class="q-footer">
