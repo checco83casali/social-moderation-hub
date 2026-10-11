@@ -187,6 +187,8 @@ class ModerationService
     // Entry point: process a raw comment from a webhook
     // ──────────────────────────────────────────────────────────────────
 
+    private const EDIT_RECHECK_DELAY = 300;
+
     public function processWebhookComment(array $webhookComment, array $page): array
     {
         $verb = $webhookComment['verb'] ?? 'add';
@@ -1392,14 +1394,24 @@ class ModerationService
         ]);
 
         // Update stored text
-        DB::table('comments')->where('id', $existing->id)->update([
+        $update = [
             'content'      => $newText,
             'content_hash' => hash('sha256', $newText),
-        ]);
+        ];
+
+        if (!$wasHidden && in_array($existing->status, ['approved', 'escalated_human'], true)) {
+            // Rianalisi differita: ogni modifica sposta il ricontrollo di 5 minuti in avanti.
+            // Il testo di riferimento è quello già valutato (fissato alla prima modifica).
+            $update['edit_recheck_at'] = date('Y-m-d H:i:s', time() + self::EDIT_RECHECK_DELAY);
+            if (empty($existing->edit_recheck_at)) {
+                $update['edit_baseline_hash'] = $existing->content_hash;
+            }
+        }
+        DB::table('comments')->where('id', $existing->id)->update($update);
 
         if (!$wasHidden) {
-            // Was already approved or pending — no re-analysis needed
-            return ['action' => 'edit_logged', 'comment_id' => $existing->id];
+            // Approvato o in coda: la rianalisi avviene dopo 5 minuti (recheckEditedComments)
+            return ['action' => 'edit_logged', 'comment_id' => $existing->id, 'recheck_scheduled' => isset($update['edit_recheck_at'])];
         }
 
         // Re-analyse with AI
@@ -1471,5 +1483,154 @@ class ModerationService
         DB::table('moderation_log')->where('id', $reAnalysisLogId)->update(['final_action' => 'hidden']);
         $this->logger?->info("Comment #{$existing->id} remains hidden after edit re-analysis");
         return ['action' => 'edit_remains_hidden', 'comment_id' => $existing->id];
+    }
+
+    // ──────────────────────────────────────────────────────────────────
+    // Rianalisi differita dei commenti modificati (cron: bin/recheck-edits.php)
+    // ──────────────────────────────────────────────────────────────────
+
+    /**
+     * Rianalizza i commenti approvati o in coda modificati da almeno 5 minuti.
+     * Rilegge il testo da Facebook e chiama l'AI solo se differisce da quello già valutato.
+     *
+     * @return array{checked:int, reanalysed:int, unchanged:int, failed:int}
+     */
+    public function recheckEditedComments(int $limit = 20): array
+    {
+        $stats = ['checked' => 0, 'reanalysed' => 0, 'unchanged' => 0, 'failed' => 0];
+
+        $due = DB::table('comments')
+            ->whereNotNull('edit_recheck_at')
+            ->where('edit_recheck_at', '<=', date('Y-m-d H:i:s'))
+            ->orderBy('edit_recheck_at')
+            ->limit($limit)
+            ->get();
+
+        foreach ($due as $comment) {
+            $stats['checked']++;
+            try {
+                $outcome = $this->recheckOne($comment);
+                $stats[$outcome]++;
+            } catch (\Throwable $e) {
+                $stats['failed']++;
+                $this->logger?->error("Edit recheck comment #{$comment->id} failed: " . $e->getMessage());
+                // Riprova al prossimo giro invece di perdere il controllo
+                DB::table('comments')->where('id', $comment->id)->update([
+                    'edit_recheck_at' => date('Y-m-d H:i:s', time() + self::EDIT_RECHECK_DELAY),
+                ]);
+            }
+        }
+
+        return $stats;
+    }
+
+    /** @return 'reanalysed'|'unchanged'|'failed' */
+    private function recheckOne(object $comment): string
+    {
+        $clear = ['edit_recheck_at' => null, 'edit_baseline_hash' => null];
+
+        $page = DB::table('connected_pages')->find($comment->page_id);
+        $status = (string) $comment->status;
+        if (!$page || !in_array($status, ['approved', 'escalated_human'], true)) {
+            // Nel frattempo è stato nascosto/deciso: niente da fare
+            DB::table('comments')->where('id', $comment->id)->update($clear);
+            return 'unchanged';
+        }
+
+        // Testo attuale su Facebook (può essere cambiato ancora dopo il webhook)
+        $fresh = $this->meta->getComment($comment->platform_comment_id, $page->page_access_token);
+        $text  = (string) ($fresh['message'] ?? '');
+        if ($text === '') {
+            throw new \RuntimeException('testo aggiornato non disponibile');
+        }
+
+        $hash = hash('sha256', $text);
+        if ($hash !== $comment->content_hash) {
+            DB::table('comments')->where('id', $comment->id)->update(['content' => $text, 'content_hash' => $hash]);
+        }
+        if ($hash === $comment->edit_baseline_hash) {
+            // Modificato e poi riportato al testo già valutato
+            DB::table('comments')->where('id', $comment->id)->update($clear);
+            return 'unchanged';
+        }
+
+        $policy = DB::table('policies')->where('is_active', 1)->first();
+        if (!$policy) {
+            throw new \RuntimeException('nessuna policy attiva');
+        }
+
+        $socialUser = (array) DB::table('social_users')->find($comment->social_user_id);
+        $accountMeta = [];
+        $pid = (string) ($socialUser['platform_user_id'] ?? '');
+        if ($pid !== '' && !str_starts_with($pid, 'unknown_')) {
+            $accountMeta = $this->fetchAccountMeta($pid, $page->page_access_token);
+        }
+        $pageArr = (array) $page;
+
+        $context = $this->buildCommentContext(
+            $text, $socialUser, $accountMeta,
+            $this->postContext->forPost($pageArr, (string) ($comment->platform_post_id ?? '')),
+        );
+
+        $reasonMaxWords = 40;
+        try {
+            $rmw = DB::table('app_settings')->where('key', 'reason_max_words')->value('value');
+            if ($rmw !== null) $reasonMaxWords = max(10, (int) $rmw);
+        } catch (\Throwable) {}
+
+        [$pgHaiku, $pgSonnet, $pgFactCheck, $pgWhatabout] = $this->pageThresholdOverrides((int) $comment->page_id);
+        $result = $this->claude->moderate(
+            commentText:         $context,
+            moderationPrompt:    $policy->moderation_prompt ?? '',
+            reasonMaxWords:      $reasonMaxWords,
+            haikuThreshold:      $pgHaiku,
+            sonnetThreshold:     $pgSonnet,
+            factCheckEnabled:    $pgFactCheck,
+            whataboutismEnabled: $pgWhatabout,
+        );
+
+        // Un moderatore ha già deciso su questo commento?
+        $humanDecided = $status === 'approved'
+            && DB::table('moderation_log')->where('comment_id', $comment->id)->where('stage', 'human')->exists();
+        $problem = $result->stage === 'human' || in_array($result->decision, ['hide', 'reportable'], true);
+
+        $action = match (true) {
+            !$problem                                            => ($status === 'approved' ? 'approved' : 'pending_human'),
+            $status === 'escalated_human'                        => 'pending_human',
+            $humanDecided || $result->stage === 'human'          => 'pending_human',
+            default                                              => 'hidden',
+        };
+
+        $logId = DB::table('moderation_log')->insertGetId([
+            'comment_id'                => $comment->id,
+            'stage'                     => $result->stage,
+            'policy_id'                 => $policy->id,
+            'ai_decision'               => $result->decision,
+            'ai_confidence'             => $result->confidence,
+            'ai_reason'                 => $result->reason,
+            'ai_public_reason'          => $result->publicReason,
+            'ai_categories'             => json_encode($result->categories),
+            'ai_severity'               => $result->severity,
+            'ai_model'                  => $result->model,
+            'ai_latency_ms'             => $result->latencyMs,
+            'ai_whataboutism_suggested' => $result->whataboutismSuggested ? 1 : 0,
+            'ai_whataboutism_draft'     => $result->whataboutismDraft,
+            'ai_whataboutism_confidence'=> $result->whataboutismConfidence > 0.0 ? $result->whataboutismConfidence : null,
+            'human_note'                => 'Rianalisi dopo modifica (5 min)',
+            'final_action'              => $action,
+            'created_at'                => date('Y-m-d H:i:s'),
+        ]);
+        DB::table('comments')->where('id', $comment->id)->update($clear);
+
+        // Applica l'esito, senza ripetere risposte automatiche già date
+        if ($action === 'hidden') {
+            $this->executeHide((int) $comment->id, $socialUser, $pageArr, $result, $logId, decidedBy: 'ai');
+        } elseif ($action === 'pending_human' && $status === 'approved') {
+            $this->escalateToHuman((int) $comment->id, $result, reportable: $result->decision === 'reportable', logId: $logId);
+        }
+        // approved→approved e coda→coda: solo la nuova valutazione nel registro
+
+        $this->logger?->info("Comment #{$comment->id} rianalizzato dopo modifica: {$action}");
+        return 'reanalysed';
     }
 }

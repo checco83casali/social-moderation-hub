@@ -191,7 +191,8 @@ mysql -u <user> -p <db> < database/scripts/reset-operational-data.sql
 ```
 social-moderation-hub/
 ├── bin/
-│   └── retention-purge.php       # Nightly anonymisation (cron)
+│   ├── retention-purge.php       # Nightly anonymisation (cron)
+│   └── recheck-edits.php         # Re-analysis of edited comments after 5 min (cron, every minute)
 ├── public/
 │   ├── index.php                 # Slim 4 entry point + all routes
 │   ├── dashboard.html            # Admin SPA (no framework, dark theme)
