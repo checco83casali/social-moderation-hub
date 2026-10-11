@@ -283,6 +283,10 @@ $app->group('/api', function ($group) {
     $group->post('/ai-training/analyze',       [AiTrainingController::class, 'analyze']);
     $group->post('/comments/{id}/training-note', [AiTrainingController::class, 'addNote']);
 
+    // Rivalutazione manuale AI di un commento (admin, Pro edit_recheck)
+    $group->get('/reevaluate/status',          [ModerationController::class, 'reevaluateStatus']);
+    $group->post('/comments/{id}/reevaluate',  [ModerationController::class, 'reevaluate']);
+
     // Debug webhook Meta (admin): stato + ultimi eventi, attiva/disattiva, svuota
     $group->get('/webhook-debug',              [WebhookDebugController::class, 'status']);
     $group->post('/webhook-debug',             [WebhookDebugController::class, 'toggle']);

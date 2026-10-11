@@ -13,7 +13,32 @@ function devChip(x) {
 // rinvia la stessa decisione con `training_note`.
 let TRAINING = { active: false, count: 0, target: 0, min_note_chars: 15 };
 
+// Rivalutazione manuale AI (admin, Pro edit_recheck, toggle attivo nelle impostazioni)
+let REEVALUATE = false;
+
+async function reevaluateComment(id) {
+  if (!(await confirmDialog({
+    title: 'Rivaluta con AI',
+    message: 'Il commento viene rimesso in pipeline per una seconda valutazione AI, sul testo attuale. Se l\'esito cambia può essere nascosto, ripristinato o rimandato in coda.',
+    confirmLabel: 'Rivaluta',
+  }))) return;
+  try {
+    const r = await api(`/comments/${id}/reevaluate`, 'POST', {});
+    const msg = { approved: 'Approvato', hidden: 'Nascosto', pending_human: 'In coda di revisione' }[r.action] || r.action;
+    toast(`Rivalutato: ${msg}`, 'ok');
+    loadStats();
+    for (const fn of ['loadApprovedComments', 'loadHiddenComments', 'loadQueue']) {
+      if (typeof window[fn] === 'function') window[fn]();
+    }
+  } catch (e) {
+    toast('Errore: ' + e.message, 'err');
+  }
+}
+
 async function loadTrainingStatus() {
+  try {
+    REEVALUATE = !!(await api('/reevaluate/status')).available;
+  } catch (_) { REEVALUATE = false; }
   try {
     const d = await api('/ai-training');
     TRAINING = Object.assign({ active: false, count: 0, target: 0, min_note_chars: 15 }, d);
@@ -1189,6 +1214,7 @@ function openApprovedMenu(ev, id) {
   if (['admin', 'supervisor'].includes(currentUserRole)) {
     items.push({ label: 'Nascondi con avviso…', icon: MENU_ICONS.hide, tone: 'warn', onClick: () => hideApprovedComment(id) });
   }
+  if (REEVALUATE) items.push({ label: 'Rivaluta con AI…', icon: MENU_ICONS.check, onClick: () => reevaluateComment(id) });
   if (TRAINING.active) items.push({ label: 'Inserisci nota addestramento…', icon: MENU_ICONS.check, onClick: () => addTrainingNote(id) });
   openRowMenu(ev.currentTarget, items);
 }
@@ -1486,6 +1512,7 @@ function openHiddenMenu(ev, id) {
   const items = [];
   if (c._fbLink) items.push({ label: 'Vedi su Facebook', icon: MENU_ICONS.link, href: c._fbLink });
   if (c._canRestore) items.push({ label: 'Approva (senza risposta)…', icon: MENU_ICONS.check, tone: 'ok', onClick: () => restoreHiddenComment(id) });
+  if (REEVALUATE) items.push({ label: 'Rivaluta con AI…', icon: MENU_ICONS.check, onClick: () => reevaluateComment(id) });
   if (TRAINING.active) items.push({ label: 'Inserisci nota addestramento…', icon: MENU_ICONS.check, onClick: () => addTrainingNote(id) });
   openRowMenu(ev.currentTarget, items);
 }

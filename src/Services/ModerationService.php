@@ -1609,6 +1609,19 @@ class ModerationService
             return 'unchanged';
         }
 
+        [$result, $policy, $socialUser, $pageArr] = $this->analyzeExisting($comment, $page, $text);
+        DB::table('comments')->where('id', $comment->id)->update($clear);
+        $this->applyReanalysis($comment, $status, $result, $policy, $cfg, 'Rianalisi dopo modifica (' . $cfg['delay'] . ' min)', $socialUser, $pageArr);
+        return 'reanalysed';
+    }
+
+    /**
+     * Esegue la pipeline AI su un commento già salvato (stessi prompt, soglie di pagina e contesto del post).
+     *
+     * @return array{0: ModerationResult, 1: object, 2: array<string,mixed>, 3: array<string,mixed>}
+     */
+    private function analyzeExisting(object $comment, object $page, string $text): array
+    {
         $policy = DB::table('policies')->where('is_active', 1)->first();
         if (!$policy) {
             throw new \RuntimeException('nessuna policy attiva');
@@ -1644,12 +1657,26 @@ class ModerationService
             whataboutismEnabled: $pgWhatabout,
         );
 
-        // Un moderatore ha già deciso su questo commento?
-        $humanDecided = $status === 'approved'
+        return [$result, $policy, $socialUser, $pageArr];
+    }
+
+    /**
+     * Registra la nuova valutazione e ne applica l'esito (rianalisi dopo modifica o richiesta di un admin).
+     * Un commento nascosto che ora passa viene ripristinato; approvato o in coda che ora non passa va
+     * nascosto o in coda secondo l'impostazione. Una decisione umana non viene mai ribaltata in automatico.
+     *
+     * @param array{enabled:bool, delay:int, approved:bool, queue:bool, action:string} $cfg
+     * @param array<string,mixed> $socialUser
+     * @param array<string,mixed> $pageArr
+     */
+    private function applyReanalysis(object $comment, string $status, ModerationResult $result, object $policy, array $cfg, string $note, array $socialUser, array $pageArr): string
+    {
+        $humanDecided = $status !== 'escalated_human'
             && DB::table('moderation_log')->where('comment_id', $comment->id)->where('stage', 'human')->exists();
         $problem = $result->stage === 'human' || in_array($result->decision, ['hide', 'reportable'], true);
 
         $action = match (true) {
+            $status === 'hidden'                                 => ($problem || $humanDecided) ? 'hidden' : 'approved',
             !$problem                                            => ($status === 'approved' ? 'approved' : 'pending_human'),
             $status === 'escalated_human'                        => 'pending_human',
             $humanDecided || $result->stage === 'human'          => 'pending_human',
@@ -1672,21 +1699,78 @@ class ModerationService
             'ai_whataboutism_suggested' => $result->whataboutismSuggested ? 1 : 0,
             'ai_whataboutism_draft'     => $result->whataboutismDraft,
             'ai_whataboutism_confidence'=> $result->whataboutismConfidence > 0.0 ? $result->whataboutismConfidence : null,
-            'human_note'                => 'Rianalisi dopo modifica (' . $cfg['delay'] . ' min)',
+            'human_note'                => $note,
             'final_action'              => $action,
             'created_at'                => date('Y-m-d H:i:s'),
         ]);
-        DB::table('comments')->where('id', $comment->id)->update($clear);
 
         // Applica l'esito, senza ripetere risposte automatiche già date
-        if ($action === 'hidden') {
+        if ($status === 'hidden') {
+            if ($action === 'approved') {
+                if (!$this->isDevMode()) {
+                    $this->meta->unhideComment($comment->platform_comment_id, $pageArr['page_access_token']);
+                }
+                DB::table('comments')->where('id', $comment->id)->update(['status' => 'approved', 'processed_at' => date('Y-m-d H:i:s')]);
+                $this->applyRestoreSideEffects((int) $comment->id, (int) $comment->social_user_id);
+            }
+        } elseif ($action === 'hidden') {
             $this->executeHide((int) $comment->id, $socialUser, $pageArr, $result, $logId, decidedBy: 'ai');
         } elseif ($action === 'pending_human' && $status === 'approved') {
             $this->escalateToHuman((int) $comment->id, $result, reportable: $result->decision === 'reportable', logId: $logId);
         }
-        // approved→approved e coda→coda: solo la nuova valutazione nel registro
+        // approvato→approvato, coda→coda, nascosto→nascosto: solo la nuova valutazione nel registro
 
-        $this->logger?->info("Comment #{$comment->id} rianalizzato dopo modifica: {$action}");
-        return 'reanalysed';
+        $this->logger?->info("Comment #{$comment->id} rivalutato ({$note}): {$action}");
+        return $action;
+    }
+
+    /** True se un admin può chiedere la rivalutazione manuale (licenza `edit_recheck` + toggle attivo). */
+    public function reevaluateAvailable(): bool
+    {
+        return $this->editRecheckConfig()['enabled'];
+    }
+
+    /**
+     * Rivaluta con l'AI un commento già in archivio (richiesta manuale di un admin).
+     * Rilegge il testo da Facebook, rifà la pipeline completa e applica l'esito come per le modifiche.
+     *
+     * @return array{action: string, comment_id: int}
+     */
+    public function reevaluateComment(int $commentId): array
+    {
+        $cfg = $this->editRecheckConfig();
+        if (!$cfg['enabled']) {
+            throw new \DomainException('Rivalutazione non attiva (licenza o impostazione).');
+        }
+        $comment = DB::table('comments')->find($commentId);
+        if (!$comment) {
+            throw new \InvalidArgumentException('Commento non trovato.');
+        }
+        $status = (string) $comment->status;
+        if (!in_array($status, ['approved', 'escalated_human', 'hidden'], true)) {
+            throw new \DomainException('Questo commento non può essere rivalutato nello stato attuale.');
+        }
+        $page = DB::table('connected_pages')->find($comment->page_id);
+        if (!$page) {
+            throw new \InvalidArgumentException('Pagina non trovata.');
+        }
+
+        // Testo attuale su Facebook; se non è raggiungibile si usa quello archiviato
+        $text = (string) $comment->content;
+        try {
+            $fresh = $this->meta->getComment($comment->platform_comment_id, $page->page_access_token);
+            if (!empty($fresh['message'])) {
+                $text = (string) $fresh['message'];
+            }
+        } catch (\Throwable) {}
+        if ($text !== $comment->content) {
+            DB::table('comments')->where('id', $comment->id)->update(['content' => $text, 'content_hash' => hash('sha256', $text)]);
+        }
+
+        [$result, $policy, $socialUser, $pageArr] = $this->analyzeExisting($comment, $page, $text);
+        DB::table('comments')->where('id', $comment->id)->update(['edit_recheck_at' => null, 'edit_baseline_hash' => null, 'edit_baseline_norm' => null]);
+        $action = $this->applyReanalysis($comment, $status, $result, $policy, $cfg, 'Rivalutazione richiesta da un admin', $socialUser, $pageArr);
+
+        return ['action' => $action, 'comment_id' => $commentId];
     }
 }

@@ -269,6 +269,39 @@ class ModerationController
         ]);
     }
 
+    // ── GET /api/reevaluate/status  (tutti i ruoli: mostra/nasconde il comando) ──
+    public function reevaluateStatus(ServerRequestInterface $request, Response $response): ResponseInterface
+    {
+        $isAdmin = (($request->getAttribute('auth_user')->role ?? '') === 'admin');
+        return $this->json($response, ['available' => $isAdmin && $this->moderation->reevaluateAvailable()]);
+    }
+
+    // ── POST /api/comments/{id}/reevaluate  (admin, Pro edit_recheck) ──
+    /**
+     * Rimette il commento in pipeline per una seconda valutazione AI.
+     *
+     * @param array<string,string> $args
+     */
+    public function reevaluate(ServerRequestInterface $request, Response $response, array $args): ResponseInterface
+    {
+        $auth = $request->getAttribute('auth_user');
+        if (($auth->role ?? '') !== 'admin') {
+            return $this->json($response, ['error' => 'Admin required'], 403);
+        }
+        $commentId = (int) ($args['id'] ?? 0);
+        try {
+            $res = $this->moderation->reevaluateComment($commentId);
+        } catch (\InvalidArgumentException $e) {
+            return $this->json($response, ['error' => $e->getMessage()], 404);
+        } catch (\DomainException $e) {
+            return $this->json($response, ['error' => $e->getMessage()], 409);
+        } catch (\Throwable $e) {
+            return $this->json($response, ['error' => 'Rivalutazione non riuscita: ' . $e->getMessage()], 502);
+        }
+        AuditService::log($auth, 'comment.reevaluate', ['comment_id' => $commentId, 'details' => ['esito' => $res['action']]]);
+        return $this->json($response, ['ok' => true] + $res);
+    }
+
     // ── GET /api/comments/{id}/legal-dossier  ────────────────────────
     /** Generate (on demand, always re-downloadable) the PDF dossier for the legal team. */
     public function legalDossier(ServerRequestInterface $request, Response $response, array $args): ResponseInterface

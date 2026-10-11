@@ -7,6 +7,7 @@ const AUDIT_ACTIONS = {
   'comment.keep_hidden': { label: 'Mantenuto nascosto',   tone: 'warn' },
   'comment.reply':       { label: 'Risposta pubblicata',  tone: ''     },
   'comment.report_legal':{ label: 'Segnalazione legale',  tone: 'warn' },
+  'comment.reevaluate': { label: 'Rivalutato con AI',    tone: ''     },
   'user.ban':            { label: 'Ban manuale',          tone: 'warn' },
   'user.unban':          { label: 'Ban revocato',         tone: 'ok'   },
   'user.password_reset': { label: 'Password reimpostata', tone: 'warn' },
