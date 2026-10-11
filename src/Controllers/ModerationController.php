@@ -49,7 +49,7 @@ class ModerationController
             ->join('connected_pages as cp', 'cp.id', '=', 'c.page_id')
             ->leftJoin('moderation_log as ml', function ($join) {
                 $join->on('ml.comment_id', '=', 'c.id')
-                     ->whereRaw('ml.id = (SELECT MAX(id) FROM moderation_log WHERE comment_id = c.id)');
+                     ->whereRaw("ml.id = (SELECT MAX(id) FROM moderation_log WHERE comment_id = c.id AND COALESCE(final_action, '') <> 'comment_edited')");
             })
             ->where('c.status', 'escalated_human')
             ->select([
@@ -136,7 +136,7 @@ class ModerationController
             ->join('connected_pages as cp', 'cp.id', '=', 'c.page_id')
             ->leftJoin('moderation_log as ml', function ($join) {
                 $join->on('ml.comment_id', '=', 'c.id')
-                     ->whereRaw('ml.id = (SELECT MAX(id) FROM moderation_log WHERE comment_id = c.id)');
+                     ->whereRaw("ml.id = (SELECT MAX(id) FROM moderation_log WHERE comment_id = c.id AND COALESCE(final_action, '') <> 'comment_edited')");
             })
             ->where('c.status', 'escalated_reportable')
             ->select([
@@ -186,7 +186,7 @@ class ModerationController
             ->join('connected_pages as cp', 'cp.id', '=', 'c.page_id')
             ->leftJoin('moderation_log as ml', function ($join) {
                 $join->on('ml.comment_id', '=', 'c.id')
-                     ->whereRaw('ml.id = (SELECT MAX(id) FROM moderation_log WHERE comment_id = c.id)');
+                     ->whereRaw("ml.id = (SELECT MAX(id) FROM moderation_log WHERE comment_id = c.id AND COALESCE(final_action, '') <> 'comment_edited')");
             })
             ->leftJoin('admin_users as au', 'au.id', '=', 'ml.human_user_id')
             ->where('c.status', 'reported_legal')
@@ -425,7 +425,7 @@ class ModerationController
             ->join('connected_pages as cp', 'cp.id', '=', 'c.page_id')
             ->leftJoin('moderation_log as ml', function ($join) {
                 $join->on('ml.comment_id', '=', 'c.id')
-                     ->whereRaw('ml.id = (SELECT MAX(id) FROM moderation_log WHERE comment_id = c.id)');
+                     ->whereRaw("ml.id = (SELECT MAX(id) FROM moderation_log WHERE comment_id = c.id AND COALESCE(final_action, '') <> 'comment_edited')");
             })
             ->where('ar.status', 'pending')
             ->select([
@@ -596,7 +596,7 @@ class ModerationController
             ->join('connected_pages as cp', 'cp.id', '=', 'c.page_id')
             ->leftJoin('moderation_log as ml', function ($join) {
                 $join->on('ml.comment_id', '=', 'c.id')
-                     ->whereRaw('ml.id = (SELECT MAX(id) FROM moderation_log WHERE comment_id = c.id)');
+                     ->whereRaw("ml.id = (SELECT MAX(id) FROM moderation_log WHERE comment_id = c.id AND COALESCE(final_action, '') <> 'comment_edited')");
             })
             ->leftJoin('appeal_records as ar', function ($join) {
                 $join->on('ar.comment_id', '=', 'c.id')
@@ -1244,7 +1244,7 @@ class ModerationController
             ->join('connected_pages as cp', 'cp.id', '=', 'c.page_id')
             ->leftJoin('moderation_log as ml', function ($join) {
                 $join->on('ml.comment_id', '=', 'c.id')
-                     ->whereRaw('ml.id = (SELECT MAX(id) FROM moderation_log WHERE comment_id = c.id)');
+                     ->whereRaw("ml.id = (SELECT MAX(id) FROM moderation_log WHERE comment_id = c.id AND COALESCE(final_action, '') <> 'comment_edited')");
             })
             ->leftJoin('admin_users as au', 'au.id', '=', 'ml.human_user_id')
             ->where('c.status', 'removed');
@@ -1390,7 +1390,7 @@ class ModerationController
             ->join('connected_pages as cp', 'cp.id', '=', 'c.page_id')
             ->leftJoin('moderation_log as ml', function ($join) {
                 $join->on('ml.comment_id', '=', 'c.id')
-                     ->whereRaw('ml.id = (SELECT MAX(id) FROM moderation_log WHERE comment_id = c.id)');
+                     ->whereRaw("ml.id = (SELECT MAX(id) FROM moderation_log WHERE comment_id = c.id AND COALESCE(final_action, '') <> 'comment_edited')");
             })
             ->leftJoin('admin_users as au', 'au.id', '=', 'ml.human_user_id')
             ->where('c.social_user_id', $userId)
@@ -1663,7 +1663,7 @@ class ModerationController
             ->join('connected_pages as cp', 'cp.id', '=', 'c.page_id')
             ->leftJoin('moderation_log as ml', function ($join) {
                 $join->on('ml.comment_id', '=', 'c.id')
-                     ->whereRaw('ml.id = (SELECT MAX(id) FROM moderation_log WHERE comment_id = c.id)');
+                     ->whereRaw("ml.id = (SELECT MAX(id) FROM moderation_log WHERE comment_id = c.id AND COALESCE(final_action, '') <> 'comment_edited')");
             })
             ->leftJoin('admin_users as au', 'au.id', '=', 'ml.human_user_id')
             ->where('c.status', 'approved');
