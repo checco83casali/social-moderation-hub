@@ -84,6 +84,7 @@ offline-mode setting for fully air-gapped installs).
 - **Moderation log export** — CSV / JSON export with date and decision filters
 - **AI training** — when enabled in Settings → AI, moderators must write a note whenever a decision reinforces or corrects the AI verdict (escalations, hiding an approved comment, restoring a hidden one, deciding an appeal); notes can also be added afterwards from the comment menu. After N notes collection stops by itself and Sonnet proposes a revised (inactive) moderation prompt to review in the Prompt AI screen (feature key `ai_training`)
 - **Post context for the AI** — at the first comment on a post, Haiku summarises the post (text, shared link, image) and the summary is sent with every comment of that post, so the AI understands what people are replying to; toggle in Settings → AI (feature key `post_context`)
+- **Edited-comment re-analysis** — an approved or queued comment edited by its author is re-evaluated by the AI after a configurable quiet delay (each new edit restarts the wait), and only if the words really changed (case, punctuation, spaces and accents are ignored). Settings → AI choose which states to watch and whether a problem hides the comment or sends it to the queue; a moderator's decision is never overturned automatically. Admins can also re-evaluate any approved, queued or hidden comment from its ⋯ menu. Needs the `bin/recheck-edits.php` cron every minute (feature key `edit_recheck`)
 
 ---
 
@@ -314,13 +315,8 @@ the current Pro plan.
   violation" (current) but also "probability of genuine value", so the
   dashboard can sort/filter by either axis (e.g. surface high-quality comments
   worth amplifying, not only the ones to moderate).
-- **Contextual grounding** — the first comment on a new post triggers an
-  extractive summary of the post body; that summary is then attached as
-  context to every following comment evaluated by Claude. Solves the current
-  blind spot: comments are moderated in isolation from the article they
-  reference.
-- **Topic-aware analytics & proactive per-post alerts** — built on Contextual
-  Grounding. Posts get auto-tagged by topic (sport, culture, environment,
+- **Topic-aware analytics & proactive per-post alerts** — built on the Pro
+  *Post context* feature. Posts get auto-tagged by topic (sport, culture, environment,
   politics, foreign affairs…). The stats dashboard then shows engagement and
   incident rates per topic over time. When a new post is published the system
   predicts a risk score based on historical patterns ("this topic averages

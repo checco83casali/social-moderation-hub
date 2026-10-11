@@ -881,6 +881,27 @@ footer {
         <h3 data-i18n="feat.9.h">Appeals & transparency</h3>
         <p data-i18n="feat.9.p">Hidden comments get a signed appeal link. Users can contest; moderators accept or reject. Every AI decision comes with its reasoning — nothing is a black box.</p>
       </div>
+      <div class="feat-card">
+        <div class="feat-ic" style="background:rgba(62,207,142,.16);color:#3ecf8e;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+        </div>
+        <h3 data-i18n="feat.10.h">Installable app &amp; push alerts</h3>
+        <p data-i18n="feat.10.p">Install the dashboard as an app on phone or desktop and get a push notification when a comment needs review, a report arrives or an appeal is filed.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-ic" style="background:rgba(139,92,246,.16);color:#c4b0ff;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3 data-i18n="feat.11.h">Teams &amp; roles</h3>
+        <p data-i18n="feat.11.p">Admin, supervisor and moderator roles. Admins create users with a temporary password and can reset it at any time; the user must choose a new one at next login.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-ic" style="background:rgba(247,178,74,.16);color:#f7b24a;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        </div>
+        <h3 data-i18n="feat.12.h">Your own branding</h3>
+        <p data-i18n="feat.12.p">Upload your logo once: it becomes the dashboard logo, the favicon and the app icon. Thresholds, toggles and templates are all configurable from the settings.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -1070,13 +1091,6 @@ footer {
         </div>
       </div>
       <div class="rm-item">
-        <div class="rm-icon">🧠</div>
-        <div>
-          <h4>Contextual grounding <span class="rm-badge rm-badge--advanced">Advanced</span></h4>
-          <p>Al primo commento su un post il sistema ne estrae un riassunto e lo aggancia come contesto a tutte le moderazioni successive. Niente più commenti giudicati senza sapere di cosa parla l'articolo.</p>
-        </div>
-      </div>
-      <div class="rm-item">
         <div class="rm-icon">🎯</div>
         <div>
           <h4>Topic-aware proactive alerts <span class="rm-badge rm-badge--advanced">Advanced</span></h4>
@@ -1179,6 +1193,9 @@ footer {
           <li><span class="plan-chk plan-chk--ok">✓</span><span data-i18n-html="p.f7"><strong>Custom reply templates</strong> — tailored automatic responses.</span></li>
           <li><span class="plan-chk plan-chk--ok">✓</span><span data-i18n-html="p.f8"><strong>Log export</strong> — CSV/JSON moderation-log export with filters.</span></li>
           <li><span class="plan-chk plan-chk--ok">✓</span><span data-i18n-html="p.f9"><strong>Configurable data retention</strong> — custom GDPR anonymization window.</span></li>
+          <li><span class="plan-chk plan-chk--ok">✓</span><span data-i18n-html="p.f10"><strong>Post context</strong> — Haiku summarises the post (text, link, image) at the first comment and attaches it to every comment of that post, so the AI knows what is being replied to.</span><span class="plan-pill plan-pill--new" data-i18n="pill.new">New</span></li>
+          <li><span class="plan-chk plan-chk--ok">✓</span><span data-i18n-html="p.f11"><strong>AI training</strong> — moderators explain their decisions on N comments (appeals included); Sonnet then proposes a new, inactive prompt version for you to review.</span><span class="plan-pill plan-pill--new" data-i18n="pill.new">New</span></li>
+          <li><span class="plan-chk plan-chk--ok">✓</span><span data-i18n-html="p.f12"><strong>Edited-comment re-analysis</strong> — after a configurable quiet delay, edited comments are re-evaluated only if the words changed. Admins can also send any comment back through the AI for a second opinion.</span><span class="plan-pill plan-pill--new" data-i18n="pill.new">New</span></li>
         </ul>
 
         <div class="plan-section-title" data-i18n="plan.pro.soon">Coming soon for Pro</div>
@@ -1215,10 +1232,6 @@ footer {
           <li>
             <span class="plan-chk plan-chk--ok">✓</span>
             <span data-i18n-html="a.f1"><strong>Dual confidence scoring</strong> — each comment scored on both axes: probability of violation AND probability of genuine value.</span>
-          </li>
-          <li>
-            <span class="plan-chk plan-chk--ok">✓</span>
-            <span data-i18n-html="a.f2"><strong>Contextual grounding</strong> — the post is summarised at the first comment and attached as context to every following moderation call.</span>
           </li>
           <li>
             <span class="plan-chk plan-chk--ok">✓</span>
@@ -1503,6 +1516,9 @@ const TRANS = {
     'feat.7.h':'Full audit trail','feat.7.p':'Every AI and human decision is logged with model name, confidence score, latency, categories, and the name of the human moderator.',
     'feat.8.h':'Configurable data retention','feat.8.p':'Nightly cron anonymizes PII after N days. Statistical fields preserved for analytics. Reset operational data without losing configuration.',
     'feat.9.h':'Appeals & transparency','feat.9.p':'Hidden comments get a signed appeal link. Users can contest; moderators accept or reject. Every AI decision comes with its reasoning — nothing is a black box.',
+    'feat.10.h':'Installable app & push alerts','feat.10.p':'Install the dashboard as an app on phone or desktop and get a push notification when a comment needs review, a report arrives or an appeal is filed.',
+    'feat.11.h':'Teams & roles','feat.11.p':'Admin, supervisor and moderator roles. Admins create users with a temporary password and can reset it at any time; the user must choose a new one at next login.',
+    'feat.12.h':'Your own branding','feat.12.p':'Upload your logo once: it becomes the dashboard logo, the favicon and the app icon. Thresholds, toggles and templates are all configurable from the settings.',
     'lanes.label':'Special handling','lanes.h2':'Three dedicated lanes','lanes.sub':'Some content types need more than a binary allow/hide decision.',
     'lanes.1.h':'🚨 Reportable content','lanes.1.p':'Potentially illegal content is hidden immediately and routed to a dedicated "Reports" queue for legal review. <strong>Never deleted</strong> — preserved as evidence.',
     'lanes.2.h':'📰 Editorial criticism','lanes.2.p':'Criticism of journalists or the publication always goes to human review — protecting legitimate editorial debate from over-moderation.',
@@ -1570,11 +1586,13 @@ const TRANS = {
     'p.f7':'<strong>Custom reply templates</strong> — tailored automatic responses.',
     'p.f8':'<strong>Log export</strong> — CSV/JSON moderation-log export with filters.',
     'p.f9':'<strong>Configurable data retention</strong> — custom GDPR anonymization window.',
+    'p.f10':'<strong>Post context</strong> — Haiku summarises the post (text, link, image) at the first comment and attaches it to every comment of that post, so the AI knows what is being replied to.',
+    'p.f11':'<strong>AI training</strong> — moderators explain their decisions on N comments (appeals included); Sonnet then proposes a new, inactive prompt version for you to review.',
+    'p.f12':'<strong>Edited-comment re-analysis</strong> — after a configurable quiet delay, edited comments are re-evaluated only if the words changed. Admins can also send any comment back through the AI for a second opinion.',
     'p.s1':'<strong>Flame detection & post lock</strong> — auto-lock comments on posts under flame.',
     'p.s2':'<strong>Bot & campaign detection</strong> — cross-user behavioural analysis.',
     'p.s3':'<strong>Policy test mode</strong> — test a comment against a new policy before activating it.',
     'a.f1':'<strong>Dual confidence scoring</strong> — each comment scored on both axes: probability of violation AND probability of genuine value.',
-    'a.f2':'<strong>Contextual grounding</strong> — the post is summarised at the first comment and attached as context to every following moderation call.',
     'a.f3':'<strong>Topic-aware proactive alerts</strong> — posts auto-tagged by topic; risk score predicted from historical patterns when a post is published.',
   },
   it: {
@@ -1607,6 +1625,9 @@ const TRANS = {
     'feat.7.h':'Audit trail completo','feat.7.p':'Ogni decisione AI e umana viene registrata con nome modello, punteggio di confidenza, latenza, categorie e nome del moderatore.',
     'feat.8.h':'Retention dati configurabile','feat.8.p':'Cron notturno anonimizza i dati personali dopo N giorni. Campi statistici preservati per analytics. Reset dei dati operativi senza perdere la configurazione.',
     'feat.9.h':'Appelli & trasparenza','feat.9.p':'I commenti nascosti ricevono un link di appello firmato. Gli utenti possono contestare; i moderatori accettano o rifiutano. Ogni decisione AI include il ragionamento — niente è una scatola nera.',
+    'feat.10.h':'App installabile e notifiche push','feat.10.p':'Installa la dashboard come app su telefono o desktop e ricevi una notifica push quando un commento richiede revisione, arriva una segnalazione o viene presentato un ricorso.',
+    'feat.11.h':'Team e ruoli','feat.11.p':'Ruoli admin, supervisore e moderatore. Gli admin creano utenti con una password temporanea e possono reimpostarla in qualsiasi momento; l\'utente deve sceglierne una nuova al prossimo accesso.',
+    'feat.12.h':'Il tuo marchio','feat.12.p':'Carica il logo una volta: diventa il logo della dashboard, la favicon e l\'icona dell\'app. Soglie, toggle e template si configurano tutti dalle impostazioni.',
     'lanes.label':'Gestione speciale','lanes.h2':'Tre corsie dedicate','lanes.sub':'Alcuni tipi di contenuto richiedono più di una semplice decisione mostra/nascondi.',
     'lanes.1.h':'🚨 Contenuto segnalabile','lanes.1.p':'Il contenuto potenzialmente illegale viene nascosto immediatamente e instradato verso una coda "Segnalazioni" dedicata per revisione legale. <strong>Mai eliminato</strong> — conservato come prova.',
     'lanes.2.h':'📰 Critica editoriale','lanes.2.p':"Le critiche a giornalisti o alla testata vanno sempre in revisione umana — proteggendo il legittimo dibattito editoriale dalla sovra-moderazione.",
@@ -1674,11 +1695,13 @@ const TRANS = {
     'p.f7':'<strong>Template risposta personalizzati</strong> — risposte automatiche su misura.',
     'p.f8':'<strong>Export log</strong> — export moderation-log CSV/JSON con filtri.',
     'p.f9':'<strong>Retention dati configurabile</strong> — finestra di anonimizzazione GDPR personalizzata.',
+    'p.f10':'<strong>Contesto del post</strong> — Haiku riassume il post (testo, link, immagine) al primo commento e lo allega a ogni commento di quel post, così l\'AI capisce a cosa si risponde.',
+    'p.f11':'<strong>Training AI</strong> — i moderatori spiegano le loro decisioni su N commenti (ricorsi inclusi); Sonnet propone poi una nuova versione del prompt, inattiva, da rivedere.',
+    'p.f12':'<strong>Rianalisi dei commenti modificati</strong> — dopo un\'attesa configurabile, i commenti modificati vengono rivalutati solo se le parole sono cambiate. Gli admin possono anche rimandare qualsiasi commento all\'AI per una seconda valutazione.',
     'p.s1':'<strong>Rilevamento flame & blocco post</strong> — blocco automatico commenti su post sotto flame.',
     'p.s2':'<strong>Rilevamento bot e campagne</strong> — analisi comportamentale cross-utente.',
     'p.s3':'<strong>Modalità test policy</strong> — testa un commento su una nuova policy prima di attivarla.',
     'a.f1':'<strong>Scoring doppio</strong> — ogni commento valutato su entrambi gli assi: probabilità di violazione E probabilità di valore genuino.',
-    'a.f2':'<strong>Grounding contestuale</strong> — il post viene riassunto al primo commento e allegato come contesto ad ogni successiva chiamata di moderazione.',
     'a.f3':'<strong>Alert proattivi per topic</strong> — post auto-taggati per argomento; score di rischio predetto da pattern storici alla pubblicazione.',
   }
 };
