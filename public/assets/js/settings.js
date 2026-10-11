@@ -129,6 +129,14 @@ async function loadSettings() {
       const pcEl = document.getElementById('set-post-context-enabled');
       if (pcEl) pcEl.checked = !!d.post_context_enabled;
 
+      // PRO: rianalisi commenti modificati
+      const erSet = (id, fn) => { const el = document.getElementById(id); if (el) fn(el); };
+      erSet('set-edit-recheck-enabled',  el => el.checked = !!d.edit_recheck_enabled);
+      erSet('set-edit-recheck-delay',    el => el.value   = parseInt(d.edit_recheck_delay_min ?? 5, 10));
+      erSet('set-edit-recheck-approved', el => el.checked = !!d.edit_recheck_approved);
+      erSet('set-edit-recheck-queue',    el => el.checked = !!d.edit_recheck_queue);
+      erSet('set-edit-recheck-action',   el => el.value   = d.edit_recheck_action === 'queue' ? 'queue' : 'hide');
+
       // PRO: fact-check auto-publish threshold
       const fcEl = document.getElementById('set-fact-check-threshold');
       if (fcEl) {
@@ -428,6 +436,14 @@ async function saveSettings() {
     if (banHideEl && !banHideEl.disabled) payload.banned_user_hide_template = banHideEl.value.trim();
     const pcEl = document.getElementById('set-post-context-enabled');
     if (pcEl && !pcEl.disabled) payload.post_context_enabled = pcEl.checked;
+    const erOn = document.getElementById('set-edit-recheck-enabled');
+    if (erOn && !erOn.disabled) {
+      payload.edit_recheck_enabled   = erOn.checked;
+      payload.edit_recheck_delay_min = Math.max(1, Math.min(60, parseInt(document.getElementById('set-edit-recheck-delay').value, 10) || 5));
+      payload.edit_recheck_approved  = document.getElementById('set-edit-recheck-approved').checked;
+      payload.edit_recheck_queue     = document.getElementById('set-edit-recheck-queue').checked;
+      payload.edit_recheck_action    = document.getElementById('set-edit-recheck-action').value;
+    }
     const fcThEl = document.getElementById('set-fact-check-threshold');
     if (fcThEl && !fcThEl.disabled) {
       const fcPct = parseInt(fcThEl.value, 10);

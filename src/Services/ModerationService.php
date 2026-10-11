@@ -18,6 +18,7 @@ class ModerationService
         private readonly BanService       $ban,
         private readonly MetaGraphService $meta,
         private readonly PostContextService $postContext,
+        private readonly LicenseService   $license,
         private ?Logger                   $logger = null,
     ) {}
 
@@ -188,6 +189,31 @@ class ModerationService
     // ──────────────────────────────────────────────────────────────────
 
     private const EDIT_RECHECK_DELAY = 300;
+
+    /**
+     * Impostazioni della rianalisi dopo modifica (feature Pro `edit_recheck`).
+     * Senza licenza la funzione è spenta: la modifica viene solo registrata.
+     *
+     * @return array{enabled:bool, delay:int, approved:bool, queue:bool, action:string}
+     */
+    private function editRecheckConfig(): array
+    {
+        $cfg = ['enabled' => false, 'delay' => 5, 'approved' => true, 'queue' => true, 'action' => 'hide'];
+        if (!$this->license->hasFeature('edit_recheck')) {
+            return $cfg;
+        }
+        try {
+            $rows = DB::table('app_settings')->where('key', 'like', 'edit_recheck_%')->pluck('value', 'key')->toArray();
+        } catch (\Throwable) {
+            $rows = [];
+        }
+        $cfg['enabled']  = (bool) (int) ($rows['edit_recheck_enabled']  ?? 1);
+        $cfg['delay']    = max(1, min(60, (int) ($rows['edit_recheck_delay_min'] ?? 5)));
+        $cfg['approved'] = (bool) (int) ($rows['edit_recheck_approved'] ?? 1);
+        $cfg['queue']    = (bool) (int) ($rows['edit_recheck_queue']    ?? 1);
+        $cfg['action']   = ($rows['edit_recheck_action'] ?? 'hide') === 'queue' ? 'queue' : 'hide';
+        return $cfg;
+    }
 
     public function processWebhookComment(array $webhookComment, array $page): array
     {
@@ -1399,10 +1425,13 @@ class ModerationService
             'content_hash' => hash('sha256', $newText),
         ];
 
-        if (!$wasHidden && in_array($existing->status, ['approved', 'escalated_human'], true)) {
-            // Rianalisi differita: ogni modifica sposta il ricontrollo di 5 minuti in avanti.
+        $cfg = $this->editRecheckConfig();
+        $watched = ($existing->status === 'approved' && $cfg['approved'])
+                || ($existing->status === 'escalated_human' && $cfg['queue']);
+        if (!$wasHidden && $cfg['enabled'] && $watched) {
+            // Rianalisi differita: ogni modifica sposta il ricontrollo in avanti.
             // Il testo di riferimento è quello già valutato (fissato alla prima modifica).
-            $update['edit_recheck_at'] = date('Y-m-d H:i:s', time() + self::EDIT_RECHECK_DELAY);
+            $update['edit_recheck_at'] = date('Y-m-d H:i:s', time() + $cfg['delay'] * 60);
             if (empty($existing->edit_recheck_at)) {
                 $update['edit_baseline_hash'] = $existing->content_hash;
             }
@@ -1410,7 +1439,7 @@ class ModerationService
         DB::table('comments')->where('id', $existing->id)->update($update);
 
         if (!$wasHidden) {
-            // Approvato o in coda: la rianalisi avviene dopo 5 minuti (recheckEditedComments)
+            // Approvato o in coda: la rianalisi avviene dopo il ritardo configurato (recheckEditedComments)
             return ['action' => 'edit_logged', 'comment_id' => $existing->id, 'recheck_scheduled' => isset($update['edit_recheck_at'])];
         }
 
@@ -1531,7 +1560,9 @@ class ModerationService
 
         $page = DB::table('connected_pages')->find($comment->page_id);
         $status = (string) $comment->status;
-        if (!$page || !in_array($status, ['approved', 'escalated_human'], true)) {
+        $cfg = $this->editRecheckConfig();
+        $watched = ($status === 'approved' && $cfg['approved']) || ($status === 'escalated_human' && $cfg['queue']);
+        if (!$page || !$cfg['enabled'] || !$watched) {
             // Nel frattempo è stato nascosto/deciso: niente da fare
             DB::table('comments')->where('id', $comment->id)->update($clear);
             return 'unchanged';
@@ -1598,6 +1629,7 @@ class ModerationService
             !$problem                                            => ($status === 'approved' ? 'approved' : 'pending_human'),
             $status === 'escalated_human'                        => 'pending_human',
             $humanDecided || $result->stage === 'human'          => 'pending_human',
+            $cfg['action'] === 'queue'                           => 'pending_human',
             default                                              => 'hidden',
         };
 
@@ -1616,7 +1648,7 @@ class ModerationService
             'ai_whataboutism_suggested' => $result->whataboutismSuggested ? 1 : 0,
             'ai_whataboutism_draft'     => $result->whataboutismDraft,
             'ai_whataboutism_confidence'=> $result->whataboutismConfidence > 0.0 ? $result->whataboutismConfidence : null,
-            'human_note'                => 'Rianalisi dopo modifica (5 min)',
+            'human_note'                => 'Rianalisi dopo modifica (' . $cfg['delay'] . ' min)',
             'final_action'              => $action,
             'created_at'                => date('Y-m-d H:i:s'),
         ]);

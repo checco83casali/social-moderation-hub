@@ -550,6 +550,57 @@
           </div>
         </div>
 
+        <!-- ── PRO: Rianalisi commenti modificati ───────────────────────── -->
+        <div data-pro-feature="edit_recheck" style="max-width:900px;position:relative;margin-bottom:20px">
+          <div class="panel" style="border-color:rgba(99,102,241,.2)">
+            <div class="panel-head">
+              <div class="panel-title">✏️ Commenti modificati <span style="font-size:11px;font-weight:400;color:var(--accent);background:rgba(99,102,241,.1);padding:2px 8px;border-radius:20px;margin-left:6px">PRO</span></div>
+            </div>
+            <!-- Lock overlay -->
+            <div class="pro-lock-overlay" style="position:absolute;inset:0;background:rgba(var(--bg-card-rgb),.85);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;gap:8px;backdrop-filter:blur(1px)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;color:var(--muted)"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <div style="font-size:12px;font-weight:500;color:var(--muted)">Funzionalità Pro</div>
+            </div>
+            <div class="policy-form">
+              <label class="whd-switch ok">
+                <input type="checkbox" id="set-edit-recheck-enabled">
+                <span class="whd-track" aria-hidden="true"></span>
+                <span>Rianalizza i commenti modificati dall'autore</span>
+              </label>
+              <p class="whd-help">
+                Dopo una modifica l'AI rivaluta il testo nuovo, ma solo se è davvero cambiato rispetto a quello già controllato.
+                Ogni nuova modifica fa ripartire l'attesa, così una serie di correzioni costa una sola analisi.
+                I commenti già nascosti vengono sempre rianalizzati subito. Richiede il cron <code>bin/recheck-edits.php</code> ogni minuto.
+              </p>
+              <div class="form-group" style="margin-top:12px">
+                <label class="form-label" for="set-edit-recheck-delay">Attendi (minuti) dopo l'ultima modifica</label>
+                <input type="number" id="set-edit-recheck-delay" class="form-input" min="1" max="60" step="1" style="max-width:120px">
+              </div>
+              <label class="whd-switch ok" style="margin-top:12px">
+                <input type="checkbox" id="set-edit-recheck-approved">
+                <span class="whd-track" aria-hidden="true"></span>
+                <span>Controlla i commenti approvati</span>
+              </label>
+              <label class="whd-switch ok" style="margin-top:8px">
+                <input type="checkbox" id="set-edit-recheck-queue">
+                <span class="whd-track" aria-hidden="true"></span>
+                <span>Aggiorna la valutazione dei commenti in coda di revisione</span>
+              </label>
+              <div class="form-group" style="margin-top:12px">
+                <label class="form-label" for="set-edit-recheck-action">Se il testo modificato risulta problematico</label>
+                <select id="set-edit-recheck-action" class="form-input" style="max-width:360px">
+                  <option value="hide">Nascondi (se approvato dall'AI)</option>
+                  <option value="queue">Manda in coda di revisione</option>
+                </select>
+              </div>
+              <p class="whd-help" style="margin-bottom:0">
+                I commenti approvati da un moderatore non vengono mai nascosti in automatico: tornano sempre in coda.
+                Un possibile contenuto illegale va comunque nascosto e in Segnalazioni.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <!-- ── PRO: Fact-check auto-publish threshold ───────────────────── -->
         <div data-pro-feature="fact_check" style="max-width:900px;position:relative">
           <div class="panel" style="border-color:rgba(99,102,241,.2)">

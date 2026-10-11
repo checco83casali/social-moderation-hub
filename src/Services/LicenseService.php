@@ -49,6 +49,8 @@ use Monolog\Logger;
  *   ai_training         — "Training AI": per N decisioni umane i moderatori scrivono una nota che
  *                         spiega perché rinforzano o correggono il verdetto dell'AI; raggiunto N
  *                         Sonnet propone una nuova versione (inattiva) del prompt di moderazione.
+ *   edit_recheck        — re-analysis of approved/queued comments edited by the author, after a
+ *                         configurable quiet delay. Admin settings: app_settings.edit_recheck_*.
  *   post_context        — at the first comment on a post Haiku summarises the post (text,
  *                         shared link, image); the summary is sent to the AI with every
  *                         comment of that post. Admin toggle: app_settings.post_context_enabled.
@@ -110,6 +112,7 @@ class LicenseService
         'advanced_audit',
         'post_context',
         'ai_training',
+        'edit_recheck',
     ];
 
     /** Human-readable labels for display in the license panel (server-side only). */
@@ -126,6 +129,7 @@ class LicenseService
         'multi_page'          => 'Pagine multiple',
         'post_context'        => 'Contesto del post per l\'AI',
         'ai_training'         => 'Training AI',
+        'edit_recheck'        => 'Rianalisi commenti modificati',
     ];
 
     // ── State ────────────────────────────────────────────────────────
