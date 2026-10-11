@@ -1434,6 +1434,7 @@ class ModerationService
             $update['edit_recheck_at'] = date('Y-m-d H:i:s', time() + $cfg['delay'] * 60);
             if (empty($existing->edit_recheck_at)) {
                 $update['edit_baseline_hash'] = $existing->content_hash;
+                $update['edit_baseline_norm'] = $this->normalizedHash((string) $existing->content);
             }
         }
         DB::table('comments')->where('id', $existing->id)->update($update);
@@ -1553,10 +1554,27 @@ class ModerationService
         return $stats;
     }
 
+    /**
+     * Hash delle sole parole del testo: ignora maiuscole, accenti, punteggiatura e spazi
+     * (emoji e simboli restano). Due testi con lo stesso hash dicono le stesse parole.
+     */
+    private function normalizedHash(string $text): string
+    {
+        $t = mb_strtolower($text);
+        if (class_exists(\Normalizer::class)) {
+            $d = \Normalizer::normalize($t, \Normalizer::FORM_D);
+            if (is_string($d)) {
+                $t = (string) preg_replace('/\p{Mn}+/u', '', $d);
+            }
+        }
+        $t = trim((string) preg_replace('/[\p{P}\p{Z}\p{C}]+/u', ' ', $t));
+        return hash('sha256', $t);
+    }
+
     /** @return 'reanalysed'|'unchanged'|'failed' */
     private function recheckOne(object $comment): string
     {
-        $clear = ['edit_recheck_at' => null, 'edit_baseline_hash' => null];
+        $clear = ['edit_recheck_at' => null, 'edit_baseline_hash' => null, 'edit_baseline_norm' => null];
 
         $page = DB::table('connected_pages')->find($comment->page_id);
         $status = (string) $comment->status;
@@ -1581,6 +1599,12 @@ class ModerationService
         }
         if ($hash === $comment->edit_baseline_hash) {
             // Modificato e poi riportato al testo già valutato
+            DB::table('comments')->where('id', $comment->id)->update($clear);
+            return 'unchanged';
+        }
+
+        if (!empty($comment->edit_baseline_norm) && $this->normalizedHash($text) === $comment->edit_baseline_norm) {
+            // Stesse parole (cambiano solo maiuscole, punteggiatura, spazi o accenti): niente rianalisi
             DB::table('comments')->where('id', $comment->id)->update($clear);
             return 'unchanged';
         }
