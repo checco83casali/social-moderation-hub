@@ -83,7 +83,40 @@ class WebhookController
         $comments = $this->meta->parseWebhookComments($payload);
         $trace    = [];
 
+        // Debug: salva subito lo stato "in elaborazione" e, se PHP viene interrotto a metà
+        // (timeout, memoria, errore fatale), registra comunque cosa è successo invece di
+        // lasciare il risultato vuoto.
+        /** @var \ArrayObject<string, mixed> $state */
+        $state = new \ArrayObject(['finished' => false, 'current' => null, 'trace' => []]);
+        if ($debug) {
+            DB::table('webhook_events')->where('id', $eventId)->update([
+                'debug' => $this->debugJson($request, [
+                    'comments_parsed' => count($comments),
+                    'comments'        => [],
+                    'result'          => 'in elaborazione… (se resta così, l\'elaborazione è stata interrotta)',
+                ]),
+            ]);
+            $debugBody = $this;
+            register_shutdown_function(static function () use ($state, $debugBody, $request, $eventId, $comments): void {
+                if ($state['finished']) return;
+                $err = error_get_last();
+                try {
+                    DB::table('webhook_events')->where('id', $eventId)->update([
+                        'error' => $err['message'] ?? 'elaborazione interrotta',
+                        'debug' => $debugBody->debugJsonPublic($request, [
+                            'comments_parsed' => count($comments),
+                            'comments'        => $state['trace'],
+                            'result'          => 'INTERROTTO durante il commento ' . ($state['current'] ?? '?') . ': ' . ($err['message'] ?? 'elaborazione terminata prima della fine')
+                                . (isset($err['file']) ? ' (' . basename($err['file']) . ':' . $err['line'] . ')' : ''),
+                        ]),
+                    ]);
+                } catch (\Throwable) {}
+            });
+        }
+
         foreach ($comments as $comment) {
+            $state['trace']   = $trace;
+            $state['current'] = $comment['id'];
             $page = DB::table('connected_pages')
                 ->where('page_id', $comment['page_id'])
                 ->where('is_active', 1)
@@ -116,6 +149,7 @@ class WebhookController
             ]);
         }
         DB::table('webhook_events')->where('id', $eventId)->update($update);
+        $state['finished'] = true;
 
         // Meta requires a 200 response quickly
         $response->getBody()->write(json_encode(['ok' => true]));
@@ -138,6 +172,17 @@ class WebhookController
         } catch (\Throwable $e) {
             $this->logger?->error('Webhook debug store failed: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Esposto solo per la shutdown function del debug.
+     *
+     * @param array<string, mixed> $extra
+     * @internal
+     */
+    public function debugJsonPublic(ServerRequestInterface $request, array $extra): string
+    {
+        return $this->debugJson($request, $extra);
     }
 
     /** @param array<string, mixed> $extra */
