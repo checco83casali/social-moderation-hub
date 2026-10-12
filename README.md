@@ -82,7 +82,7 @@ offline-mode setting for fully air-gapped installs).
 - **Custom reply templates** — editable hide / reportable / ban reply templates
 - **Configurable data retention** — custom GDPR anonymisation window via nightly cron
 - **Moderation log export** — CSV / JSON export with date and decision filters
-- **Post context for the AI** — at the first comment on a post, Haiku summarises the post (text, shared link, image) and the summary is sent with every comment of that post, so the AI understands what people are replying to; toggle in Settings → AI (feature key `post_context`)
+- **Post context for the AI** — at the first comment on a post, Haiku summarises the post (text, shared link, image) and the summary is sent with every comment of that post, so the AI understands what people are replying to; toggle in Settings → AI (feature key `post_context`). In the comment detail, "Open the discussion context" expands the post summary together with the parent comment, the previous and following comments on the post and the replies — authors are shown only as internal pseudonyms (`User #ID`), never names or profiles
 - **Edited-comment re-analysis** — an approved or queued comment edited by its author is re-evaluated by the AI after a configurable quiet delay (each new edit restarts the wait), and only if the words really changed (case, punctuation, spaces and accents are ignored). Settings → AI choose which states to watch and whether a problem hides the comment or sends it to the queue; a moderator's decision is never overturned automatically. Admins can also re-evaluate any approved, queued or hidden comment from its ⋯ menu. Needs the `bin/recheck-edits.php` cron every minute (feature key `edit_recheck`)
 
 ### Advanced / Enterprise license features

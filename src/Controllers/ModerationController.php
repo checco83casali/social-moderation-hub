@@ -298,7 +298,129 @@ class ModerationController
     public function reevaluateStatus(ServerRequestInterface $request, Response $response): ResponseInterface
     {
         $isAdmin = (($request->getAttribute('auth_user')->role ?? '') === 'admin');
-        return $this->json($response, ['available' => $isAdmin && $this->moderation->reevaluateAvailable()]);
+        return $this->json($response, [
+            'available' => $isAdmin && $this->moderation->reevaluateAvailable(),
+            'context'   => $this->postContextEnabled(),   // contesto della discussione nel dettaglio
+        ]);
+    }
+
+    /** Contesto del post attivo: licenza Pro `post_context` + interruttore nelle Impostazioni. */
+    private function postContextEnabled(): bool
+    {
+        if (!$this->license->hasFeature('post_context')) {
+            return false;
+        }
+        try {
+            return (string) (DB::table('app_settings')->where('key', 'post_context_enabled')->value('value') ?? '1') !== '0';
+        } catch (\Throwable) {
+            return true;
+        }
+    }
+
+    // ── GET /api/comments/{id}/context  ─────────────────────────────
+    /**
+     * Contesto della discussione di un commento: riassunto del post, commento padre, commenti
+     * precedenti e successivi sullo stesso post, risposte. Gli autori sono solo pseudonimi interni
+     * ("Utente #ID"), come nella coda: mai nomi, profili o id Facebook.
+     *
+     * @param array<string,string> $args
+     */
+    public function commentContext(ServerRequestInterface $request, Response $response, array $args): ResponseInterface
+    {
+        if (!$this->postContextEnabled()) {
+            return $this->json($response, ['error' => 'Contesto del post non attivo.', 'code' => 'license_required'], 403);
+        }
+        $id = (int) ($args['id'] ?? 0);
+        $c  = DB::table('comments')->find($id);
+        if (!$c) {
+            return $this->json($response, ['error' => 'Commento non trovato.'], 404);
+        }
+        $postId = (string) $c->platform_post_id;
+
+        $parentId = $c->parent_platform_id ?? null;
+        if ($parentId === null || $parentId === '') {
+            $parentId = $this->lookupParentId($c);   // commenti precedenti alla migrazione 013
+        }
+
+        $summary = null;
+        try {
+            $summary = DB::table('post_contexts')->where('platform_post_id', $postId)->where('status', 'ready')->value('summary');
+        } catch (\Throwable) {}
+
+        $cols = ['id', 'platform_comment_id', 'social_user_id', 'content', 'status', 'received_at', 'is_dev'];
+        $parent = null;
+        if ($parentId && $parentId !== $postId) {
+            $p = DB::table('comments')->where('platform_comment_id', $parentId)->first($cols);
+            $parent = $p ? $this->contextItem($p, $c) : ['text' => null, 'unavailable' => true];
+        }
+        $before = DB::table('comments')->where('platform_post_id', $postId)->where('id', '<', $id)
+            ->orderByDesc('id')->limit(3)->get($cols)->reverse()->values()
+            ->map(fn($r) => $this->contextItem($r, $c))->all();
+        $after = DB::table('comments')->where('platform_post_id', $postId)->where('id', '>', $id)
+            ->orderBy('id')->limit(3)->get($cols)
+            ->map(fn($r) => $this->contextItem($r, $c))->all();
+        $replies = DB::table('comments')->where('parent_platform_id', (string) $c->platform_comment_id)
+            ->orderBy('id')->limit(3)->get($cols)
+            ->map(fn($r) => $this->contextItem($r, $c))->all();
+
+        // Il padre e le risposte non si ripetono nell'elenco cronologico
+        $skip   = array_filter([$parent['id'] ?? null]);
+        $before = array_values(array_filter($before, fn($x) => !in_array($x['id'], $skip, true)));
+        $replyIds = array_column($replies, 'id');
+        $after  = array_values(array_filter($after, fn($x) => !in_array($x['id'], $replyIds, true)));
+
+        return $this->json($response, [
+            'summary'       => $summary,
+            'parent'        => $parent,
+            'before'        => $before,
+            'replies'       => $replies,
+            'after'         => $after,
+            'is_reply'      => $parent !== null,
+            'total_on_post' => (int) DB::table('comments')->where('platform_post_id', $postId)->count(),
+        ]);
+    }
+
+    /** Commento padre per i commenti salvati prima della migrazione 013: lo chiede a Facebook e lo memorizza. */
+    private function lookupParentId(object $c): ?string
+    {
+        try {
+            $page = DB::table('connected_pages')->find($c->page_id);
+            if (!$page || empty($page->page_access_token)) return null;
+            $fresh = $this->meta->getComment((string) $c->platform_comment_id, $page->page_access_token);
+            $pid = $fresh['parent']['id'] ?? null;
+            if ($pid && DB::schema()->hasColumn('comments', 'parent_platform_id')) {
+                DB::table('comments')->where('id', $c->id)->update(['parent_platform_id' => (string) $pid]);
+            }
+            return $pid ? (string) $pid : null;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Un commento del contesto, senza dati personali: pseudonimo, stato semplificato, testo accorciato.
+     *
+     * @return array<string,mixed>
+     */
+    private function contextItem(object $r, object $current): array
+    {
+        $text = trim((string) $r->content);
+        if (mb_strlen($text) > 280) {
+            $text = rtrim(mb_substr($text, 0, 280)) . '…';
+        }
+        $state = match ((string) $r->status) {
+            'approved'                                          => 'visible',
+            'hidden', 'hidden_reportable', 'removed', 'reported_legal' => 'hidden',
+            default                                             => 'pending',
+        };
+        return [
+            'id'          => (int) $r->id,
+            'who'         => 'Utente #' . (int) $r->social_user_id,
+            'same_author' => (int) $r->social_user_id === (int) $current->social_user_id,
+            'state'       => $state,
+            'text'        => $text !== '' ? $text : null,   // vuoto = anonimizzato dalla retention
+            'received_at' => $r->received_at,
+        ];
     }
 
     // ── POST /api/comments/{id}/reevaluate  (admin, Pro edit_recheck) ──

@@ -48,12 +48,12 @@ $orgName = $DB::table('app_settings')->where('key', 'privacy_org_name')->value('
  *
  * @return array<string,mixed>|null
  */
-function publicPolicyStats(string $dbClass, ?object $policy): ?array
+function publicPolicyStats(string $dbClass, ?object $policy, string &$status = 'ok'): ?array
 {
-    if (!$policy) return null;
+    if (!$policy) { $status = 'no_policy'; return null; }
     try {
         // Riepilogo pubblico solo con licenza `prompt_stats` (livello Enterprise)
-        if (!(new \ModerationHub\Services\LicenseService())->hasFeature('prompt_stats')) return null;
+        if (!(new \ModerationHub\Services\LicenseService())->hasFeature('prompt_stats')) { $status = 'not_licensed'; return null; }
         $row = $dbClass::table('app_settings')->where('key', 'policy_stats_public')->first();
         if ($row) {
             $cached = json_decode((string) $row->value, true);
@@ -71,12 +71,15 @@ function publicPolicyStats(string $dbClass, ?object $policy): ?array
             ['value' => json_encode(['at' => time(), 'policy_id' => (int) $policy->id, 'data' => $data])],
         );
         return $data;
-    } catch (\Throwable) {
-        return null;   // tabelle non migrate o DB non raggiungibile: la pagina resta senza riepilogo
+    } catch (\Throwable $e) {
+        error_log('[policy stats] ' . $e->getMessage());
+        $status = 'error';   // tabelle non migrate o DB non raggiungibile: la pagina resta senza riepilogo
+        return null;
     }
 }
 
-$stats = publicPolicyStats($DB, $policy);
+$statsStatus = 'ok';
+$stats = publicPolicyStats($DB, $policy, $statsStatus);
 
 // ── JSON mode ─────────────────────────────────────────────────────
 if (!empty($jsonMode)) {
@@ -91,6 +94,8 @@ if (!empty($jsonMode)) {
             'version'      => $policy->version,
             'activated_at' => $policy->updated_at,
         ],
+        // 'ok' | 'not_licensed' (manca la voce prompt_stats, o la licenza è in cache da prima) | 'error'
+        'statistics_status' => $statsStatus,
         'statistics' => $stats === null ? null : [
             'scope'               => !empty($stats['all_versions']) ? 'all_versions' : 'active_version',
             'evaluations'         => $stats['uses'],

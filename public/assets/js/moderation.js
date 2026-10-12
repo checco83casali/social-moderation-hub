@@ -15,6 +15,8 @@ let TRAINING = { active: false, count: 0, target: 0, min_note_chars: 15 };
 
 // Rivalutazione manuale AI (admin, Pro edit_recheck, toggle attivo nelle impostazioni)
 let REEVALUATE = false;
+// Contesto della discussione nel dettaglio (licenza Pro `post_context` + interruttore attivo)
+let CONTEXT_ON = false;
 
 async function reevaluateComment(id) {
   if (!(await confirmDialog({
@@ -38,8 +40,10 @@ async function reevaluateComment(id) {
 async function loadTrainingStatus() {
   const before = REEVALUATE;
   try {
-    REEVALUATE = !!(await api('/reevaluate/status')).available;
-  } catch (_) { REEVALUATE = false; }
+    const st = await api('/reevaluate/status');
+    REEVALUATE = !!st.available;
+    CONTEXT_ON = !!st.context;
+  } catch (_) { REEVALUATE = false; CONTEXT_ON = false; }
   // La coda può essere già disegnata prima che lo stato arrivi: ridisegna per mostrare/nascondere il ⋯
   if (before !== REEVALUATE && document.getElementById('queue-list')?.children.length) loadQueue();
   try {
@@ -506,6 +510,53 @@ async function loadReportableArchive() {
   }
 }
 
+// ── Contesto della discussione (estratto + commento padre + vicini + risposte) ──
+const CTX_STATE = { visible: 'Visibile', hidden: 'Nascosto', pending: 'In coda' };
+
+function ctxItem(it, role) {
+  if (!it) return '';
+  if (it.unavailable) return `<div class="ctx-item ctx-gone"><div class="ctx-text">Commento non registrato da questo sistema.</div></div>`;
+  return `<div class="ctx-item ctx-${it.state}${role === 'current' ? ' ctx-current' : ''}">
+    <div class="ctx-head">
+      <span class="ctx-who">${role === 'current' ? 'Questo commento' : esc(it.who)}</span>
+      ${it.same_author && role !== 'current' ? '<span class="ctx-tag">stesso autore</span>' : ''}
+      ${role !== 'current' ? `<span class="ctx-state ctx-state--${it.state}">${CTX_STATE[it.state] || ''}</span>` : ''}
+      <span class="ctx-time">${relTime(it.received_at)}</span>
+    </div>
+    <div class="ctx-text">${it.text ? esc(it.text) : '<i>testo non più disponibile</i>'}</div>
+  </div>`;
+}
+
+function ctxGroup(title, items, role) {
+  return items && items.length ? `<div class="ctx-label">${title}</div>${items.map(i => ctxItem(i, role)).join('')}` : '';
+}
+
+async function toggleCommentContext(id, btn) {
+  const box = document.getElementById(`ctx-thread-${id}`);
+  if (!box) return;
+  const open = box.hidden;
+  box.hidden = !open;
+  btn.setAttribute('aria-expanded', String(open));
+  btn.firstChild.textContent = open ? 'Chiudi il contesto della discussione ' : 'Apri il contesto della discussione ';
+  if (!open || box.dataset.loaded) return;
+  box.innerHTML = '<div class="loading">Caricamento…</div>';
+  try {
+    const d = await api(`/comments/${id}/context`);
+    const cur = (queueMap[id] || hiddenMap[id] || approvedMap[id] || currentComment || {});
+    box.innerHTML = `
+      ${d.summary ? `<div class="ctx-label">Estratto del post</div><div class="ctx-summary">${esc(d.summary)}</div>` : ''}
+      ${d.parent ? ctxGroup('In risposta a', [d.parent]) : ''}
+      ${ctxGroup('Commenti precedenti', d.before)}
+      ${ctxItem({ state: 'pending', text: cur.content, received_at: cur.received_at }, 'current')}
+      ${ctxGroup('Risposte a questo commento', d.replies)}
+      ${ctxGroup('Commenti successivi', d.after)}
+      <div class="ctx-foot">Autori mostrati con pseudonimo interno: nomi e profili non vengono mai mostrati. Sul post ci sono ${d.total_on_post} commenti registrati.</div>`;
+    box.dataset.loaded = '1';
+  } catch (e) {
+    box.innerHTML = `<div class="empty">${esc(e.message || 'Errore nel caricamento')}</div>`;
+  }
+}
+
 function selectComment(id) {
   currentComment = queueMap[id];
   if (!currentComment) return;
@@ -533,10 +584,12 @@ function renderDetail(c) {
       <div class="comment-bubble">${esc(c.content)}</div>
     </div>
 
-    ${c.post_context ? `
+    ${(c.post_context || CONTEXT_ON) ? `
     <div class="detail-section">
       <div class="detail-section-title">Contesto del post</div>
-      <div class="post-context" title="Clicca per espandere o ridurre" onclick="this.classList.toggle('open')">${esc(c.post_context)}</div>
+      ${c.post_context ? `<div class="post-context" title="Clicca per espandere o ridurre" onclick="this.classList.toggle('open')">${esc(c.post_context)}</div>` : ''}
+      ${CONTEXT_ON ? `<button type="button" class="ctx-open" id="ctx-open-${c.id}" aria-expanded="false" onclick="toggleCommentContext(${c.id}, this)">Apri il contesto della discussione <span aria-hidden="true">›</span></button>
+      <div class="ctx-thread" id="ctx-thread-${c.id}" hidden></div>` : ''}
     </div>` : ''}
 
     <div class="detail-section">

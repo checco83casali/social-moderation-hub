@@ -287,6 +287,7 @@ $app->group('/api', function ($group) {
 
     // Rivalutazione manuale AI di un commento (admin, Pro edit_recheck)
     $group->get('/reevaluate/status',          [ModerationController::class, 'reevaluateStatus']);
+    $group->get('/comments/{id}/context',      [ModerationController::class, 'commentContext']);
     $group->post('/comments/{id}/reevaluate',  [ModerationController::class, 'reevaluate']);
 
     // Debug webhook Meta (admin): stato + ultimi eventi, attiva/disattiva, svuota

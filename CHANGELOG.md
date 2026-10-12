@@ -11,6 +11,10 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Discussion context in the detail view** — "Open the discussion context" shows the post summary, the parent
+  comment, up to 3 previous and 3 following comments on the post and the replies, with their state
+  (visible / hidden / queued); authors are internal pseudonyms only (`User #ID`). Parent ids are stored from the
+  webhook (migration 013) and looked up on Facebook for older comments. `GET /api/comments/{id}/context`.
 - **Post context for the AI (Pro, `post_context`)** — at the first comment on a post Haiku summarises it
   (text, shared link, image) in two short lines (max 1000 characters); the summary is sent with every
   comment of that post and shown, truncated, in the comment detail. Non-blocking: failures never delay

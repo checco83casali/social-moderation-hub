@@ -911,3 +911,28 @@ body.sidebar-open #mobile-menu-btn { display: none !important; }
 .ps-nowrap { white-space: nowrap; }
 .ps-nowrap .chip { margin-right: 4px; }
 @media (max-width: 640px) { .ps-nowrap { white-space: normal; } .ps-nowrap .chip { display: inline-block; margin: 0 4px 4px 0; } }
+
+/* Contesto della discussione nel dettaglio */
+.ctx-open { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; min-height: 36px; padding: 0 12px; border: 1px solid var(--border-hi); border-radius: 18px;
+  background: transparent; color: var(--accent); font: 600 12.5px var(--font); cursor: pointer; }
+.ctx-open:hover { background: var(--accent-bg); }
+.ctx-open[aria-expanded="true"] span { display: inline-block; transform: rotate(90deg); }
+.ctx-thread { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.ctx-label { margin-top: 8px; font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.ctx-summary { font-size: 12.5px; line-height: 1.6; color: var(--muted); white-space: pre-wrap; background: var(--bg-hover); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; }
+.ctx-item { border: 1px solid var(--border); border-left-width: 3px; border-radius: var(--radius); padding: 8px 12px; background: var(--bg-card); }
+.ctx-item.ctx-visible { border-left-color: var(--success); }
+.ctx-item.ctx-hidden  { border-left-color: var(--danger); opacity: .85; }
+.ctx-item.ctx-pending { border-left-color: var(--warn); }
+.ctx-item.ctx-gone    { border-left-color: var(--border-hi); color: var(--muted); font-size: 12px; }
+.ctx-item.ctx-current { border-color: var(--accent); border-left-color: var(--accent); background: var(--accent-bg); }
+.ctx-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 3px; }
+.ctx-who { font-size: 12px; font-weight: 600; }
+.ctx-tag { font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 20px; background: var(--bg-hover); color: var(--muted); border: 1px solid var(--border); }
+.ctx-state { font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 20px; }
+.ctx-state--visible { background: var(--success-bg); color: var(--success); }
+.ctx-state--hidden  { background: var(--danger-bg);  color: var(--danger); }
+.ctx-state--pending { background: var(--warn-bg);    color: var(--warn); }
+.ctx-time { margin-left: auto; font-size: 11px; color: var(--muted); }
+.ctx-text { font-size: 12.5px; line-height: 1.55; color: var(--text); overflow-wrap: anywhere; }
+.ctx-foot { margin-top: 8px; font-size: 11px; color: var(--muted); line-height: 1.5; }

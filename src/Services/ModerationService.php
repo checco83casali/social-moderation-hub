@@ -190,6 +190,20 @@ class ModerationService
 
     private const EDIT_RECHECK_DELAY = 300;
 
+    /** La colonna `parent_platform_id` esiste solo dopo la migrazione 013: senza, si salva come prima. */
+    private function hasParentColumn(): bool
+    {
+        static $has = null;
+        if ($has === null) {
+            try {
+                $has = DB::schema()->hasColumn('comments', 'parent_platform_id');
+            } catch (\Throwable) {
+                $has = false;
+            }
+        }
+        return $has;
+    }
+
     /**
      * Impostazioni della rianalisi dopo modifica (feature Pro `edit_recheck`).
      * Senza licenza la funzione è spenta: la modifica viene solo registrata.
@@ -311,7 +325,7 @@ class ModerationService
         }
 
         // 5. Persist the new comment (it IS a distinct comment on Facebook)
-        $commentId = DB::table('comments')->insertGetId([
+        $row = [
             'platform'            => 'facebook',
             'platform_comment_id' => $webhookComment['id'],
             'platform_post_id'    => $webhookComment['post_id'] ?? '',
@@ -322,7 +336,11 @@ class ModerationService
             'status'              => 'pending',
             'is_dev'              => $this->isDevMode() ? 1 : 0,
             'received_at'         => date('Y-m-d H:i:s'),
-        ]);
+        ];
+        if (!empty($webhookComment['parent_id']) && $this->hasParentColumn()) {
+            $row['parent_platform_id'] = (string) $webhookComment['parent_id'];
+        }
+        $commentId = DB::table('comments')->insertGetId($row);
 
         // 5b. Re-apply a known verdict for identical re-posts, without the AI.
         if ($cachedVerdict === 'approve') {

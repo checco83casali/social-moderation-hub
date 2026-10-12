@@ -11,6 +11,10 @@ Il progetto segue il [Semantic Versioning](https://semver.org/lang/it/).
 ## [Unreleased]
 
 ### Added
+- **Contesto della discussione nel dettaglio** — "Apri il contesto della discussione" mostra il riassunto del post,
+  il commento padre, fino a 3 commenti precedenti e 3 successivi sul post e le risposte, con il loro stato
+  (visibile / nascosto / in coda); gli autori sono solo pseudonimi interni (`Utente #ID`). L'id del padre viene
+  salvato dal webhook (migrazione 013) e chiesto a Facebook per i commenti più vecchi. `GET /api/comments/{id}/context`.
 - **Contesto del post per l'AI (Pro, `post_context`)** — al primo commento su un post Haiku lo riassume
   (testo, link condiviso, immagine) in due righe brevi (max 1000 caratteri); il riassunto accompagna ogni
   commento di quel post e compare, troncato, nel dettaglio del commento. Non bloccante: un errore non

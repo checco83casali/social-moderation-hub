@@ -199,6 +199,7 @@ class MetaGraphService
                 $comments[] = [
                     'id'           => $value['comment_id'] ?? $value['post_id'] ?? null,
                     'post_id'      => $value['post_id'] ?? null,
+                    'parent_id'    => $value['parent_id'] ?? null,   // commento padre (o il post se di primo livello)
                     'page_id'      => $pageId,
                     'message'      => $value['message'] ?? '',   // empty for 'edited' — fetched later
                     'from'         => ['id' => $fromId, 'name' => $fromName],
@@ -365,7 +366,7 @@ class MetaGraphService
             $response = $this->http->get($commentId, [
                 'query' => [
                     'access_token' => $pageToken,
-                    'fields'       => 'id,message,from,created_time,can_remove,is_hidden',
+                    'fields'       => 'id,message,from,created_time,can_remove,is_hidden,parent{id}',
                 ],
             ]);
             return json_decode((string) $response->getBody(), true);
