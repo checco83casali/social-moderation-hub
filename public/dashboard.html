@@ -243,6 +243,30 @@
         </div>
       </div>
 
+      <!-- Utilizzo ed efficacia delle versioni del prompt -->
+      <div class="panel" id="policy-stats-panel" style="margin-top:20px">
+        <div class="panel-head"><div class="panel-title">Utilizzo ed efficacia del prompt</div><button class="panel-action" onclick="loadPolicyStats()">↺ Aggiorna</button></div>
+        <div class="filter-bar" data-filter-group="ps-scope">
+          <span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-right:8px">Dati:</span>
+          <button class="filter-btn active" onclick="setPolicyStatsScope('all',this)">Tutti</button>
+          <button class="filter-btn"        onclick="setPolicyStatsScope('prod',this)">Produzione</button>
+          <button class="filter-btn"        onclick="setPolicyStatsScope('dev',this)">Sviluppo</button>
+          <span class="filter-count" id="policy-stats-count"></span>
+        </div>
+        <div id="policy-stats-body" style="padding:16px 20px"><div class="loading">Caricamento…</div></div>
+        <details style="margin:0 20px 18px;font-size:12px;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:10px 14px">
+          <summary style="cursor:pointer;font-weight:600;color:var(--text)">Come si leggono questi numeri</summary>
+          <div style="margin-top:8px;line-height:1.7">
+            <b>Valutazione</b>: ogni volta che l'AI ha giudicato un commento con quella versione del prompt (le risposte ripetute da archivio non contano).<br>
+            <b>Errore accertato</b>: un moderatore ha ribaltato una decisione autonoma dell'AI. <i>Troppo permissivo</i> = l'AI aveva approvato e un umano ha nascosto. <i>Troppo severo</i> = l'AI aveva nascosto e un umano ha ripristinato (anche tramite ricorso).<br>
+            <b>Efficacia</b> = 1 − errori ÷ decisioni autonome. Le decisioni mai contestate contano come corrette, quindi è una stima per eccesso finché i moderatori non rivedono tutto.<br>
+            <b>Escalation</b>: l'AI era incerta e ha passato il commento a un umano. Non è un errore: si mostra come l'umano ha poi deciso.<br>
+            <b>Fasce di confidenza</b>: in quale fascia l'AI sbaglia di più. Serve a decidere le soglie di confidenza.<br>
+            <b>Sviluppo</b>: i commenti ricevuti in modalità sviluppo. Includili per valutare il prompt prima del passaggio in produzione.
+          </div>
+        </details>
+      </div>
+
       <!-- Row 2: nuova versione del prompt (full width) -->
       <div style="margin-top:20px">
         <div class="panel">

@@ -216,6 +216,7 @@ $app->group('/api', function ($group) {
 
     // Policies
     $group->get('/policies',                   [PolicyController::class, 'index']);
+    $group->get('/policies/stats',             [PolicyController::class, 'stats']);
     $group->get('/policies/active',            [PolicyController::class, 'active']);
     $group->get('/policies/{id}',              [PolicyController::class, 'show']);
     $group->post('/policies',                  [PolicyController::class, 'create']);

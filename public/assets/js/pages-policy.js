@@ -409,6 +409,105 @@ async function loadPolicies() {
   } catch (e) { wrap.innerHTML = '<div class="empty">Errore</div>'; }
 }
 
+// ── Utilizzo ed efficacia del prompt ──────────────────────────────
+let policyStatsScope = 'all';
+let policyStatsData  = null;
+let policyStatsSel   = null;   // versione di cui si mostrano le fasce di confidenza
+
+function setPolicyStatsScope(scope, el) {
+  policyStatsScope = scope;
+  document.querySelectorAll('[data-filter-group="ps-scope"] .filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  loadPolicyStats();
+}
+
+const psPctText = v => (v === null || v === undefined) ? '—' : Math.round(v * 100) + '%';
+const psNum = n => Number(n || 0).toLocaleString('it-IT');
+// Verde ≥ 90%, ambra ≥ 75%, rosso sotto
+function psTone(eff) { return eff === null || eff === undefined ? '' : eff >= 0.9 ? 'ok' : eff >= 0.75 ? 'warn' : 'danger'; }
+
+function psDecisionBar(d, total) {
+  if (!total) return '<span style="color:var(--muted)">—</span>';
+  const seg = (n, color, label) => n ? `<span title="${label}: ${n}" style="flex:${n};background:${color}"></span>` : '';
+  return `<div style="display:flex;height:8px;border-radius:4px;overflow:hidden;min-width:90px;background:var(--bg-hover)">
+    ${seg(d.allow, 'var(--success)', 'Approvati')}${seg(d.uncertain, 'var(--warn)', 'Incerti')}${seg(d.hide + d.reportable, 'var(--danger)', 'Nascosti/segnalati')}
+  </div>
+  <div style="font-size:10.5px;color:var(--muted);margin-top:3px">${psNum(d.allow)} appr. · ${psNum(d.uncertain)} incerti · ${psNum(d.hide + d.reportable)} nasc.</div>`;
+}
+
+function psCard(label, value, sub, tone) {
+  return `<div class="stat-card"><div class="stat-label">${label}</div><div class="stat-value ${tone || ''}">${value}</div><div class="stat-sub">${sub}</div></div>`;
+}
+
+async function loadPolicyStats() {
+  const body = document.getElementById('policy-stats-body');
+  if (!body) return;
+  if (!['admin', 'supervisor'].includes(currentUserRole)) {
+    document.getElementById('policy-stats-panel').style.display = 'none';
+    return;
+  }
+  try {
+    policyStatsData = await api('/policies/stats?scope=' + policyStatsScope);
+    if (!policyStatsSel || !policyStatsData.policies.some(p => p.id === policyStatsSel)) {
+      policyStatsSel = (policyStatsData.policies.find(p => p.is_active) || policyStatsData.policies[0] || {}).id ?? null;
+    }
+    renderPolicyStats();
+  } catch (e) {
+    body.innerHTML = '<div class="empty">Errore nel caricamento</div>';
+  }
+}
+
+function renderPolicyStats() {
+  const body = document.getElementById('policy-stats-body');
+  const d = policyStatsData;
+  if (!d) return;
+  const t = d.totals;
+  document.getElementById('policy-stats-count').textContent = `${psNum(t.uses)} valutazioni`;
+  if (!t.uses) {
+    body.innerHTML = '<div class="empty">Ancora nessuna valutazione' + (policyStatsScope === 'dev' ? ' in modalità sviluppo' : policyStatsScope === 'prod' ? ' in produzione' : '') + '.</div>';
+    return;
+  }
+
+  const cards = `<div class="stats-grid" style="margin-bottom:18px">
+    ${psCard('Valutazioni', psNum(t.uses), `${psNum(t.comments)} commenti · ${psNum(t.prod_uses)} prod. · ${psNum(t.dev_uses)} sviluppo`, 'accent')}
+    ${psCard('Efficacia stimata', psPctText(t.effectiveness), `su ${psNum(t.decisive)} decisioni autonome`, psTone(t.effectiveness))}
+    ${psCard('Errori accertati', psNum(t.errors), `${psNum(t.too_permissive)} troppo permissivi · ${psNum(t.too_strict)} troppo severi`, t.errors ? 'warn' : 'success')}
+    ${psCard('Escalation a umano', psNum(t.escalated), `${psNum(t.escalated_hidden)} nascosti · ${psNum(t.escalated_visible)} approvati · ${psNum(t.escalated_pending)} in attesa`, 'warn')}
+    ${psCard('Confidenza media', psPctText(t.confidence_avg), `corrette ${psPctText(t.confidence_ok_avg)} · errori ${psPctText(t.confidence_err_avg)}`, '')}
+  </div>`;
+
+  const rows = d.policies.map(p => `
+    <tr class="ps-row ${p.id === policyStatsSel ? 'selected' : ''}" onclick="selectPolicyStats(${p.id})" style="cursor:pointer">
+      <td><div style="font-weight:600">${esc(p.name)} <span style="font-size:11px;color:var(--muted);font-weight:400">v${p.version}</span></div>
+          <div style="font-size:11px;color:var(--muted)">${p.is_active ? '<span class="badge-human">ATTIVA</span>' : 'Inattiva'}${p.last_used ? ' · ultimo uso ' + relTime(p.last_used) : ''}</div></td>
+      <td><b>${psNum(p.uses)}</b><div style="font-size:11px;color:var(--muted)">${psNum(p.prod_uses)} prod. · ${psNum(p.dev_uses)} sviluppo</div></td>
+      <td class="ps-hide-m" style="min-width:150px">${psDecisionBar(p.by_decision, p.uses)}</td>
+      <td>${p.effectiveness === null ? '—' : `<span class="chip chip-ai chip-ai--${psTone(p.effectiveness)}">${psPctText(p.effectiveness)}</span>`}</td>
+      <td>${psNum(p.errors)}<div style="font-size:11px;color:var(--muted)">${psNum(p.too_permissive)} perm. · ${psNum(p.too_strict)} sev.</div></td>
+      <td class="ps-hide-m">${psNum(p.escalated)}</td>
+      <td class="ps-hide-m">${psPctText(p.confidence_avg)}</td>
+    </tr>`).join('');
+
+  const sel = d.policies.find(p => p.id === policyStatsSel);
+  const bands = sel && sel.decisive ? `
+    <div style="margin-top:20px">
+      <div class="detail-section-title">Fasce di confidenza — ${esc(sel.name)} v${sel.version}</div>
+      <div class="ban-table-wrap"><table class="ban-table ps-table">
+        <thead><tr><th>Confidenza dell'AI</th><th>Decisioni autonome</th><th>Errori</th><th>Tasso di errore</th></tr></thead>
+        <tbody>${sel.bands.map(b => `<tr><td>${b.label}</td><td>${psNum(b.n)}</td><td>${psNum(b.errors)}</td>
+          <td>${b.error_rate === null ? '—' : `<span class="chip chip-ai chip-ai--${b.error_rate <= 0.05 ? 'ok' : b.error_rate <= 0.15 ? 'warn' : 'danger'}">${psPctText(b.error_rate)}</span>`}</td></tr>`).join('')}</tbody>
+      </table></div>
+    </div>` : '';
+
+  body.innerHTML = cards + `
+    <div class="ban-table-wrap"><table class="ban-table ps-table">
+      <thead><tr><th>Versione</th><th>Valutazioni</th><th class="ps-hide-m">Esiti dell'AI</th><th>Efficacia</th><th>Errori accertati</th><th class="ps-hide-m">Escalation</th><th class="ps-hide-m">Conf. media</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>` + bands;
+}
+
+function selectPolicyStats(id) { policyStatsSel = id; renderPolicyStats(); }
+
 async function loadActivePolicyPrompt() {
   const el = document.getElementById('active-prompt-viewer');
   if (!el) return;

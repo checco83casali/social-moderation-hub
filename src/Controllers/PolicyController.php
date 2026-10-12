@@ -6,6 +6,7 @@ namespace ModerationHub\Controllers;
 
 use Illuminate\Database\Capsule\Manager as DB;
 use ModerationHub\Services\AuditService;
+use ModerationHub\Services\PolicyStatsService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Psr7\Response;
@@ -48,6 +49,18 @@ class PolicyController
             ->toArray();
 
         return $this->json($response, $policies);
+    }
+
+    // ── GET /api/policies/stats?scope=all|prod|dev  (admin e supervisori) ──
+    /** Utilizzo ed efficacia di ogni versione del prompt, con o senza i dati della modalità sviluppo. */
+    public function stats(ServerRequestInterface $request, Response $response): ResponseInterface
+    {
+        $role = $request->getAttribute('auth_user')->role ?? '';
+        if (!in_array($role, ['admin', 'supervisor'], true)) {
+            return $this->json($response, ['error' => 'Admin or supervisor required'], 403);
+        }
+        $scope = (string) ($request->getQueryParams()['scope'] ?? 'all');
+        return $this->json($response, (new PolicyStatsService())->compute($scope));
     }
 
     // ── GET /api/policies/{id}  ──────────────────────────────────────

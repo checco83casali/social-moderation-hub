@@ -38,7 +38,7 @@ document.querySelectorAll('.nav-item[data-screen]').forEach(item => {
     if (sc === 'reportable')        { loadReportableQueue(); loadReportableArchive(); loadStats(); }
     if (sc === 'stats')             loadStatsScreen();
     if (sc === 'pages')             loadPages();
-    if (sc === 'policy')            { loadPolicies(); loadActivePolicyPrompt(); }
+    if (sc === 'policy')            { loadPolicies(); loadActivePolicyPrompt(); loadPolicyStats(); }
     if (sc === 'bans')              { loadBans(); loadBanStats(); }
     if (sc === 'banned-comments')   loadHiddenComments();
     if (sc === 'hidden-comments')   loadHiddenComments();
