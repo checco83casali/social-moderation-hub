@@ -907,3 +907,7 @@ body.sidebar-open #mobile-menu-btn { display: none !important; }
   .ps-table th, .ps-table td { padding: 10px 6px; white-space: normal; }
   .ps-table th { font-size: 9px; }
 }
+
+.ps-nowrap { white-space: nowrap; }
+.ps-nowrap .chip { margin-right: 4px; }
+@media (max-width: 640px) { .ps-nowrap { white-space: normal; } .ps-nowrap .chip { display: inline-block; margin: 0 4px 4px 0; } }

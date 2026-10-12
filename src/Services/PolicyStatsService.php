@@ -107,6 +107,8 @@ final class PolicyStatsService
                     if ($conf >= $lo && $conf < $hi) {
                         $a['bands'][$i]['n']++;
                         if ($isError) $a['bands'][$i]['errors']++;
+                        if ($permissive) $a['bands'][$i]['too_permissive']++;
+                        if ($severe)     $a['bands'][$i]['too_strict']++;
                         break;
                     }
                 }
@@ -135,7 +137,7 @@ final class PolicyStatsService
             'decisive' => 0, 'too_permissive' => 0, 'too_strict' => 0,
             'escalated' => 0, 'escalated_hidden' => 0, 'escalated_visible' => 0, 'escalated_pending' => 0,
             'conf_sum' => 0.0, 'conf_n' => 0, 'conf_ok_sum' => 0.0, 'conf_ok_n' => 0, 'conf_err_sum' => 0.0, 'conf_err_n' => 0,
-            'bands' => array_map(static fn($b) => ['label' => $b[0], 'n' => 0, 'errors' => 0], self::BANDS),
+            'bands' => array_map(static fn($b) => ['label' => $b[0], 'n' => 0, 'errors' => 0, 'too_permissive' => 0, 'too_strict' => 0], self::BANDS),
         ];
     }
 
@@ -151,7 +153,9 @@ final class PolicyStatsService
             $a[$k] += $b[$k];
         }
         foreach ($b['by_decision'] as $k => $v) { $a['by_decision'][$k] += $v; }
-        foreach ($b['bands'] as $i => $band) { $a['bands'][$i]['n'] += $band['n']; $a['bands'][$i]['errors'] += $band['errors']; }
+        foreach ($b['bands'] as $i => $band) {
+            foreach (['n', 'errors', 'too_permissive', 'too_strict'] as $k) { $a['bands'][$i][$k] += $band[$k]; }
+        }
         $a['comments'] = $a['comments'] + $b['comments'];
         foreach (['first_used' => 'min', 'last_used' => 'max'] as $k => $fn) {
             if ($b[$k] !== null) { $a[$k] = $a[$k] === null ? $b[$k] : ($fn === 'min' ? min($a[$k], $b[$k]) : max($a[$k], $b[$k])); }
@@ -189,7 +193,11 @@ final class PolicyStatsService
             'confidence_avg'     => $avg($a['conf_sum'], $a['conf_n']),
             'confidence_ok_avg'  => $avg($a['conf_ok_sum'], $a['conf_ok_n']),
             'confidence_err_avg' => $avg($a['conf_err_sum'], $a['conf_err_n']),
-            'bands'           => array_map(static fn($b) => $b + ['error_rate' => $b['n'] > 0 ? round($b['errors'] / $b['n'], 4) : null], $a['bands']),
+            'bands'           => array_map(static fn($b) => $b + [
+                'error_rate'      => $b['n'] > 0 ? round($b['errors'] / $b['n'], 4) : null,
+                'permissive_rate' => $b['n'] > 0 ? round($b['too_permissive'] / $b['n'], 4) : null,
+                'strict_rate'     => $b['n'] > 0 ? round($b['too_strict'] / $b['n'], 4) : null,
+            ], $a['bands']),
         ];
     }
 }

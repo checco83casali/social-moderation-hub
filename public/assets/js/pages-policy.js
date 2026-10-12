@@ -504,7 +504,9 @@ function renderPolicyStats() {
       <div class="ban-table-wrap"><table class="ban-table ps-table">
         <thead><tr><th>Confidenza dell'AI</th><th>Decisioni autonome</th><th>Errori</th><th>Tasso di errore</th></tr></thead>
         <tbody>${sel.bands.map(b => `<tr><td>${b.label}</td><td>${psNum(b.n)}</td><td>${psNum(b.errors)}</td>
-          <td>${b.error_rate === null ? '—' : `<span class="chip chip-ai chip-ai--${b.error_rate <= 0.05 ? 'ok' : b.error_rate <= 0.15 ? 'warn' : 'danger'}">${psPctText(b.error_rate)}</span>`}</td></tr>`).join('')}</tbody>
+          <td class="ps-nowrap">${b.n === 0 ? '—' : `
+            <span class="chip chip-ai chip-ai--danger" title="Troppo severo: l'AI aveva nascosto, un moderatore ha ripristinato — ${psNum(b.too_strict)} su ${psNum(b.n)}">severo ${psPctText(b.strict_rate)}</span>
+            <span class="chip chip-ai chip-ai--ok" title="Troppo permissivo: l'AI aveva approvato, un moderatore ha nascosto — ${psNum(b.too_permissive)} su ${psNum(b.n)}">permissivo ${psPctText(b.permissive_rate)}</span>`}</td></tr>`).join('')}</tbody>
       </table></div>
     </div>` : '';
 

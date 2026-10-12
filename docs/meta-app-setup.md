@@ -1,112 +1,114 @@
-# Meta App — Guida completa alla configurazione
+# Meta App — Complete Setup Guide
 
-Questa guida copre la creazione e configurazione dell'app Meta necessaria per
-connettere Social Moderation Hub alle pagine Facebook.
+🇬🇧 English · [🇮🇹 Italiano](meta-app-setup.it.md)
 
----
-
-## Prerequisiti
-
-- Account Meta Developer (gratuito) → [developers.facebook.com](https://developers.facebook.com)
-- Accesso admin alla pagina Facebook da moderare
-- Social Moderation Hub installato su un URL HTTPS pubblico
+This guide covers creating and configuring the Meta app needed to connect
+Social Moderation Hub to Facebook pages.
 
 ---
 
-## Step 1 — Crea l'app su Meta for Developers
+## Prerequisites
 
-1. Vai su [developers.facebook.com/apps](https://developers.facebook.com/apps)
-2. Clicca **Crea app**
-3. Scegli il tipo: **Business** (obbligatorio per le API delle pagine)
-4. Inserisci:
-   - **Nome app**: es. `Social Moderation Hub` (non viene mostrato agli utenti)
-   - **Email contatto**: la tua email
-   - **Business account**: collega il Business Manager se ce l'hai
-5. Clicca **Crea app**
+- Meta Developer account (free) → [developers.facebook.com](https://developers.facebook.com)
+- Admin access to the Facebook page you want to moderate
+- Social Moderation Hub installed on a public HTTPS URL
 
 ---
 
-## Step 2 — Recupera App ID e App Secret
+## Step 1 — Create the app on Meta for Developers
 
-1. Nella dashboard dell'app, vai su **Impostazioni → Base** (Settings → Basic)
-2. Copia:
-   - **ID app** → `META_APP_ID` nel `.env`
-   - **Chiave segreta app** → `META_APP_SECRET` nel `.env`
+1. Go to [developers.facebook.com/apps](https://developers.facebook.com/apps)
+2. Click **Create app**
+3. Choose the type: **Business** (required for the Pages APIs)
+4. Enter:
+   - **App name**: e.g. `Social Moderation Hub` (not shown to users)
+   - **Contact email**: your email
+   - **Business account**: link your Business Manager if you have one
+5. Click **Create app**
+
+---
+
+## Step 2 — Get the App ID and App Secret
+
+1. In the app dashboard, go to **Settings → Basic**
+2. Copy:
+   - **App ID** → `META_APP_ID` in `.env`
+   - **App Secret** → `META_APP_SECRET` in `.env`
 
 ```env
 META_APP_ID=123456789012345
 META_APP_SECRET=abcdef1234567890abcdef1234567890
 ```
 
-> ⚠️ La chiave segreta non va mai esposta pubblicamente. Tienila solo nel `.env` sul server.
+> ⚠️ Never expose the app secret publicly. Keep it only in the `.env` file on the server.
 
 ---
 
-## Step 3 — Aggiungi il prodotto Facebook Login
+## Step 3 — Add the Facebook Login product
 
-Facebook Login è necessario per connettere le pagine dalla dashboard.
+Facebook Login is required to connect pages from the dashboard.
 
-1. Nella barra sinistra, clicca **Aggiungi prodotto** (Add a Product)
-2. Trova **Facebook Login** → clicca **Configura**
-3. Scegli **Web**
-4. In **URI di reindirizzamento OAuth validi** aggiungi:
+1. In the left sidebar, click **Add a Product**
+2. Find **Facebook Login** → click **Set up**
+3. Choose **Web**
+4. Under **Valid OAuth Redirect URIs** add:
    ```
-   https://moderation.tuodominio.com/auth/meta/callback
+   https://moderation.yourdomain.com/auth/meta/callback
    ```
-5. Salva le modifiche
+5. Save the changes
 
-### Permessi richiesti per Facebook Login
+### Permissions required for Facebook Login
 
-Nella sezione **Facebook Login → Impostazioni**, assicurati che siano abilitati:
+In **Facebook Login → Settings**, make sure these are enabled:
 
-| Permesso | Motivo |
+| Permission | Why |
 |---|---|
-| `pages_show_list` | Elencare le pagine gestite dall'utente |
-| `pages_manage_metadata` | Leggere i metadati della pagina e gestire il webhook |
-| `pages_read_engagement` | Leggere i commenti |
-| `pages_manage_engagement` | Nascondere/eliminare commenti |
-| `pages_read_user_content` | Leggere i contenuti degli utenti sulla pagina |
+| `pages_show_list` | List the pages the user manages |
+| `pages_manage_metadata` | Read page metadata and manage the webhook |
+| `pages_read_engagement` | Read comments (and the post text, for the post-context feature) |
+| `pages_manage_engagement` | Hide/delete comments |
+| `pages_read_user_content` | Read users' content on the page |
 
-> In **modalità sviluppo** questi permessi funzionano subito per gli utenti con un ruolo nell'app.
-> Per la produzione (app in **modalità live**) è richiesta la App Review di Meta.
+> In **development mode** these permissions work immediately for users who have a role in the app.
+> For production (app in **live mode**) Meta's App Review is required.
 
 ---
 
-## Step 4 — Aggiungi il prodotto Webhooks
+## Step 4 — Add the Webhooks product
 
-Il webhook riceve in tempo reale i nuovi commenti dalla pagina Facebook.
+The webhook receives new comments from the Facebook page in real time.
 
-1. Clicca **Aggiungi prodotto** → trova **Webhooks** → **Configura**
-2. Seleziona oggetto: **Pagina** (Page)
-3. Clicca **Iscriviti a questo oggetto** (Subscribe to this object)
+1. Click **Add a Product** → find **Webhooks** → **Set up**
+2. Select the object: **Page**
+3. Click **Subscribe to this object**
 
-Compila i campi:
+Fill in the fields:
 
-- **URL di callback**: `https://moderation.tuodominio.com/webhook/meta`
-- **Token di verifica**: il valore di `META_WEBHOOK_VERIFY_TOKEN` dal tuo `.env`
+- **Callback URL**: `https://moderation.yourdomain.com/webhook/meta`
+- **Verify token**: the value of `META_WEBHOOK_VERIFY_TOKEN` from your `.env`
 
 ```env
-META_WEBHOOK_VERIFY_TOKEN=valore_casuale_che_hai_scelto
+META_WEBHOOK_VERIFY_TOKEN=the_random_value_you_chose
 ```
 
-> Il token di verifica è un valore **scelto da te** e messo sia nel `.env` che nel
-> pannello Meta — non è l'App Secret. Tienili distinti.
+> The verify token is a value **you choose** and put both in `.env` and in the
+> Meta panel — it is not the App Secret. Keep them distinct.
 
-4. Sottoscrivi i campi:
+4. Subscribe to the fields:
    - ✅ `feed`
    - ✅ `comments`
 
-5. Clicca **Verifica e salva** — se la verifica ha successo appare un segno verde.
+5. Click **Verify and save** — a green tick appears when the check succeeds.
 
 ---
 
-## Step 5 — (Opzionale) Facebook Login for Business
+## Step 5 — (Optional) Facebook Login for Business
 
-Se vuoi usare il flusso semplificato "Aggiungi pagine" dalla dashboard:
+If you want to use the simplified "Add pages" flow from the dashboard:
 
-1. Vai su **Prodotti → Facebook Login for Business**
-2. Crea una **Configurazione salvata** con i permessi elencati nello Step 3
-3. Copia l'**ID configurazione** → `.env`:
+1. Go to **Products → Facebook Login for Business**
+2. Create a **Saved configuration** with the permissions listed in Step 3
+3. Copy the **configuration ID** → `.env`:
 
 ```env
 META_FB_LOGIN_CONFIG_ID=123456789
@@ -114,58 +116,59 @@ META_FB_LOGIN_CONFIG_ID=123456789
 
 ---
 
-## Step 6 — Connetti la pagina dalla dashboard
+## Step 6 — Connect the page from the dashboard
 
-1. Apri `https://moderation.tuodominio.com/dashboard.html`
-2. Vai su **Pagine Facebook → + Connetti pagina**
-3. Segui il flusso Facebook Login
-4. Seleziona la pagina da moderare
-5. Il webhook viene sottoscritto automaticamente
-
----
-
-## Step 7 — Verifica il funzionamento
-
-Pubblica un commento di test sulla pagina Facebook. Entro pochi secondi
-deve apparire nella **Coda revisione** della dashboard.
-
-Puoi anche inviare un evento di test dalla dashboard Meta:
-**Webhooks → Pagina → Test** → seleziona `feed` → **Invia test**
+1. Open `https://moderation.yourdomain.com/dashboard.html`
+2. Go to **Facebook Pages → + Connect page**
+3. Follow the Facebook Login flow
+4. Select the page to moderate
+5. The webhook is subscribed automatically
 
 ---
 
-## Step 8 — Vai in modalità Live (produzione)
+## Step 7 — Check that it works
 
-In modalità sviluppo solo gli utenti con un ruolo nell'app possono usare i permessi.
-Per andare in produzione:
+Post a test comment on the Facebook page. Within a few seconds it
+should appear in the dashboard's **Review queue**.
 
-1. Vai su **App Review → Permessi e funzionalità**
-2. Richiedi la revisione per i permessi sopra elencati
-3. Una volta approvati, cambia l'interruttore **Modalità sviluppo → Live**
+You can also send a test event from the Meta dashboard:
+**Webhooks → Page → Test** → select `feed` → **Send test**
 
-> Per le pagine che possiedi e di cui sei admin non serve la App Review —
-> la modalità Live è sufficiente per iniziare.
+---
+
+## Step 8 — Go Live (production)
+
+In development mode only users with a role in the app can use the permissions.
+To go to production:
+
+1. Go to **App Review → Permissions and features**
+2. Request review for the permissions listed above
+3. Once approved, switch **Development mode → Live**
+
+> For pages you own and administer, App Review is not needed —
+> Live mode is enough to get started.
 
 ---
 
 ## Troubleshooting
 
-| Problema | Soluzione |
+| Problem | Solution |
 |---|---|
-| Verifica webhook fallisce | Controlla che `META_WEBHOOK_VERIFY_TOKEN` nel `.env` corrisponda esattamente a quello inserito in Meta |
-| Commenti non arrivano | Verifica che la pagina abbia il webhook attivo: colonna `webhook_verified = 1` in `connected_pages` |
-| Commenti arrivano ma non vengono moderati | C'è una policy attiva? Controlla `policies` tabella: `is_active = 1` |
-| Errori firma (`403`) | `META_APP_SECRET` corretto? Controlla `logs/app.log` |
-| `pages_manage_engagement` negato | L'app è in modalità sviluppo e l'utente non ha un ruolo nell'app |
+| Webhook verification fails | Check that `META_WEBHOOK_VERIFY_TOKEN` in `.env` matches exactly what you entered in Meta |
+| Comments do not arrive | Check that the page has the webhook active: column `webhook_verified = 1` in `connected_pages` |
+| Comments arrive but are not moderated | Is there an active policy? Check the `policies` table: `is_active = 1` |
+| Signature errors (`403`) | Is `META_APP_SECRET` correct? Check `logs/app.log` |
+| `pages_manage_engagement` denied | The app is in development mode and the user has no role in the app |
+| Post context stays empty | The page token lacks `pages_read_engagement`: reconnect the page after granting it |
 
 ---
 
-## Sicurezza webhook
+## Webhook security
 
-Ogni POST in ingresso viene validato con firma HMAC-SHA256 (`X-Hub-Signature-256`),
-confrontata in tempo costante. Richieste senza firma o con firma errata vengono
-rifiutate con HTTP 403 prima di qualsiasi elaborazione.
+Every incoming POST is validated with an HMAC-SHA256 signature (`X-Hub-Signature-256`),
+compared in constant time. Requests without a signature, or with a wrong one, are
+rejected with HTTP 403 before any processing.
 
-> `/webhook/meta` è l'unico endpoint che deve essere raggiungibile dall'internet
-> pubblico. Tutto il resto (dashboard, `/api`, login, connessione pagine) va
-> ristretto a IP interni via firewall. Vedi [deployment-security.md](deployment-security.md).
+> `/webhook/meta` is the only endpoint that must be reachable from the public
+> internet. Everything else (dashboard, `/api`, login, page connection) should be
+> restricted to internal IPs via firewall. See [deployment-security.md](deployment-security.md).
