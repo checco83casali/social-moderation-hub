@@ -265,8 +265,10 @@ function aiVerdictChip(c, who = 'AI') {
 
 // Chi ha deciso + verdetto AI. Se ha deciso l'AI basta il badge del verdetto;
 // se ha deciso un moderatore: badge verde col nome + cosa aveva detto l'AI.
-function decisionChips(c, humanLabel) {
-  if (humanLabel) return `<span class="badge-human">${humanLabel}</span> ${aiVerdictChip(c)}`;
+// Il badge del moderatore ha lo stesso stile di quello dell'AI e segue l'esito:
+// rosso se ha nascosto, verde se ha approvato.
+function decisionChips(c, humanLabel, tone = '') {
+  if (humanLabel) return `<span class="chip chip-ai ${tone ? 'chip-ai--' + tone : ''}" title="Decisione di un moderatore"><span class="ai-dot"></span>${humanLabel}</span> ${aiVerdictChip(c)}`;
   return aiVerdictChip(c) || `<span class="badge-ai">AI</span>`;
 }
 
@@ -485,7 +487,7 @@ async function loadReportableArchive() {
           <div class="bc-content">${esc(c.content)}</div>
           ${commentNotes(c)}
           <div class="bc-footer">
-            ${decisionChips(c, c.reported_by ? 'Segnalato da: ' + esc(c.reported_by) : 'Segnalato manualmente')} ${cats}
+            ${decisionChips(c, c.reported_by ? 'Segnalato da: ' + esc(c.reported_by) : 'Segnalato manualmente', 'danger')} ${cats}
             <span class="chip chip-danger">⚠️ segnalato alle autorità</span>
             <button class="btn btn-sm" style="margin-left:auto;padding:5px 12px;font-size:12px"
               onclick="downloadLegalDossier(${c.id})">📄 Scarica dossier PDF</button>
@@ -1151,7 +1153,7 @@ async function loadBannedComments() {
     if (!d.items?.length) { list.innerHTML = '<div class="empty">Nessun commento rimosso</div>'; return; }
     list.innerHTML = d.items.map(c => {
       const cats    = (c.ai_categories||[]).map(cat => categoryChip(cat)).join(' ');
-      const decider = decisionChips(c, humanDecided(c, 'hidden') ? humanLabel(c, 'Nascosto') : '');
+      const decider = decisionChips(c, humanDecided(c, 'hidden') ? humanLabel(c, 'Nascosto') : '', 'danger');
 
       // Build Facebook permalink: comment link if we have both IDs, otherwise post link
       let fbLink = '';
@@ -1223,7 +1225,7 @@ async function loadApprovedComments() {
     list.innerHTML = d.items.map(c => {
       const cats    = (c.ai_categories||[]).map(cat => categoryChip(cat)).join(' ');
       // Fact-check / whataboutism pubblicati in automatico compaiono già come segnali accanto.
-      const decider = decisionChips(c, humanDecided(c, 'visible') ? humanLabel(c, 'Approvato') : '');
+      const decider = decisionChips(c, humanDecided(c, 'visible') ? humanLabel(c, 'Approvato') : '', 'ok');
 
       let fbLink = '';
       if (c.platform_comment_id) {
@@ -1526,7 +1528,7 @@ async function loadHiddenComments() {
         : (c.is_reportable ? '<span class="chip chip-danger">⚠️ segnalabile</span>' : '');
       // Chi ha nascosto il commento: o un moderatore (nome valorizzato), o l'AI
       // (auto-hide della pipeline — caso tipico dei reportable e degli "hide" diretti).
-      const deciderBadge = decisionChips(c, humanDecided(c, 'hidden') ? humanLabel(c, 'Nascosto') : '');
+      const deciderBadge = decisionChips(c, humanDecided(c, 'hidden') ? humanLabel(c, 'Nascosto') : '', 'danger');
       const fbLink = c.platform_comment_id && c.platform_post_id
         ? `https://www.facebook.com/permalink.php?story_fbid=${(c.platform_post_id.split('_')[1]||c.platform_post_id)}&id=${c.facebook_page_id}&comment_id=${c.platform_comment_id}`
         : '';
