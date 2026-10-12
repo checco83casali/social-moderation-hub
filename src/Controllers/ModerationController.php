@@ -208,7 +208,7 @@ class ModerationController
             })
             ->toArray();
 
-        $items = $this->stripModeratorNames($request, $items);
+        $items = $this->maskUserNames($request, $this->stripModeratorNames($request, $items));
         return $this->json($response, compact('total', 'page', 'items') + ['per_page' => $limit]);
     }
 
@@ -292,6 +292,40 @@ class ModerationController
         }
         unset($row);
         return $rows;
+    }
+
+    /**
+     * Pseudonimizzazione dei nomi degli utenti social: solo gli admin vedono il nome reale.
+     * A moderatori e supervisori si restituisce "Utente #ID" (come nella coda di revisione).
+     *
+     * @param array<int, array<string, mixed>> $rows
+     * @return array<int, array<string, mixed>>
+     */
+    private function maskUserNames(ServerRequestInterface $request, array $rows): array
+    {
+        if (($request->getAttribute('auth_user')->role ?? '') === 'admin') {
+            return $rows;
+        }
+        foreach ($rows as &$row) {
+            $row = $this->maskUserRow($row);
+        }
+        unset($row);
+        return $rows;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
+    private function maskUserRow(array $row): array
+    {
+        $uid = $row['social_user_id'] ?? ($row['id'] ?? null);
+        foreach (['display_name', 'commenter_name'] as $k) {
+            if (array_key_exists($k, $row)) {
+                $row[$k] = $uid !== null ? 'Utente #' . (int) $uid : 'Utente';
+            }
+        }
+        return $row;
     }
 
     // ── GET /api/reevaluate/status  (tutti i ruoli: mostra/nasconde il comando) ──
@@ -628,6 +662,7 @@ class ModerationController
             })
             ->toArray();
 
+        $items = $this->maskUserNames($request, $items);
         return $this->json($response, [
             'total'    => $total,
             'page'     => $page,
@@ -848,7 +883,7 @@ class ModerationController
             })
             ->toArray();
 
-        $items = $this->stripModeratorNames($request, $items);
+        $items = $this->maskUserNames($request, $this->stripModeratorNames($request, $items));
         return $this->json($response, compact('total', 'page', 'items') + ['per_page' => $limit]);
     }
 
@@ -1151,7 +1186,7 @@ class ModerationController
             ->toArray();
 
         return $this->json($response, [
-            'user'            => (array) $user,
+            'user'            => $this->maskUserNames($request, [(array) $user])[0],
             'ban_status'      => $this->ban->getUserBanStatus($user->id),
             'ban_history'     => $banHistory,
             'recent_comments' => $recentComments,
@@ -1390,6 +1425,7 @@ class ModerationController
             })
             ->toArray();
 
+        $items = $this->maskUserNames($request, $items);
         return $this->json($response, [
             'total'    => $total,
             'page'     => $page,
@@ -1430,6 +1466,7 @@ class ModerationController
             })
             ->toArray();
 
+        $items = $this->maskUserNames($request, $items);
         return $this->json($response, compact('total', 'page', 'items') + ['per_page' => $limit]);
     }
 
@@ -1513,7 +1550,7 @@ class ModerationController
             })
             ->toArray();
 
-        $items = $this->stripModeratorNames($request, $items);
+        $items = $this->maskUserNames($request, $this->stripModeratorNames($request, $items));
         return $this->json($response, compact('total', 'page', 'items') + ['per_page' => $limit]);
     }
 
@@ -1623,9 +1660,9 @@ class ModerationController
             })
             ->toArray();
 
-        $comments = $this->stripModeratorNames($request, $comments);
+        $comments = $this->maskUserNames($request, $this->stripModeratorNames($request, $comments));
         return $this->json($response, [
-            'user'     => (array) $user,
+            'user'     => $this->maskUserNames($request, [(array) $user])[0],
             'comments' => $comments,
             'total'    => count($comments),
         ]);
@@ -1956,7 +1993,7 @@ class ModerationController
             })
             ->toArray();
 
-        $items = $this->stripModeratorNames($request, $items);
+        $items = $this->maskUserNames($request, $this->stripModeratorNames($request, $items));
         return $this->json($response, compact('total', 'page', 'items') + ['per_page' => $limit]);
     }
 

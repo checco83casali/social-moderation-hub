@@ -361,7 +361,11 @@ async function loadQueue() {
 const linkMap = {};
 function openLinkMenu(ev, id) {
   const href = linkMap[id];
-  openRowMenu(ev.currentTarget, href ? [{ label: 'Vedi su Facebook', icon: MENU_ICONS.link, href }] : []);
+  const items = href ? [{ label: 'Vedi su Facebook', icon: MENU_ICONS.link, href }] : [];
+  if (CONTEXT_ON && document.getElementById(`ctx-thread-${id}`)) {
+    items.push({ label: 'Contesto della discussione', icon: MENU_ICONS.check, onClick: () => toggleListContext(id) });
+  }
+  openRowMenu(ev.currentTarget, items);
 }
 
 // ── Reportable queue (dangerous content, auto-hidden by AI) ───────
@@ -531,23 +535,39 @@ function ctxGroup(title, items, role) {
   return items && items.length ? `<div class="ctx-label">${title}</div>${items.map(i => ctxItem(i, role)).join('')}` : '';
 }
 
+function ctxCurrentState(cur) {
+  if (['approved'].includes(cur.status)) return 'visible';
+  if (['hidden', 'hidden_reportable', 'removed', 'reported_legal', 'appeal_pending'].includes(cur.status)) return 'hidden';
+  return 'pending';
+}
+
+// Dalle liste (nascosti, approvati, bannati) il contesto si apre dal menù ⋯ della riga.
+function toggleListContext(id) {
+  const box = document.getElementById(`ctx-thread-${id}`);
+  if (!box) return;
+  toggleCommentContext(id, null);
+  if (!box.hidden) box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
 async function toggleCommentContext(id, btn) {
   const box = document.getElementById(`ctx-thread-${id}`);
   if (!box) return;
   const open = box.hidden;
   box.hidden = !open;
-  btn.setAttribute('aria-expanded', String(open));
-  btn.firstChild.textContent = open ? 'Chiudi il contesto della discussione ' : 'Apri il contesto della discussione ';
+  if (btn) {
+    btn.setAttribute('aria-expanded', String(open));
+    btn.firstChild.textContent = open ? 'Chiudi il contesto della discussione ' : 'Apri il contesto della discussione ';
+  }
   if (!open || box.dataset.loaded) return;
   box.innerHTML = '<div class="loading">Caricamento…</div>';
   try {
     const d = await api(`/comments/${id}/context`);
-    const cur = (queueMap[id] || hiddenMap[id] || approvedMap[id] || currentComment || {});
+    const cur = (queueMap[id] || hiddenMap[id] || approvedMap[id] || bannedMap[id] || currentComment || {});
     box.innerHTML = `
       ${d.summary ? `<div class="ctx-label">Estratto del post</div><div class="ctx-summary">${esc(d.summary)}</div>` : ''}
       ${d.parent ? ctxGroup('In risposta a', [d.parent]) : ''}
       ${ctxGroup('Commenti precedenti', d.before)}
-      ${ctxItem({ state: 'pending', text: cur.content, received_at: cur.received_at }, 'current')}
+      ${ctxItem({ state: ctxCurrentState(cur), text: cur.content, received_at: cur.received_at }, 'current')}
       ${ctxGroup('Risposte a questo commento', d.replies)}
       ${ctxGroup('Commenti successivi', d.after)}
       <div class="ctx-foot">Autori mostrati con pseudonimo interno: nomi e profili non vengono mai mostrati. Sul post ci sono ${d.total_on_post} commenti registrati.</div>`;
@@ -1236,6 +1256,7 @@ async function loadBannedComments() {
       }
 
       linkMap[c.id] = fbLink;
+      bannedMap[c.id] = c;
       return `
         <div class="bc-item">
           <div class="bc-header has-menu">
@@ -1247,6 +1268,7 @@ async function loadBannedComments() {
           </div>
           <div class="bc-content">${esc(c.content)}</div>
           ${commentNotes(c)}
+          <div class="ctx-thread" id="ctx-thread-${c.id}" hidden></div>
           <div class="bc-footer">
             ${decider} ${tagsGroup(c, cats)}
           </div>
@@ -1316,6 +1338,7 @@ async function loadApprovedComments() {
           </div>
           <div class="bc-content">${esc(c.content)}</div>
           ${commentNotes(c)}
+          <div class="ctx-thread" id="ctx-thread-${c.id}" hidden></div>
           <div class="bc-footer">
             ${decider} ${tagsGroup(c, cats)}
           </div>
@@ -1328,11 +1351,13 @@ async function loadApprovedComments() {
 
 // Commento già approvato → nascondi con avviso (solo admin/supervisor; il server lo impone).
 const approvedMap = {};
+const bannedMap = {};
 function openApprovedMenu(ev, id) {
   const c = approvedMap[id];
   if (!c) return;
   const items = [];
   if (c._fbLink) items.push({ label: 'Vedi su Facebook', icon: MENU_ICONS.link, href: c._fbLink });
+  if (CONTEXT_ON) items.push({ label: 'Contesto della discussione', icon: MENU_ICONS.check, onClick: () => toggleListContext(id) });
   if (['admin', 'supervisor'].includes(currentUserRole)) {
     items.push({ label: 'Nascondi con avviso…', icon: MENU_ICONS.hide, tone: 'warn', onClick: () => hideApprovedComment(id) });
   }
@@ -1614,6 +1639,7 @@ async function loadHiddenComments() {
           <div class="bc-content">${esc(c.content)}</div>
           ${commentNotes(c)}
           ${replyBlock}
+          <div class="ctx-thread" id="ctx-thread-${c.id}" hidden></div>
           <div class="bc-footer">
             ${deciderBadge} ${reportBadge} ${appealBadge} ${tagsGroup(c, cats)}
           </div>
@@ -1630,6 +1656,7 @@ function openHiddenMenu(ev, id) {
   if (!c) return;
   const items = [];
   if (c._fbLink) items.push({ label: 'Vedi su Facebook', icon: MENU_ICONS.link, href: c._fbLink });
+  if (CONTEXT_ON) items.push({ label: 'Contesto della discussione', icon: MENU_ICONS.check, onClick: () => toggleListContext(id) });
   if (c._canRestore) items.push({ label: 'Approva (senza risposta)…', icon: MENU_ICONS.check, tone: 'ok', onClick: () => restoreHiddenComment(id) });
   if (REEVALUATE) items.push({ label: 'Rivaluta con AI…', icon: MENU_ICONS.check, onClick: () => reevaluateComment(id) });
   if (TRAINING.active) items.push({ label: 'Inserisci nota addestramento…', icon: MENU_ICONS.check, onClick: () => addTrainingNote(id) });
