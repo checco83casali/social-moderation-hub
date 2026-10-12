@@ -52,11 +52,15 @@ button, .btn, .nav-item, .q-item, .chip-btn, .panel-action { touch-action: manip
     position: fixed; top: 0; right: 0; bottom: 0; left: var(--sidebar-w); z-index: 150;
     margin: 0; border-radius: 0; border: 0; background: var(--bg-card);
     overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
-    padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: env(safe-area-inset-bottom);
   }
+  /* L'area del notch sta DENTRO la barra fissa: se fosse padding del pannello il testo
+     ci scorrerebbe sotto, visibile sopra "‹ Coda". */
   body.detail-open #detail-panel .panel-head {
     position: sticky; top: 0; z-index: 2; background: var(--bg-card);
     display: flex; align-items: center; gap: 8px;
+    padding-top: calc(env(safe-area-inset-top) + 6px);
+    box-shadow: 0 1px 0 var(--border);
   }
   body.detail-open #detail-panel .sheet-back {
     display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 12px 0 6px;
