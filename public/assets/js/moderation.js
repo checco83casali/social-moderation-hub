@@ -252,10 +252,8 @@ function aiPctText(confidence) {
 // segnali (fact-check / whataboutism) · categorie · stati (ricorso, segnalazione).
 // Motivazione AI e note stanno sempre sotto il testo del commento.
 
-// Verdetto AI in un solo badge: "Haiku: Approvato · 97%". `who` = chi l'ha emesso
-// (Haiku/Sonnet quando ha deciso l'AI, altrimenti "AI" accanto al badge del moderatore).
+// Verdetto AI in un solo badge: "AI: Approvato · 97%" (il modello si vede nel dettaglio).
 // Vuoto se l'ultima voce del registro non ha un verdetto.
-const AI_STAGE_LABEL = { haiku: 'Haiku', sonnet: 'Sonnet', system: 'Sistema' };
 function aiVerdictChip(c, who = 'AI') {
   if (!c.ai_decision && !c.ai_confidence) return '';
   const label = { allow:'Approvato', remove:'Rimosso', uncertain:'Incerto', hide:'Nascosto', reportable:'Segnalato' }[c.ai_decision]
@@ -265,11 +263,23 @@ function aiVerdictChip(c, who = 'AI') {
   return `<span class="chip chip-ai ${tone ? 'chip-ai--' + tone : ''}" title="Valutazione AI${pct ? ' — confidenza ' + pct : ''}"><span class="ai-dot"></span>${esc(who)}${label ? ': ' + esc(label) : ''}${pct ? ` <span class="ai-pct">· ${pct}</span>` : ''}</span>`;
 }
 
-// Chi ha deciso + verdetto AI. Se ha deciso l'AI basta un badge ("Haiku: Approvato · 97%");
+// Chi ha deciso + verdetto AI. Se ha deciso l'AI basta il badge del verdetto;
 // se ha deciso un moderatore: badge verde col nome + cosa aveva detto l'AI.
 function decisionChips(c, humanLabel) {
   if (humanLabel) return `<span class="badge-human">${humanLabel}</span> ${aiVerdictChip(c)}`;
-  return aiVerdictChip(c, AI_STAGE_LABEL[c.ai_stage] || 'AI') || `<span class="badge-ai">AI</span>`;
+  return aiVerdictChip(c) || `<span class="badge-ai">AI</span>`;
+}
+
+// Ha deciso un umano? Sì se il registro lo dice, ma anche quando l'esito finale contraddice
+// il verdetto dell'AI (es. nascosto ma l'AI aveva approvato): l'AI da sola non l'avrebbe fatto.
+function humanDecided(c, finalOutcome) {
+  if (c.decided_by === 'human' || c.hidden_by_human || c.human_decision) return true;
+  if (!c.ai_decision) return false;
+  const aiHid = ['hide', 'remove', 'reportable'].includes(c.ai_decision);
+  return finalOutcome === 'hidden' ? !aiHid : c.ai_decision !== 'allow';
+}
+function humanName(c) {
+  return esc(c.decided_by_name || 'un moderatore');
 }
 
 function commentNotes(c) {
@@ -279,7 +289,7 @@ function commentNotes(c) {
 
 function queueAiChips(item) {
   const cats = (item.ai_categories || []).slice(0, 2).map(cat => categoryChip(cat)).join(' ');
-  return `${aiVerdictChip(item, AI_STAGE_LABEL[item.ai_stage] || 'AI')} ${cats}`;
+  return `${aiVerdictChip(item)} ${cats}`;
 }
 
 // ── Queue (uncertain AI decisions only) ──────────────────────────
@@ -1139,7 +1149,7 @@ async function loadBannedComments() {
     if (!d.items?.length) { list.innerHTML = '<div class="empty">Nessun commento rimosso</div>'; return; }
     list.innerHTML = d.items.map(c => {
       const cats    = (c.ai_categories||[]).map(cat => categoryChip(cat)).join(' ');
-      const decider = decisionChips(c, c.decided_by === 'human' ? 'Umano' + (c.decided_by_name ? ': ' + esc(c.decided_by_name) : '') : '');
+      const decider = decisionChips(c, humanDecided(c, 'hidden') ? 'Nascosto da: ' + humanName(c) : '');
 
       // Build Facebook permalink: comment link if we have both IDs, otherwise post link
       let fbLink = '';
@@ -1211,7 +1221,7 @@ async function loadApprovedComments() {
     list.innerHTML = d.items.map(c => {
       const cats    = (c.ai_categories||[]).map(cat => categoryChip(cat)).join(' ');
       // Fact-check / whataboutism pubblicati in automatico compaiono già come segnali accanto.
-      const decider = decisionChips(c, c.decided_by === 'human' ? 'Umano' + (c.decided_by_name ? ': ' + esc(c.decided_by_name) : '') : '');
+      const decider = decisionChips(c, humanDecided(c, 'visible') ? 'Approvato da: ' + humanName(c) : '');
 
       let fbLink = '';
       if (c.platform_comment_id) {
@@ -1514,7 +1524,7 @@ async function loadHiddenComments() {
         : (c.is_reportable ? '<span class="chip chip-danger">⚠️ segnalabile</span>' : '');
       // Chi ha nascosto il commento: o un moderatore (nome valorizzato), o l'AI
       // (auto-hide della pipeline — caso tipico dei reportable e degli "hide" diretti).
-      const deciderBadge = decisionChips(c, c.hidden_by_human ? 'Nascosto da: ' + esc(c.decided_by_name || 'un moderatore') : '');
+      const deciderBadge = decisionChips(c, humanDecided(c, 'hidden') ? 'Nascosto da: ' + humanName(c) : '');
       const fbLink = c.platform_comment_id && c.platform_post_id
         ? `https://www.facebook.com/permalink.php?story_fbid=${(c.platform_post_id.split('_')[1]||c.platform_post_id)}&id=${c.facebook_page_id}&comment_id=${c.platform_comment_id}`
         : '';
