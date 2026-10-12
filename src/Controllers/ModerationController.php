@@ -208,6 +208,7 @@ class ModerationController
             })
             ->toArray();
 
+        $items = $this->stripModeratorNames($request, $items);
         return $this->json($response, compact('total', 'page', 'items') + ['per_page' => $limit]);
     }
 
@@ -267,6 +268,30 @@ class ModerationController
             'comment_id'  => $commentId,
             'dossier_url' => '/api/comments/' . $commentId . '/legal-dossier',
         ]);
+    }
+
+    /**
+     * Il nome di chi ha deciso è visibile solo a supervisori e admin: ai moderatori si
+     * restituisce null (l'interfaccia mostra "un moderatore"). I flag derivati restano.
+     *
+     * @param array<int, array<string, mixed>> $rows
+     * @return array<int, array<string, mixed>>
+     */
+    private function stripModeratorNames(ServerRequestInterface $request, array $rows): array
+    {
+        $role = $request->getAttribute('auth_user')->role ?? '';
+        if (in_array($role, ['admin', 'supervisor'], true)) {
+            return $rows;
+        }
+        foreach ($rows as &$row) {
+            foreach (['decided_by_name', 'reported_by'] as $k) {
+                if (array_key_exists($k, $row)) {
+                    $row[$k] = null;
+                }
+            }
+        }
+        unset($row);
+        return $rows;
     }
 
     // ── GET /api/reevaluate/status  (tutti i ruoli: mostra/nasconde il comando) ──
@@ -701,6 +726,7 @@ class ModerationController
             })
             ->toArray();
 
+        $items = $this->stripModeratorNames($request, $items);
         return $this->json($response, compact('total', 'page', 'items') + ['per_page' => $limit]);
     }
 
@@ -1338,6 +1364,7 @@ class ModerationController
             })
             ->toArray();
 
+        $items = $this->stripModeratorNames($request, $items);
         return $this->json($response, compact('total', 'page', 'items') + ['per_page' => $limit]);
     }
 
@@ -1447,6 +1474,7 @@ class ModerationController
             })
             ->toArray();
 
+        $comments = $this->stripModeratorNames($request, $comments);
         return $this->json($response, [
             'user'     => (array) $user,
             'comments' => $comments,
@@ -1779,6 +1807,7 @@ class ModerationController
             })
             ->toArray();
 
+        $items = $this->stripModeratorNames($request, $items);
         return $this->json($response, compact('total', 'page', 'items') + ['per_page' => $limit]);
     }
 
