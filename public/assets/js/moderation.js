@@ -247,6 +247,15 @@ function aiPctText(confidence) {
   return confidence ? Math.round(confidence * 100) + '%' : '';
 }
 
+// Percentuale di confidenza AI nello stesso stile ovunque (code, approvati, nascosti, dettaglio).
+// `fallbackTone` vale quando la lista non porta la decisione dell'AI.
+function aiConfBadge(c, fallbackTone = '') {
+  const pct = aiPctText(c.ai_confidence);
+  if (!pct) return '';
+  const tone = aiTone(c.ai_decision) || fallbackTone;
+  return `<span class="bc-conf"><span class="ai-pct ai-pct--lg ${tone ? 'chip-ai--' + tone : ''}" title="Confidenza dell'AI">${pct}</span></span>`;
+}
+
 function queueAiChips(item) {
   const label = { allow:'Approvato', remove:'Rimosso', uncertain:'Incerto', hide:'Nascosto', reportable:'Segnalato' }[item.ai_decision]
     || item.ai_decision || 'AI';
@@ -1143,7 +1152,7 @@ async function loadBannedComments() {
           <div class="bc-footer">
             ${decider} ${aiSignalChips(c)} ${cats}
             ${c.ai_reason ? `<span style="font-size:11px;color:var(--muted);flex-basis:100%;margin-top:4px">${esc(c.ai_reason)}</span>` : ''}
-            <span class="bc-conf">${conf}</span>
+            ${aiConfBadge(c, 'danger')}
           </div>
         </div>`;
     }).join('');
@@ -1221,7 +1230,7 @@ async function loadApprovedComments() {
             ${decider} ${aiSignalChips(c)} ${cats}
             ${c.ai_reason ? `<span style="font-size:11px;color:var(--muted);flex-basis:100%;margin-top:4px">${esc(c.ai_reason)}</span>` : ''}
             ${c.human_note ? `<span style="font-size:11px;color:var(--muted);flex-basis:100%;margin-top:2px">📝 ${esc(c.human_note)}</span>` : ''}
-            <span class="bc-conf">${conf}</span>
+            ${aiConfBadge(c, 'ok')}
           </div>
         </div>`;
     }).join('');
@@ -1523,6 +1532,7 @@ async function loadHiddenComments() {
           ${replyBlock}
           <div class="bc-footer" style="margin-top:10px">
             ${aiSignalChips(c)} ${cats}
+            ${aiConfBadge(c, 'danger')}
           </div>
         </div>`;
     }).join('');

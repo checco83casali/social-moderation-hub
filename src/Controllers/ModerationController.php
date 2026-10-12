@@ -669,6 +669,7 @@ class ModerationController
                 'c.platform_comment_id', 'c.platform_post_id',
                 'su.id as social_user_id', 'su.display_name', 'su.violation_count',
                 'cp.page_name', 'cp.page_id as facebook_page_id',
+                'ml.ai_decision', 'ml.ai_confidence',
                 'ml.ai_reason', 'ml.ai_public_reason', 'ml.ai_categories', 'ml.ai_severity',
                 'ml.removal_reply_text', 'ml.human_decision',
                 'ml.ai_fact_check_suggested', 'ml.ai_fact_check_confidence',
