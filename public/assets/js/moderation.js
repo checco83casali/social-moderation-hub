@@ -1585,13 +1585,19 @@ function openHiddenMenu(ev, id) {
 
 // Commento nascosto → approva senza risposta: torna visibile e scala 1 violazione (solo admin/supervisor).
 async function restoreHiddenComment(id) {
-  if (!(await confirmDialog({
+  const r = await confirmDialogEx({
     title: 'Approvare il commento nascosto?',
     message: 'Il commento tornerà visibile e all\'utente verrà scalata 1 violazione (l\'eventuale ban innescato da questo commento viene revocato).\n\nNessuna risposta verrà pubblicata.',
     confirmLabel: 'Approva senza risposta',
-  }))) return;
+    // Con l'addestramento attivo la nota interna serve anche a correggere l'AI: la chiediamo qui.
+    noteLabel: TRAINING.active ? 'Nota interna — usata per l\'addestramento dell\'AI' : '',
+    noteMin: TRAINING.min_note_chars || 15,
+  });
+  if (!r.ok) return;
   try {
-    const res = await decideCall(id, { decision: 'restore', note: 'Approvato senza risposta da supervisore (ripristino)' });
+    const payload = { decision: 'restore', note: r.note || 'Approvato senza risposta da supervisore (ripristino)' };
+    if (r.note) payload.training_note = r.note;
+    const res = await decideCall(id, payload);
     if (res && res.dev_mode) toast('Dev mode attivo: nessuna azione reale su Facebook', 'err');
     else toast('Commento approvato e ripristinato', 'ok');
     document.getElementById(`hc-${id}`)?.remove();

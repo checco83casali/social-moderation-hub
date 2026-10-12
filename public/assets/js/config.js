@@ -324,7 +324,14 @@ function openRowMenu(anchor, items) {
 
 // Modale di conferma: sostituisce window.confirm. Uso: if (!(await confirmDialog({...}))) return;
 // Esc / clic fuori / Annulla → false. Per le azioni "danger" il focus parte su Annulla.
-function confirmDialog({ title = 'Confermi?', message = '', confirmLabel = 'Conferma', cancelLabel = 'Annulla', danger = false } = {}) {
+// Conferma semplice: true/false.
+async function confirmDialog(opts = {}) {
+  return (await confirmDialogEx(opts)).ok;
+}
+
+// Conferma con campo nota opzionale (`noteLabel`): restituisce { ok, note }.
+// Se la nota è scritta deve avere almeno `noteMin` caratteri, altrimenti il dialogo resta aperto.
+function confirmDialogEx({ title = 'Confermi?', message = '', confirmLabel = 'Conferma', cancelLabel = 'Annulla', danger = false, noteLabel = '', noteMin = 15 } = {}) {
   return new Promise(resolve => {
     const overlay = document.createElement('div');
     overlay.setAttribute('role', 'dialog');
@@ -342,6 +349,24 @@ function confirmDialog({ title = 'Confermi?', message = '', confirmLabel = 'Conf
     p.style.cssText = 'font-size:13px;color:var(--muted);line-height:1.6;white-space:pre-line';
     p.textContent = message;
 
+    let noteEl = null, noteErr = null;
+    const noteWrap = document.createElement('div');
+    if (noteLabel) {
+      noteWrap.style.cssText = 'margin-top:14px';
+      const lbl = document.createElement('div');
+      lbl.style.cssText = 'font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px';
+      lbl.textContent = noteLabel;
+      noteEl = document.createElement('textarea');
+      noteEl.className = 'form-textarea';
+      noteEl.rows = 3;
+      noteEl.style.cssText = 'width:100%;box-sizing:border-box;min-height:72px';
+      noteEl.placeholder = `Almeno ${noteMin} caratteri…`;
+      noteErr = document.createElement('div');
+      noteErr.style.cssText = 'display:none;font-size:11.5px;color:var(--danger);margin-top:4px';
+      noteErr.textContent = `La nota deve avere almeno ${noteMin} caratteri (oppure lasciala vuota).`;
+      noteWrap.append(lbl, noteEl, noteErr);
+    }
+
     const row = document.createElement('div');
     row.style.cssText = 'display:flex;gap:10px;justify-content:flex-end;margin-top:22px';
 
@@ -353,27 +378,34 @@ function confirmDialog({ title = 'Confermi?', message = '', confirmLabel = 'Conf
     if (danger) ok.style.cssText = 'background:var(--danger);border-color:var(--danger);color:#fff';
 
     row.append(cancel, ok);
-    box.append(h, p, row);
+    box.append(h, p, noteWrap, row);
     overlay.append(box);
 
     const done = (value) => {
       document.removeEventListener('keydown', onKey, true);
+      const note = noteEl ? noteEl.value.trim() : '';
       overlay.remove();
-      resolve(value);
+      resolve({ ok: value, note: value ? note : '' });
     };
     const onKey = (e) => {
       if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); done(false); }
-      else if (e.key === 'Tab') {                       // focus intrappolato tra i due pulsanti
+      else if (e.key === 'Tab' && !noteEl) {            // focus intrappolato tra i due pulsanti
         e.preventDefault();
         (document.activeElement === ok ? cancel : ok).focus();
       }
     };
     cancel.addEventListener('click', () => done(false));
-    ok.addEventListener('click', () => done(true));
-    overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) done(false); });
+    ok.addEventListener('click', () => {
+      if (noteEl) {
+        const n = noteEl.value.trim();
+        if (n !== '' && n.length < noteMin) { noteErr.style.display = 'block'; noteEl.focus(); return; }
+      }
+      done(true);
+    });
+    overlay.addEventListener('mousedown', (e) => { if (e.target === overlay && !(noteEl && noteEl.value.trim())) done(false); });
     document.addEventListener('keydown', onKey, true);
 
     document.body.appendChild(overlay);
-    (danger ? cancel : ok).focus();
+    (noteEl ? noteEl : (danger ? cancel : ok)).focus();
   });
 }
