@@ -815,6 +815,19 @@ class ModerationController
                 'is_dev'       => 1,
                 'processed_at' => date('Y-m-d H:i:s'),
             ]);
+            // Anche in modalità sviluppo la decisione umana resta nel registro: serve alle statistiche
+            // del prompt e al training. Si aggiorna l'ultima valutazione, come nel flusso reale.
+            $lastLog = DB::table('moderation_log')->where('comment_id', (int) $args['id'])
+                ->whereRaw("COALESCE(final_action, '') <> 'comment_edited'")->orderByDesc('id')->first();
+            if ($lastLog) {
+                DB::table('moderation_log')->where('id', $lastLog->id)->update([
+                    'human_user_id'    => $auth->sub ?? null,
+                    'human_decision'   => match ($decision) { 'allow' => 'allow', 'hide', 'keep_hidden' => 'hide', default => 'unhide' },
+                    'human_note'       => (string) ($body['note'] ?? ''),
+                    'human_decided_at' => date('Y-m-d H:i:s'),
+                    'final_action'     => $status === 'hidden' || $status === 'hidden_reportable' ? 'hidden' : 'approved',
+                ]);
+            }
             $this->auditDecision($auth, $requested, (int) $args['id'], $auditUserId, $commentStatus, $violBefore, $body, null, null, true);
             $devResult = [
                 'dev_mode' => true,

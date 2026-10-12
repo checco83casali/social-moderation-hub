@@ -41,6 +41,41 @@ $policy  = $DB::table('policies')->where('is_active', 1)->first();
 $appUrl  = rtrim($DB::table('app_settings')->where('key', 'app_url')->value('value') ?? '', '/');
 $orgName = $DB::table('app_settings')->where('key', 'privacy_org_name')->value('value') ?? '';
 
+// ── Statistiche di utilizzo ed efficacia (cache 15 minuti: la pagina è pubblica) ──
+/**
+ * Riepilogo della versione attiva del prompt, comprensivo dei dati della fase di test.
+ * Se la versione attiva non ha ancora valutazioni si usano i totali di tutte le versioni.
+ *
+ * @return array<string,mixed>|null
+ */
+function publicPolicyStats(string $dbClass, ?object $policy): ?array
+{
+    if (!$policy) return null;
+    try {
+        $row = $dbClass::table('app_settings')->where('key', 'policy_stats_public')->first();
+        if ($row) {
+            $cached = json_decode((string) $row->value, true);
+            if (is_array($cached) && ($cached['policy_id'] ?? 0) === (int) $policy->id && (time() - (int) ($cached['at'] ?? 0)) < 900) {
+                return $cached['data'];
+            }
+        }
+        $all = (new \ModerationHub\Services\PolicyStatsService())->compute('all');
+        $mine = null;
+        foreach ($all['policies'] as $p) { if ($p['id'] === (int) $policy->id) { $mine = $p; break; } }
+        $useTotals = !$mine || $mine['uses'] === 0;
+        $data = ($useTotals ? $all['totals'] : $mine) + ['all_versions' => $useTotals];
+        $dbClass::table('app_settings')->updateOrInsert(
+            ['key' => 'policy_stats_public'],
+            ['value' => json_encode(['at' => time(), 'policy_id' => (int) $policy->id, 'data' => $data])],
+        );
+        return $data;
+    } catch (\Throwable) {
+        return null;   // tabelle non migrate o DB non raggiungibile: la pagina resta senza riepilogo
+    }
+}
+
+$stats = publicPolicyStats($DB, $policy);
+
 // ── JSON mode ─────────────────────────────────────────────────────
 if (!empty($jsonMode)) {
     if (!$policy) {
@@ -53,6 +88,18 @@ if (!empty($jsonMode)) {
             'description'  => $policy->description,
             'version'      => $policy->version,
             'activated_at' => $policy->updated_at,
+        ],
+        'statistics' => $stats === null ? null : [
+            'scope'               => !empty($stats['all_versions']) ? 'all_versions' : 'active_version',
+            'evaluations'         => $stats['uses'],
+            'comments'            => $stats['comments'],
+            'autonomous_decisions' => $stats['decisive'],
+            'estimated_effectiveness' => $stats['effectiveness'],
+            'overturned_by_moderator' => $stats['errors'],
+            'too_permissive'      => $stats['too_permissive'],
+            'too_strict'          => $stats['too_strict'],
+            'escalated_to_human'  => $stats['escalated'],
+            'average_confidence'  => $stats['confidence_avg'],
         ],
         'moderation_rules' => \ModerationHub\Services\ClaudeService::stripComments($policy->moderation_prompt),
         'pipeline' => [
@@ -209,6 +256,14 @@ $promptHtml = promptToHtml($promptRaw);
     .info strong { color:var(--text); }
 
     /* Pipeline */
+    .kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:.75rem; }
+    .kpi  { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:.9rem 1rem; }
+    .kpi-l { font-size:11.5px; color:var(--muted); margin-bottom:6px; }
+    .kpi-v { font-size:24px; font-weight:600; letter-spacing:-.5px; }
+    .kpi-v.ok { color:var(--success); } .kpi-v.warn { color:var(--warn); } .kpi-v.acc { color:var(--accent); }
+    .kpi-s { font-size:11px; color:var(--muted); margin-top:4px; line-height:1.4; }
+    .kpi-note { font-size:11.5px; color:var(--muted); line-height:1.6; margin-bottom:2rem; }
+    @media(max-width:700px){ .kpis { grid-template-columns:repeat(2,1fr); } }
     .pipeline { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:2rem; }
     .ps-step  { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius);
                  padding:1rem; text-align:center; }
@@ -276,6 +331,28 @@ $promptHtml = promptToHtml($promptRaw);
     <span class="badge b-dim">Policy: <?= $policyName ?> v<?= $policyVersion ?></span>
     <span class="badge b-dim">Aggiornata: <?= $policyDate ?></span>
   </div>
+
+  <?php if ($stats !== null && $stats['uses'] > 0):
+      $n   = static fn($v) => number_format((float) $v, 0, ',', '.');
+      $pct = static fn($v) => $v === null ? '—' : round((float) $v * 100) . '%';
+      $eff = $stats['effectiveness'];
+      $effClass = $eff === null ? '' : ($eff >= 0.9 ? 'ok' : ($eff >= 0.75 ? 'warn' : ''));
+  ?>
+  <div class="kpis">
+    <div class="kpi"><div class="kpi-l">Commenti valutati</div><div class="kpi-v acc"><?= $n($stats['uses']) ?></div>
+      <div class="kpi-s"><?= !empty($stats['all_versions']) ? 'con tutte le versioni del prompt' : 'con questa versione del prompt' ?></div></div>
+    <div class="kpi"><div class="kpi-l">Efficacia stimata</div><div class="kpi-v <?= $effClass ?>"><?= $pct($eff) ?></div>
+      <div class="kpi-s">su <?= $n($stats['decisive']) ?> decisioni prese dall'AI in autonomia</div></div>
+    <div class="kpi"><div class="kpi-l">Decisioni corrette da un moderatore</div><div class="kpi-v"><?= $n($stats['errors']) ?></div>
+      <div class="kpi-s"><?= $n($stats['too_permissive']) ?> troppo permissive · <?= $n($stats['too_strict']) ?> troppo severe</div></div>
+    <div class="kpi"><div class="kpi-l">Confidenza media dell'AI</div><div class="kpi-v"><?= $pct($stats['confidence_avg']) ?></div>
+      <div class="kpi-s"><?= $n($stats['escalated']) ?> casi incerti passati a un moderatore</div></div>
+  </div>
+  <p class="kpi-note">
+    I dati comprendono anche la fase di test. L'efficacia è una stima: le decisioni dell'AI che nessun moderatore
+    ha contestato sono considerate corrette. I casi incerti non sono errori: vengono sempre decisi da una persona.
+  </p>
+  <?php endif; ?>
 
   <div class="info">
     <strong>Perché questa pagina?</strong><br>

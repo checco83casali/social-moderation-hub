@@ -12,9 +12,11 @@ use Illuminate\Database\Capsule\Manager as DB;
  * Una "valutazione" è una riga del registro con un verdetto emesso da un modello Claude
  * (le risposte in cache e le righe di sistema sono escluse).
  *
- * Errore accertato = un moderatore ha ribaltato una decisione autonoma dell'AI:
- *   - troppo permissivo: l'AI aveva approvato, un umano ha nascosto
- *   - troppo severo:     l'AI aveva nascosto (o segnalato), un umano ha ripristinato (anche via ricorso)
+ * Errore accertato = lo stato finale del commento contraddice l'ultima decisione autonoma dell'AI,
+ * cioè un moderatore l'ha ribaltata:
+ *   - troppo permissivo: l'AI aveva approvato, il commento è stato nascosto
+ *   - troppo severo:     l'AI aveva nascosto (o segnalato), il commento è stato ripristinato (anche via ricorso)
+ * Si guarda solo l'ultima valutazione AI di ogni commento: le precedenti sono state sostituite.
  * Le valutazioni "incerto" non sono errori: sono escalation, con l'esito deciso dall'umano.
  * Efficacia = 1 − errori / decisioni autonome. Le decisioni mai contestate contano come corrette.
  */
@@ -36,9 +38,6 @@ final class PolicyStatsService
     {
         $scope = in_array($scope, self::SCOPES, true) ? $scope : 'all';
 
-        $humanTouched = array_flip(array_map('intval',
-            DB::table('moderation_log')->whereNotNull('human_decision')->distinct()->pluck('comment_id')->all()));
-
         $query = DB::table('moderation_log as ml')
             ->join('comments as c', 'c.id', '=', 'ml.comment_id')
             ->where('ml.ai_model', 'like', 'claude%')
@@ -50,22 +49,30 @@ final class PolicyStatsService
 
         /** @var array<int, array<string,mixed>> $acc */
         $acc = [];
+        /** @var array<int, object> $latest ultima valutazione AI di ogni commento: è l'unica che si confronta con l'esito */
+        $latest = [];
         foreach ($query->cursor() as $row) {
             $pid = (int) $row->policy_id;
             if (!isset($acc[$pid])) {
                 $acc[$pid] = $this->blank();
             }
             $a = &$acc[$pid];
-
             $a['uses']++;
             $a['comments'][(int) $row->comment_id] = true;
             $a[((int) $row->is_dev) === 1 ? 'dev_uses' : 'prod_uses']++;
             $a['first_used'] = $a['first_used'] === null || $row->created_at < $a['first_used'] ? $row->created_at : $a['first_used'];
             $a['last_used']  = $a['last_used']  === null || $row->created_at > $a['last_used']  ? $row->created_at : $a['last_used'];
+            unset($a);
+            $latest[(int) $row->comment_id] = $row;
+        }
 
+        // Efficacia: l'ultima valutazione AI di ogni commento contro il suo stato finale.
+        // Se l'esito contraddice l'AI è stato un umano a cambiarlo (nascondere, ripristinare, accogliere
+        // un ricorso): vale anche in modalità sviluppo, dove le decisioni non lasciano righe "umane".
+        foreach ($latest as $row) {
+            $a = &$acc[(int) $row->policy_id];
             $decision = (string) $row->ai_decision;
             $conf     = $row->ai_confidence !== null ? (float) $row->ai_confidence : null;
-            $touched  = isset($humanTouched[(int) $row->comment_id]);
             $status   = (string) $row->status;
             $hidden   = in_array($status, self::HIDDEN_STATUSES, true);
             $visible  = in_array($status, self::VISIBLE_STATUSES, true);
@@ -75,9 +82,9 @@ final class PolicyStatsService
             if ($decision === 'uncertain') {
                 $a['by_decision']['uncertain']++;
                 $a['escalated']++;
-                if ($touched && $hidden)       $a['escalated_hidden']++;
-                elseif ($touched && $visible)  $a['escalated_visible']++;
-                else                           $a['escalated_pending']++;
+                if ($hidden)       $a['escalated_hidden']++;
+                elseif ($visible)  $a['escalated_visible']++;
+                else               $a['escalated_pending']++;
                 unset($a);
                 continue;
             }
@@ -86,8 +93,8 @@ final class PolicyStatsService
             $a['by_decision'][$isAllow ? 'allow' : ($decision === 'reportable' ? 'reportable' : 'hide')]++;
             $a['decisive']++;
 
-            $permissive = $isAllow && $touched && $hidden;
-            $severe     = !$isAllow && $touched && $visible;
+            $permissive = $isAllow && $hidden;
+            $severe     = !$isAllow && $visible;
             if ($permissive) $a['too_permissive']++;
             if ($severe)     $a['too_strict']++;
             $isError = $permissive || $severe;
