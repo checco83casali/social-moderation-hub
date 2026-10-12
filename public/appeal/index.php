@@ -143,13 +143,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $comment && !$alreadyAppealed && !$
 
 // ── Render ─────────────────────────────────────────────────────────────────
 $siteName = $_ENV['SITE_NAME'] ?? 'Moderation Hub';
+// Nome dell'organizzazione (Impostazioni → Privacy): "Organizzazione – Moderation Hub"
+$orgName = '';
+try {
+    $orgName = trim((string) (DB::table('app_settings')->where('key', 'privacy_org_name')->value('value') ?? ''));
+} catch (\Throwable) {}
+$brandTitle = $orgName !== '' ? $orgName . ' – ' . $siteName : $siteName;
+$footerName = $orgName !== '' ? $orgName : $siteName;
 ?>
 <!DOCTYPE html>
 <html lang="it">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ricorso commento – <?= h($siteName) ?></title>
+  <title>Ricorso commento – <?= h($brandTitle) ?></title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="icon" type="image/png" sizes="192x192" href="/pwa/icon/192.png">
 <link rel="apple-touch-icon" href="/pwa/icon/apple.png">
   <style>
@@ -176,13 +184,16 @@ $siteName = $_ENV['SITE_NAME'] ?? 'Moderation Hub';
     }
 
     .logo {
-      font-size: 13px;
-      font-weight: 600;
-      color: #6b7280;
-      text-transform: uppercase;
-      letter-spacing: .08em;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #374151;
+      line-height: 1.3;
       margin-bottom: 28px;
     }
+    .logo img { width: 36px; height: 36px; flex: none; border-radius: 9px; }
 
     h1 {
       font-size: 22px;
@@ -300,7 +311,7 @@ $siteName = $_ENV['SITE_NAME'] ?? 'Moderation Hub';
 </head>
 <body>
 <div class="card">
-  <div class="logo"><?= h($siteName) ?></div>
+  <div class="logo"><img src="/favicon.svg" alt="" width="36" height="36"><span><?= h($brandTitle) ?></span></div>
 
   <?php if ($error): ?>
     <h1>Link non valido</h1>
@@ -349,7 +360,7 @@ $siteName = $_ENV['SITE_NAME'] ?? 'Moderation Hub';
   <?php endif; ?>
 
   <div class="footer">
-    Questo sistema di moderazione è gestito dalla redazione di <?= h($siteName) ?>.<br>
+    Questo sistema di moderazione è gestito dalla redazione di <?= h($footerName) ?>.<br>
     Le decisioni di moderazione seguono le nostre <a href="/privacy" style="color:#6366f1">linee guida della community</a>.
   </div>
 </div>
