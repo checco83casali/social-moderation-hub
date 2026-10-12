@@ -782,23 +782,22 @@ class ModerationController
 
         // Training AI (Pro): se la raccolta è attiva e questa decisione rinforza o corregge il
         // verdetto dell'AI serve una nota. Controllo PRIMA di applicare qualsiasi cosa.
+        // Vale anche in modalità sviluppo: la raccolta di note non tocca Facebook.
         $trainingNote = null;
-        if (!$this->isDevMode()) {
-            try {
-                $need = $this->training->requirementFor((int) $args['id'], $decision, (string) ($auth->role ?? ''));
-            } catch (\Throwable) {
-                $need = null;   // tabelle non ancora migrate: nessun obbligo
-            }
-            if ($need !== null) {
-                $trainingNote = trim((string) ($body['training_note'] ?? ''));
-                if (mb_strlen($trainingNote) < AiTrainingService::MIN_NOTE_CHARS) {
-                    return $this->json($response, [
-                        'error'     => 'Serve una nota di addestramento (almeno ' . AiTrainingService::MIN_NOTE_CHARS . ' caratteri): spiega perché rinforzi o correggi la decisione dell\'AI.',
-                        'code'      => 'training_note_required',
-                        'kind'      => $need['kind'],
-                        'min_chars' => AiTrainingService::MIN_NOTE_CHARS,
-                    ], 422);
-                }
+        try {
+            $need = $this->training->requirementFor((int) $args['id'], $decision, (string) ($auth->role ?? ''));
+        } catch (\Throwable) {
+            $need = null;   // tabelle non ancora migrate: nessun obbligo
+        }
+        if ($need !== null) {
+            $trainingNote = trim((string) ($body['training_note'] ?? ''));
+            if (mb_strlen($trainingNote) < AiTrainingService::MIN_NOTE_CHARS) {
+                return $this->json($response, [
+                    'error'     => 'Serve una nota di addestramento (almeno ' . AiTrainingService::MIN_NOTE_CHARS . ' caratteri): spiega perché rinforzi o correggi la decisione dell\'AI.',
+                    'code'      => 'training_note_required',
+                    'kind'      => $need['kind'],
+                    'min_chars' => AiTrainingService::MIN_NOTE_CHARS,
+                ], 422);
             }
         }
 
@@ -817,11 +816,12 @@ class ModerationController
                 'processed_at' => date('Y-m-d H:i:s'),
             ]);
             $this->auditDecision($auth, $requested, (int) $args['id'], $auditUserId, $commentStatus, $violBefore, $body, null, null, true);
-            return $this->json($response, [
+            $devResult = [
                 'dev_mode' => true,
                 'action'   => $status,
                 'note'     => 'Dev mode active — no real action taken.',
-            ]);
+            ];
+            return $this->json($response, $devResult + $this->saveDecisionTraining($auth, (int) $args['id'], $decision, $trainingNote));
         }
 
         // Testo dell'avviso scritto dal moderatore (solo nascondimento con avviso).
@@ -849,20 +849,34 @@ class ModerationController
 
         $this->auditDecision($auth, $requested, (int) $args['id'], $auditUserId, $commentStatus, $violBefore, $body, $replyText, $result, false);
 
-        if ($trainingNote !== null && !isset($result['error'])) {
-            try {
-                $outcome = in_array($decision, ['allow', 'unhide', 'restore'], true) ? 'visible' : 'hidden';
-                $rec = $this->training->record((int) $args['id'], isset($auth->sub) ? (int) $auth->sub : null, $trainingNote, $outcome, false);
-                AuditService::log($auth, 'ai_training.note', [
-                    'comment_id' => (int) $args['id'], 'note' => $trainingNote, 'details' => ['kind' => $rec['kind'], 'posthumous' => false],
-                ]);
-                $result['training'] = ['count' => $rec['count'], 'target' => $rec['target'], 'completed' => $rec['completed']];
-            } catch (\Throwable $e) {
-                // La decisione è già applicata: una nota non registrata non deve far fallire la risposta.
-            }
+        if (!isset($result['error'])) {
+            $result += $this->saveDecisionTraining($auth, (int) $args['id'], $decision, $trainingNote);
         }
 
         return $this->json($response, $result);
+    }
+
+    /**
+     * Registra la nota di addestramento di una decisione già applicata.
+     * Una nota non registrata non deve far fallire la risposta: la decisione c'è comunque.
+     *
+     * @return array{training?: array{count:int, target:int, completed:bool}}
+     */
+    private function saveDecisionTraining(?object $auth, int $commentId, string $decision, ?string $note): array
+    {
+        if ($note === null) {
+            return [];
+        }
+        try {
+            $outcome = in_array($decision, ['allow', 'unhide', 'restore'], true) ? 'visible' : 'hidden';
+            $rec = $this->training->record($commentId, isset($auth->sub) ? (int) $auth->sub : null, $note, $outcome, false);
+            AuditService::log($auth, 'ai_training.note', [
+                'comment_id' => $commentId, 'note' => $note, 'details' => ['kind' => $rec['kind'], 'posthumous' => false],
+            ]);
+            return ['training' => ['count' => $rec['count'], 'target' => $rec['target'], 'completed' => $rec['completed']]];
+        } catch (\Throwable) {
+            return [];
+        }
     }
 
     /**
