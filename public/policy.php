@@ -52,6 +52,8 @@ function publicPolicyStats(string $dbClass, ?object $policy): ?array
 {
     if (!$policy) return null;
     try {
+        // Riepilogo pubblico solo con licenza `prompt_stats` (livello Enterprise)
+        if (!(new \ModerationHub\Services\LicenseService())->hasFeature('prompt_stats')) return null;
         $row = $dbClass::table('app_settings')->where('key', 'policy_stats_public')->first();
         if ($row) {
             $cached = json_decode((string) $row->value, true);

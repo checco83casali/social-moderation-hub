@@ -8,6 +8,7 @@ use ModerationHub\Controllers\LicenseController;
 use ModerationHub\Controllers\ModerationController;
 use ModerationHub\Controllers\PagesController;
 use ModerationHub\Controllers\PolicyController;
+use ModerationHub\Controllers\PolicyStatsController;
 use ModerationHub\Controllers\WebhookController;
 use ModerationHub\Controllers\DeployController;
 use ModerationHub\Controllers\GdprController;
@@ -216,7 +217,7 @@ $app->group('/api', function ($group) {
 
     // Policies
     $group->get('/policies',                   [PolicyController::class, 'index']);
-    $group->get('/policies/stats',             [PolicyController::class, 'stats']);
+    $group->get('/policies/stats',             [PolicyStatsController::class, 'stats']);
     $group->get('/policies/active',            [PolicyController::class, 'active']);
     $group->get('/policies/{id}',              [PolicyController::class, 'show']);
     $group->post('/policies',                  [PolicyController::class, 'create']);

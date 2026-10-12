@@ -82,9 +82,15 @@ offline-mode setting for fully air-gapped installs).
 - **Custom reply templates** — editable hide / reportable / ban reply templates
 - **Configurable data retention** — custom GDPR anonymisation window via nightly cron
 - **Moderation log export** — CSV / JSON export with date and decision filters
-- **AI training** — when enabled in Settings → AI, moderators must write a note whenever a decision reinforces or corrects the AI verdict (escalations, hiding an approved comment, restoring a hidden one, deciding an appeal); notes can also be added afterwards from the comment menu. After N notes collection stops by itself and Sonnet proposes a revised (inactive) moderation prompt to review in the Prompt AI screen (feature key `ai_training`)
 - **Post context for the AI** — at the first comment on a post, Haiku summarises the post (text, shared link, image) and the summary is sent with every comment of that post, so the AI understands what people are replying to; toggle in Settings → AI (feature key `post_context`)
 - **Edited-comment re-analysis** — an approved or queued comment edited by its author is re-evaluated by the AI after a configurable quiet delay (each new edit restarts the wait), and only if the words really changed (case, punctuation, spaces and accents are ignored). Settings → AI choose which states to watch and whether a problem hides the comment or sends it to the queue; a moderator's decision is never overturned automatically. Admins can also re-evaluate any approved, queued or hidden comment from its ⋯ menu. Needs the `bin/recheck-edits.php` cron every minute (feature key `edit_recheck`)
+
+### Advanced / Enterprise license features
+
+Unlocked by the highest license tier (each is a separate feature key on the license server).
+
+- **AI training** — when enabled in Settings → AI, moderators must write a note whenever a decision reinforces or corrects the AI verdict (escalations, hiding an approved comment, restoring a hidden one, deciding an appeal); notes can also be added afterwards from the comment menu. After N notes collection stops by itself and Sonnet proposes a revised (inactive) moderation prompt to review in the Prompt AI screen (feature key `ai_training`)
+- **Prompt usage & effectiveness** — in the Prompt AI screen (admins and supervisors): for every prompt version, how many evaluations it produced, how many autonomous AI decisions a moderator later overturned (too permissive / too strict), how many cases were escalated to a human and how they were resolved, the average confidence and the error rate per confidence band (to tune the thresholds). A switch includes or excludes the data collected in development mode. The same figures appear as four summary cards on the public policy page and in its JSON (`statistics`). An *error* is a final comment state that contradicts the latest autonomous AI verdict; verdicts nobody contested count as correct, so effectiveness is an estimate (feature key `prompt_stats`)
 
 ---
 

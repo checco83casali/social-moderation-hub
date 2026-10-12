@@ -453,6 +453,15 @@ async function loadPolicyStats() {
     }
     renderPolicyStats();
   } catch (e) {
+    if (e.code === 'license_required') {
+      document.getElementById('policy-stats-count').textContent = '';
+      body.innerHTML = `<div class="empty" style="padding:28px 16px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;color:var(--muted);margin-bottom:8px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <div style="font-weight:600;color:var(--text);margin-bottom:4px">Funzionalità Enterprise</div>
+        L'utilizzo e l'efficacia di ogni versione del prompt sono inclusi nella licenza Enterprise.</div>`;
+      document.querySelector('[data-filter-group="ps-scope"]').style.display = 'none';
+      return;
+    }
     body.innerHTML = '<div class="empty">Errore nel caricamento</div>';
   }
 }
