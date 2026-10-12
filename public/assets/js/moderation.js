@@ -247,22 +247,29 @@ function aiPctText(confidence) {
   return confidence ? Math.round(confidence * 100) + '%' : '';
 }
 
-// Percentuale di confidenza AI nello stesso stile ovunque (code, approvati, nascosti, dettaglio).
-// `fallbackTone` vale quando la lista non porta la decisione dell'AI.
-function aiConfBadge(c, fallbackTone = '') {
-  const pct = aiPctText(c.ai_confidence);
-  if (!pct) return '';
-  const tone = aiTone(c.ai_decision) || fallbackTone;
-  return `<span class="bc-conf"><span class="ai-pct ai-pct--lg ${tone ? 'chip-ai--' + tone : ''}" title="Confidenza dell'AI">${pct}</span></span>`;
+// ── Elementi comuni delle liste di commenti ─────────────────────────
+// Ogni lista usa lo stesso ordine nel piede: chi ha deciso · verdetto AI (esito + %) ·
+// segnali (fact-check / whataboutism) · categorie · stati (ricorso, segnalazione).
+// Motivazione AI e note stanno sempre sotto il testo del commento.
+
+// Verdetto AI: esito colorato + percentuale. Vuoto se l'ultima voce del registro non ha un verdetto.
+function aiVerdictChip(c) {
+  if (!c.ai_decision && !c.ai_confidence) return '';
+  const label = { allow:'Approvato', remove:'Rimosso', uncertain:'Incerto', hide:'Nascosto', reportable:'Segnalato' }[c.ai_decision]
+    || c.ai_decision || '';
+  const pct  = aiPctText(c.ai_confidence);
+  const tone = aiTone(c.ai_decision);
+  return `<span class="chip chip-ai ${tone ? 'chip-ai--' + tone : ''}" title="Valutazione AI"><span class="ai-dot"></span>AI${label ? ': ' + esc(label) : ''}${pct ? `<span class="ai-pct">${pct}</span>` : ''}</span>`;
+}
+
+function commentNotes(c) {
+  return (c.ai_reason ? `<div class="bc-note">Motivazione AI: ${esc(c.ai_reason)}</div>` : '')
+       + (c.human_note ? `<div class="bc-note">📝 Nota: ${esc(c.human_note)}</div>` : '');
 }
 
 function queueAiChips(item) {
-  const label = { allow:'Approvato', remove:'Rimosso', uncertain:'Incerto', hide:'Nascosto', reportable:'Segnalato' }[item.ai_decision]
-    || item.ai_decision || 'AI';
-  const pct  = aiPctText(item.ai_confidence);
-  const tone = aiTone(item.ai_decision);
   const cats = (item.ai_categories || []).slice(0, 2).map(cat => categoryChip(cat)).join(' ');
-  return `<span class="chip chip-ai ${tone ? 'chip-ai--' + tone : ''}" title="Valutazione AI"><span class="ai-dot"></span>AI: ${esc(label)}${pct ? `<span class="ai-pct">${pct}</span>` : ''}</span> ${cats}`;
+  return `${aiVerdictChip(item)} ${cats}`;
 }
 
 // ── Queue (uncertain AI decisions only) ──────────────────────────
@@ -315,6 +322,13 @@ async function loadQueue() {
   }
 }
 
+// Menù ⋯ minimo (solo "Vedi su Facebook") per le liste senza altre azioni per riga
+const linkMap = {};
+function openLinkMenu(ev, id) {
+  const href = linkMap[id];
+  openRowMenu(ev.currentTarget, href ? [{ label: 'Vedi su Facebook', icon: MENU_ICONS.link, href }] : []);
+}
+
 // ── Reportable queue (dangerous content, auto-hidden by AI) ───────
 async function loadReportableQueue() {
   const list    = document.getElementById('reportable-list');
@@ -334,20 +348,21 @@ async function loadReportableQueue() {
       const fbLink = item.platform_comment_id && item.platform_post_id
         ? `https://www.facebook.com/permalink.php?story_fbid=${(item.platform_post_id.split('_')[1]||item.platform_post_id)}&id=${item.facebook_page_id}&comment_id=${item.platform_comment_id}`
         : '';
+      linkMap[item.id] = fbLink;
       return `
         <div class="bc-item" id="rep-${item.id}" style="border-left:3px solid var(--danger)">
-          <div class="bc-header">
+          <div class="bc-header has-menu">
             <div class="ban-avatar" style="width:26px;height:26px;font-size:10px;background:var(--danger)">U</div>
             <span class="bc-user">Utente #${item.social_user_id}</span>
             <span class="bc-page">${esc(item.page_name)}</span>${devChip(item)}
-            ${item.violation_count > 0 ? `<span class="chip chip-danger">${item.violation_count} violaz.</span>` : ''}
             <span class="bc-time">${relTime(item.received_at)}</span>
-            ${fbLink ? `<a href="${fbLink}" target="_blank" rel="noopener" class="btn-sm" style="margin-left:auto;text-decoration:none" title="Vedi su Facebook">🔗</a>` : ''}
+            ${rowMenuButton(`openLinkMenu(event, ${item.id})`)}
           </div>
-          <div class="bc-content" style="margin-top:8px">${esc(item.content)}</div>
-          ${item.ai_reason ? `<div style="font-size:11px;color:var(--muted);margin-top:4px">Motivazione AI: ${esc(item.ai_reason)}</div>` : ''}
-          <div class="bc-footer" style="margin-top:10px">
-            ${cats}
+          <div class="bc-content">${esc(item.content)}</div>
+          ${commentNotes(item)}
+          <div class="bc-footer">
+            <span class="badge-ai">Nascosto dall'AI</span> ${aiVerdictChip(item)} ${cats}
+            ${item.violation_count > 0 ? `<span class="chip chip-warn">${item.violation_count} ${item.violation_count === 1 ? 'violazione' : 'violazioni'}</span>` : ''}
             <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn btn-approve" style="padding:5px 12px;font-size:12px"
                 onclick="resolveReportable(${item.id}, 'approve')">✓ Falso positivo — ripristina</button>
@@ -440,15 +455,16 @@ async function loadReportableArchive() {
       return `
         <div class="bc-item">
           <div class="bc-header">
+            <div class="ban-avatar" style="width:26px;height:26px;font-size:10px;background:var(--danger)">${(c.display_name||'?')[0].toUpperCase()}</div>
             <span class="bc-user">${esc(c.display_name||'Anonimo')}</span>
             <span class="bc-page">${esc(c.page_name)}</span>${devChip(c)}
-            <span class="chip chip-danger">⚠️ segnalato alle autorità</span>
             <span class="bc-time">${relTime(c.processed_at||c.received_at)}</span>
           </div>
           <div class="bc-content">${esc(c.content)}</div>
-          ${c.human_note ? `<div style="font-size:11px;color:var(--muted);margin-top:4px">Nota: ${esc(c.human_note)}</div>` : ''}
-          <div class="bc-footer" style="margin-top:10px">
-            ${cats}
+          ${commentNotes(c)}
+          <div class="bc-footer">
+            <span class="badge-human">Segnalato${c.reported_by ? ' da: ' + esc(c.reported_by) : ''}</span> ${aiVerdictChip(c)} ${cats}
+            <span class="chip chip-danger">⚠️ segnalato alle autorità</span>
             <button class="btn btn-sm" style="margin-left:auto;padding:5px 12px;font-size:12px"
               onclick="downloadLegalDossier(${c.id})">📄 Scarica dossier PDF</button>
           </div>
@@ -1114,7 +1130,6 @@ async function loadBannedComments() {
     const stageLabel = { haiku:'Haiku', sonnet:'Sonnet', human:'Umano' };
     list.innerHTML = d.items.map(c => {
       const cats    = (c.ai_categories||[]).map(cat => categoryChip(cat)).join(' ');
-      const conf    = c.ai_confidence ? Math.round(c.ai_confidence*100)+'%' : '—';
       const decider = c.decided_by === 'human'
         ? `<span class="badge-human">Umano${c.decided_by_name ? ': '+esc(c.decided_by_name) : ''}</span>`
         : `<span class="badge-ai">AI · ${stageLabel[c.ai_stage]||c.ai_stage}</span>`;
@@ -1139,20 +1154,20 @@ async function loadBannedComments() {
         fbLink = `https://www.facebook.com/permalink.php?story_fbid=${postId}&id=${pageId}`;
       }
 
+      linkMap[c.id] = fbLink;
       return `
         <div class="bc-item">
-          <div class="bc-header">
+          <div class="bc-header has-menu">
             <div class="ban-avatar" style="width:26px;height:26px;font-size:10px">${(c.display_name||'?')[0].toUpperCase()}</div>
             <span class="bc-user">${esc(c.display_name||'Anonimo')}</span>
             <span class="bc-page">${esc(c.page_name)}</span>${devChip(c)}
             <span class="bc-time">${relTime(c.processed_at||c.received_at)}</span>
-            ${fbLink ? `<a href="${fbLink}" target="_blank" rel="noopener" class="btn-sm" style="margin-left:auto;text-decoration:none" title="Apri su Facebook">🔗 Vedi su Facebook</a>` : ''}
+            ${fbLink ? rowMenuButton(`openLinkMenu(event, ${c.id})`) : ''}
           </div>
           <div class="bc-content">${esc(c.content)}</div>
+          ${commentNotes(c)}
           <div class="bc-footer">
-            ${decider} ${aiSignalChips(c)} ${cats}
-            ${c.ai_reason ? `<span style="font-size:11px;color:var(--muted);flex-basis:100%;margin-top:4px">${esc(c.ai_reason)}</span>` : ''}
-            ${aiConfBadge(c, 'danger')}
+            ${decider} ${aiVerdictChip(c)} ${aiSignalChips(c)} ${cats}
           </div>
         </div>`;
     }).join('');
@@ -1189,7 +1204,6 @@ async function loadApprovedComments() {
     const stageLabel = { haiku:'Haiku', sonnet:'Sonnet', human:'Umano' };
     list.innerHTML = d.items.map(c => {
       const cats    = (c.ai_categories||[]).map(cat => categoryChip(cat)).join(' ');
-      const conf    = c.ai_confidence ? Math.round(c.ai_confidence*100)+'%' : '—';
       const decider = c.decided_by === 'human'
         ? `<span class="badge-human">Umano${c.decided_by_name ? ': '+esc(c.decided_by_name) : ''}</span>`
         : c.decided_by === 'ai_fact_check'
@@ -1226,11 +1240,9 @@ async function loadApprovedComments() {
             ${rowMenuButton(`openApprovedMenu(event, ${c.id})`)}
           </div>
           <div class="bc-content">${esc(c.content)}</div>
+          ${commentNotes(c)}
           <div class="bc-footer">
-            ${decider} ${aiSignalChips(c)} ${cats}
-            ${c.ai_reason ? `<span style="font-size:11px;color:var(--muted);flex-basis:100%;margin-top:4px">${esc(c.ai_reason)}</span>` : ''}
-            ${c.human_note ? `<span style="font-size:11px;color:var(--muted);flex-basis:100%;margin-top:2px">📝 ${esc(c.human_note)}</span>` : ''}
-            ${aiConfBadge(c, 'ok')}
+            ${decider} ${aiVerdictChip(c)} ${aiSignalChips(c)} ${cats}
           </div>
         </div>`;
     }).join('');
@@ -1508,7 +1520,7 @@ async function loadHiddenComments() {
         ? `https://www.facebook.com/permalink.php?story_fbid=${(c.platform_post_id.split('_')[1]||c.platform_post_id)}&id=${c.facebook_page_id}&comment_id=${c.platform_comment_id}`
         : '';
       const replyBlock = c.removal_reply_text
-        ? `<div style="margin-top:8px;background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.2);border-radius:6px;padding:10px 12px">
+        ? `<div style="margin-bottom:8px;background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.2);border-radius:6px;padding:10px 12px">
              <div style="font-size:10px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">💬 Risposta inviata automaticamente</div>
              <div style="font-size:12.5px;color:var(--text);line-height:1.5;white-space:pre-wrap">${esc(c.removal_reply_text)}</div>
            </div>`
@@ -1524,15 +1536,13 @@ async function loadHiddenComments() {
             <span class="bc-user">${esc(c.display_name||'Anonimo')}</span>
             <span class="bc-page">${esc(c.page_name)}</span>${devChip(c)}
             <span class="bc-time">${relTime(c.processed_at||c.received_at)}</span>
-            ${reportBadge} ${appealBadge} ${deciderBadge}
             ${rowMenuButton(`openHiddenMenu(event, ${c.id})`)}
           </div>
           <div class="bc-content">${esc(c.content)}</div>
-          ${c.ai_reason ? `<div style="font-size:11px;color:var(--muted);margin-top:4px">Motivazione AI: ${esc(c.ai_reason)}</div>` : ''}
+          ${commentNotes(c)}
           ${replyBlock}
-          <div class="bc-footer" style="margin-top:10px">
-            ${aiSignalChips(c)} ${cats}
-            ${aiConfBadge(c, 'danger')}
+          <div class="bc-footer">
+            ${deciderBadge} ${aiVerdictChip(c)} ${aiSignalChips(c)} ${cats} ${reportBadge} ${appealBadge}
           </div>
         </div>`;
     }).join('');
