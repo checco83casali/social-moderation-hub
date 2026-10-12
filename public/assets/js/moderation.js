@@ -235,12 +235,25 @@ function queueUserChips(item) {
     ${item.page_name ? `<span class="chip chip-user" title="Pagina di riferimento">${esc(item.page_name)}</span>` : ''}`;
 }
 
+// Tono del verdetto AI: verde = approvato, ambra = incerto, rosso = nascosto/segnalato
+function aiTone(decision) {
+  if (decision === 'allow') return 'ok';
+  if (decision === 'uncertain') return 'warn';
+  if (['hide', 'remove', 'reportable'].includes(decision)) return 'danger';
+  return '';
+}
+
+function aiPctText(confidence) {
+  return confidence ? Math.round(confidence * 100) + '%' : '';
+}
+
 function queueAiChips(item) {
   const label = { allow:'Approvato', remove:'Rimosso', uncertain:'Incerto', hide:'Nascosto', reportable:'Segnalato' }[item.ai_decision]
     || item.ai_decision || 'AI';
-  const pct  = item.ai_confidence ? Math.round(item.ai_confidence * 100) + '%' : '';
+  const pct  = aiPctText(item.ai_confidence);
+  const tone = aiTone(item.ai_decision);
   const cats = (item.ai_categories || []).slice(0, 2).map(cat => categoryChip(cat)).join(' ');
-  return `<span class="chip chip-ai" title="Valutazione AI">AI: ${esc(label)}${pct ? ` · ${pct}` : ''}</span> ${cats}`;
+  return `<span class="chip chip-ai ${tone ? 'chip-ai--' + tone : ''}" title="Valutazione AI"><span class="ai-dot"></span>AI: ${esc(label)}${pct ? `<span class="ai-pct">${pct}</span>` : ''}</span> ${cats}`;
 }
 
 // ── Queue (uncertain AI decisions only) ──────────────────────────
@@ -454,7 +467,8 @@ function renderDetail(c) {
   // Il nascondimento silenzioso (override delle impostazioni) è riservato a supervisor e admin.
   const canHideSilently = ['admin', 'supervisor'].includes(currentUserRole);
   const cats = (c.ai_categories || []).map(cat => categoryChip(cat)).join(' ');
-  const confPct = c.ai_confidence ? Math.round(c.ai_confidence * 100) + '%' : '—';
+  const confPct = aiPctText(c.ai_confidence) || '—';
+  const confTone = aiTone(c.ai_decision);
   const stageLabel = { haiku:'Claude Haiku', sonnet:'Claude Sonnet', human:'Escalation umana' };
 
   box.innerHTML = `
@@ -488,7 +502,7 @@ function renderDetail(c) {
           <div class="verdict-label">${esc(c.ai_reason || 'Nessuna motivazione')}</div>
           ${cats ? `<div style="margin-top:6px">${cats}</div>` : ''}
         </div>
-        <div class="verdict-conf">${confPct}</div>
+        <div class="verdict-conf"><span class="ai-pct ai-pct--lg ${confTone ? 'chip-ai--' + confTone : ''}" title="Confidenza dell'AI">${confPct}</span></div>
       </div>
     </div>
 

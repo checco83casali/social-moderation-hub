@@ -218,7 +218,7 @@ nav { flex: 1; padding: 12px 10px; }
 }
 .verdict-stage { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
 .verdict-label { font-size: 13px; font-weight: 500; flex: 1; }
-.verdict-conf  { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.verdict-conf  { font-family: var(--mono); font-size: 12px; color: var(--muted); flex: none; }
 
 .user-row {
   display: flex; align-items: center; gap: 10px; padding: 10px 14px;
@@ -292,7 +292,21 @@ nav { flex: 1; padding: 12px 10px; }
 .chip-user { background: var(--bg-hover); color: var(--muted); border: 1px solid var(--border); font-weight: 500; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
 .q-footer { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; margin-top: 6px; }
 .q-ai { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
-.chip-ai { background: var(--bg-hover); color: var(--text); border: 1px solid var(--border-hi); font-weight: 600; }
+/* Badge verdetto AI: tinta per esito (verde approvato · ambra incerto · rosso nascosto) + percentuale in evidenza */
+.chip-ai { display: inline-flex; align-items: center; gap: 5px; background: var(--bg-hover); color: var(--text); border: 1px solid var(--border-hi); font-weight: 600; padding: 3px 4px 3px 8px; font-size: 11px; }
+.chip-ai .ai-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+.ai-pct { font-family: var(--mono); font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 20px; background: rgba(128,128,128,.18); color: inherit; }
+.chip-ai--ok     { background: var(--success-bg); color: var(--success); border-color: rgba(62,207,142,.45); }
+.chip-ai--warn   { background: var(--warn-bg);    color: var(--warn);    border-color: rgba(247,178,68,.55); }
+.chip-ai--danger { background: var(--danger-bg);  color: var(--danger);  border-color: rgba(247,82,82,.5); }
+.chip-ai--ok .ai-pct     { background: rgba(62,207,142,.2); }
+.chip-ai--warn .ai-pct   { background: rgba(247,178,68,.25); }
+.chip-ai--danger .ai-pct { background: rgba(247,82,82,.2); }
+/* Percentuale nel dettaglio: stesso stile, più grande */
+.ai-pct--lg { font-size: 13px; padding: 4px 11px; border: 1px solid var(--border-hi); }
+.ai-pct--lg.chip-ai--ok     { border-color: rgba(62,207,142,.45); }
+.ai-pct--lg.chip-ai--warn   { border-color: rgba(247,178,68,.55); }
+.ai-pct--lg.chip-ai--danger { border-color: rgba(247,82,82,.5); }
 
 /* Modale "Approva e rispondi" */
 .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
