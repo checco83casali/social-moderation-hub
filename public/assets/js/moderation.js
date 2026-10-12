@@ -291,14 +291,16 @@ function commentNotes(c) {
        + (c.human_note ? `<div class="bc-note">📝 Nota: ${esc(c.human_note)}</div>` : '');
 }
 
-// Categorie (tag delle violazioni) allineate a destra nel piede della riga.
-function catsGroup(cats) {
-  return cats ? `<span class="bc-cats">${cats}</span>` : '';
+// Tag allineati a destra nel piede della riga: segnali dell'AI (fact-check, whataboutism)
+// e categorie delle violazioni, insieme.
+function tagsGroup(c, cats) {
+  const all = `${aiSignalChips(c)} ${cats}`.trim();
+  return all ? `<span class="bc-cats">${all}</span>` : '';
 }
 
 function queueAiChips(item) {
   const cats = (item.ai_categories || []).slice(0, 2).map(cat => categoryChip(cat)).join(' ');
-  return `${aiVerdictChip(item)} ${catsGroup(cats)}`;
+  return `${aiVerdictChip(item)} ${tagsGroup(item, cats)}`;
 }
 
 // ── Queue (uncertain AI decisions only) ──────────────────────────
@@ -1193,7 +1195,7 @@ async function loadBannedComments() {
           <div class="bc-content">${esc(c.content)}</div>
           ${commentNotes(c)}
           <div class="bc-footer">
-            ${decider} ${aiSignalChips(c)} ${catsGroup(cats)}
+            ${decider} ${tagsGroup(c, cats)}
           </div>
         </div>`;
     }).join('');
@@ -1262,7 +1264,7 @@ async function loadApprovedComments() {
           <div class="bc-content">${esc(c.content)}</div>
           ${commentNotes(c)}
           <div class="bc-footer">
-            ${decider} ${aiSignalChips(c)} ${catsGroup(cats)}
+            ${decider} ${tagsGroup(c, cats)}
           </div>
         </div>`;
     }).join('');
@@ -1560,7 +1562,7 @@ async function loadHiddenComments() {
           ${commentNotes(c)}
           ${replyBlock}
           <div class="bc-footer">
-            ${deciderBadge} ${aiSignalChips(c)} ${reportBadge} ${appealBadge} ${catsGroup(cats)}
+            ${deciderBadge} ${reportBadge} ${appealBadge} ${tagsGroup(c, cats)}
           </div>
         </div>`;
     }).join('');
