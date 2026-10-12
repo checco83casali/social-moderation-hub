@@ -54,22 +54,19 @@ function publicPolicyStats(string $dbClass, ?object $policy, string &$status = '
     try {
         // Riepilogo pubblico solo con licenza `prompt_stats` (livello Enterprise)
         if (!(new \ModerationHub\Services\LicenseService())->hasFeature('prompt_stats')) { $status = 'not_licensed'; return null; }
-        $row = $dbClass::table('app_settings')->where('key', 'policy_stats_public')->first();
-        if ($row) {
-            $cached = json_decode((string) $row->value, true);
-            if (is_array($cached) && ($cached['policy_id'] ?? 0) === (int) $policy->id && (time() - (int) ($cached['at'] ?? 0)) < 900) {
-                return $cached['data'];
-            }
+        // Cache su file (app_settings.value è troppo corto per un JSON di questa dimensione).
+        // Un problema di cache non deve mai impedire di mostrare le statistiche.
+        $cacheFile = dirname(__DIR__) . '/logs/policy-stats-public.json';
+        $cached = is_readable($cacheFile) ? json_decode((string) @file_get_contents($cacheFile), true) : null;
+        if (is_array($cached) && ($cached['policy_id'] ?? 0) === (int) $policy->id && (time() - (int) ($cached['at'] ?? 0)) < 900) {
+            return $cached['data'];
         }
         $all = (new \ModerationHub\Services\PolicyStatsService())->compute('all');
         $mine = null;
         foreach ($all['policies'] as $p) { if ($p['id'] === (int) $policy->id) { $mine = $p; break; } }
         $useTotals = !$mine || $mine['uses'] === 0;
         $data = ($useTotals ? $all['totals'] : $mine) + ['all_versions' => $useTotals];
-        $dbClass::table('app_settings')->updateOrInsert(
-            ['key' => 'policy_stats_public'],
-            ['value' => json_encode(['at' => time(), 'policy_id' => (int) $policy->id, 'data' => $data])],
-        );
+        @file_put_contents($cacheFile, json_encode(['at' => time(), 'policy_id' => (int) $policy->id, 'data' => $data]), LOCK_EX);
         return $data;
     } catch (\Throwable $e) {
         error_log('[policy stats] ' . $e->getMessage());
