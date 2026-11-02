@@ -57,10 +57,12 @@ final class MentionService
             $message = (string) ($this->meta->getComment($mention['id'], (string) $page['page_access_token'])['message'] ?? '');
         }
 
+        $isNew = true;
         if ($store) {
-            $this->store($mention, $page, $message);
+            $isNew = $this->store($mention, $page, $message);
         }
-        if ($mention['verb'] === 'add') {
+        // Redelivery dello stesso webhook: la riga esiste già, niente seconda notifica.
+        if ($mention['verb'] === 'add' && $isNew) {
             PushService::notifyLater('mention', $message);
         }
         return $message;
@@ -70,7 +72,7 @@ final class MentionService
      * @param array{id:string, post_id:string, page_id:string, message:string, from:array{id:string,name:string}, created_time:mixed, verb:string} $mention
      * @param array<string, mixed> $page
      */
-    private function store(array $mention, array $page, string $message): void
+    private function store(array $mention, array $page, string $message): bool
     {
         $created = $mention['created_time'];
         $ts      = is_numeric($created) ? (int) $created : (strtotime((string) $created) ?: time());
@@ -81,13 +83,26 @@ final class MentionService
             'mentioned_at'     => date('Y-m-d H:i:s', $ts),
             'received_at'      => date('Y-m-d H:i:s'),
         ];
+        $key = ['page_id' => (int) $page['id'], 'platform_comment_id' => $mention['id']];
         try {
-            DB::table('mentions')->updateOrInsert(
-                ['page_id' => (int) $page['id'], 'platform_comment_id' => $mention['id']],
-                $row,
-            );
+            $existing = DB::table('mentions')->where($key)->first();
+            if (!$existing) {
+                DB::table('mentions')->insert($key + $row);
+                return true;
+            }
+            // Evento ripetuto/edit (spesso senza message/from): non sovrascrivere i dati già salvati con valori vuoti.
+            $upd = ['received_at' => $row['received_at']];
+            if ($row['excerpt'] !== null) {
+                $upd['excerpt'] = $row['excerpt'];
+            }
+            if ($row['social_user_id'] !== null) {
+                $upd['social_user_id'] = $row['social_user_id'];
+            }
+            DB::table('mentions')->where($key)->update($upd);
+            return false;
         } catch (\Throwable) {
             // tabella non ancora migrata: la menzione resta solo nel debug del webhook
+            return true;
         }
     }
 
