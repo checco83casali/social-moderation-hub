@@ -69,10 +69,27 @@ final class MentionService
     }
 
     /**
+     * Recupero (bin/backfill-mentions.php) di una menzione già ricevuta: stessa scrittura di handle(),
+     * ma senza push né chiamate a Facebook e con la data di ricezione ORIGINALE dell'evento, così il
+     * dato non vive oltre la finestra di conservazione. Ritorna true se la riga è nuova.
+     *
      * @param array{id:string, post_id:string, page_id:string, message:string, from:array{id:string,name:string}, created_time:mixed, verb:string} $mention
      * @param array<string, mixed> $page
      */
-    private function store(array $mention, array $page, string $message): bool
+    public function backfill(array $mention, array $page, string $receivedAt): bool
+    {
+        if ($mention['verb'] === 'remove') {
+            $this->forget($mention, $page);
+            return false;
+        }
+        return $this->store($mention, $page, $mention['message'], $receivedAt);
+    }
+
+    /**
+     * @param array{id:string, post_id:string, page_id:string, message:string, from:array{id:string,name:string}, created_time:mixed, verb:string} $mention
+     * @param array<string, mixed> $page
+     */
+    private function store(array $mention, array $page, string $message, ?string $receivedAt = null): bool
     {
         $created = $mention['created_time'];
         $ts      = is_numeric($created) ? (int) $created : (strtotime((string) $created) ?: time());
@@ -81,7 +98,7 @@ final class MentionService
             'platform_post_id' => $mention['post_id'],
             'excerpt'          => $message !== '' ? self::excerpt($message) : null,
             'mentioned_at'     => date('Y-m-d H:i:s', $ts),
-            'received_at'      => date('Y-m-d H:i:s'),
+            'received_at'      => $receivedAt ?? date('Y-m-d H:i:s'),
         ];
         $key = ['page_id' => (int) $page['id'], 'platform_comment_id' => $mention['id']];
         try {
