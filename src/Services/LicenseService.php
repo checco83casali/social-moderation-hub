@@ -53,6 +53,9 @@ use Monolog\Logger;
  *                         policy page summary cards). Enterprise-tier feature.
  *   edit_recheck        — re-analysis of approved/queued comments edited by the author, after a
  *                         configurable quiet delay. Admin settings: app_settings.edit_recheck_*.
+ *   mentions            — read-only "Menzioni" list: comments tagging a connected page under
+ *                         posts of OTHER pages (not moderable with the page token). Enterprise
+ *                         tier: licenses with `prompt_stats` get it too — see canViewMentions().
  *   post_context        — at the first comment on a post Haiku summarises the post (text,
  *                         shared link, image); the summary is sent to the AI with every
  *                         comment of that post. Admin toggle: app_settings.post_context_enabled.
@@ -116,6 +119,7 @@ class LicenseService
         'ai_training',
         'edit_recheck',
         'prompt_stats',
+        'mentions',
     ];
 
     /** Human-readable labels for display in the license panel (server-side only). */
@@ -134,6 +138,7 @@ class LicenseService
         'ai_training'         => 'Training AI',
         'edit_recheck'        => 'Rianalisi commenti modificati',
         'prompt_stats'        => 'Utilizzo ed efficacia del prompt',
+        'mentions'            => 'Menzioni su altre pagine',
     ];
 
     // ── State ────────────────────────────────────────────────────────
@@ -213,6 +218,15 @@ class LicenseService
     public function canViewAudit(): bool
     {
         return $this->hasFeature('advanced_audit') || $this->hasFeature('advanced_stats');
+    }
+
+    /**
+     * Lista Menzioni (Enterprise): licenza `mentions`, oppure qualsiasi licenza Enterprise
+     * (`prompt_stats`), così le licenze già emesse la ottengono senza aspettare il server.
+     */
+    public function canViewMentions(): bool
+    {
+        return $this->hasFeature('mentions') || $this->hasFeature('prompt_stats');
     }
 
     /**

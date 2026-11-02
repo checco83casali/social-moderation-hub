@@ -29,6 +29,7 @@ document.querySelectorAll('.nav-item[data-screen]').forEach(item => {
       'banned-comments':  'Commenti nascosti',
       'hidden-comments':  'Commenti nascosti',
       'approved-comments':'Commenti approvati',
+      mentions:           'Menzioni',
       settings:           'Impostazioni',
       appeals:            'Ricorsi',
       audit:              'Registro audit',
@@ -43,6 +44,7 @@ document.querySelectorAll('.nav-item[data-screen]').forEach(item => {
     if (sc === 'banned-comments')   loadHiddenComments();
     if (sc === 'hidden-comments')   loadHiddenComments();
     if (sc === 'approved-comments') loadApprovedComments();
+    if (sc === 'mentions')          loadMentions();
     if (sc === 'settings')          loadSettings();
     if (sc === 'appeals')           loadAppeals();
     if (sc === 'audit')             loadAudit();
@@ -107,6 +109,10 @@ async function initApp() {
       const auditBadge = document.getElementById('nav-audit-pro-badge');
       if (auditBadge)   auditBadge.style.display   = hasAudit      ? 'none'  : 'inline-block';
       if (repBadge)     repBadge.style.display     = hasReportable ? 'none'  : 'inline-block';
+      // Menzioni: Enterprise (come LicenseService::canViewMentions())
+      const hasMentions = features.includes('mentions') || features.includes('prompt_stats');
+      const menBadge = document.getElementById('nav-mentions-pro-badge');
+      if (menBadge) menBadge.style.display = hasMentions ? 'none' : 'inline-block';
     } catch(e) {}
 
   } catch (e) {}

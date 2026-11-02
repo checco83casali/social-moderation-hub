@@ -882,6 +882,7 @@ body.sidebar-open #mobile-menu-btn { display: none !important; }
 .whd-tag { padding: 1px 8px; border-radius: 20px; font-size: 10.5px; font-weight: 600; background: var(--bg-hover); color: var(--muted); }
 .whd-tag.t-comment  { background: var(--accent-bg);  color: var(--accent); }
 .whd-tag.t-reaction { background: var(--success-bg); color: var(--success); }
+.whd-tag.t-mention  { background: var(--warn-bg);    color: var(--warn); }
 .whd-tag.t-error    { background: var(--danger-bg);  color: var(--danger); }
 .whd-tag.t-warn     { background: var(--warn-bg);    color: var(--warn); }
 .whd-line { font-size: 13px; line-height: 1.45; word-break: break-word; }

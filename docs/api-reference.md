@@ -259,6 +259,27 @@ Disconnect page (soft delete, data preserved).
 
 ---
 
+## Mentions
+
+### GET `/api/mentions` *(Enterprise: `mentions` or `prompt_stats`)*
+Read-only list of comments tagging a connected page under posts of other pages (not moderable with the
+page token). Query: `page`, `limit` (max 100). Without the license: `403 {"error": "...", "feature": "mentions"}`.
+
+```json
+{
+  "total": 1, "page": 1, "per_page": 50,
+  "items": [{
+    "id": 7, "excerpt": "Ne parla anche @Pagina…", "mentioned_at": "2026-11-02 10:14:00",
+    "received_at": "2026-11-02 10:14:03", "platform_comment_id": "1234_5678",
+    "platform_post_id": "999_1234", "page_name": "Pagina", "facebook_page_id": "111",
+    "social_user_id": 42, "display_name": "Utente #42"
+  }]
+}
+```
+Authors are pseudonymised (`Utente #ID`) for non-admin roles. Rows are deleted with the general retention window.
+
+---
+
 ## Error responses
 
 All errors follow this format:

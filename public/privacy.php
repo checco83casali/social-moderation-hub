@@ -355,8 +355,16 @@ amministrate per conto di terzi. La presente informativa è rivolta a:</p>
   </thead>
   <tbody>
     <tr>
-      <td>Commenti (contenuto) e log di moderazione (campi testuali)</td>
+      <td>Commenti (contenuto) e log di moderazione (campi testuali) — commenti approvati o in revisione</td>
       <td><?php if ($retentionEnabled): ?><?= $retentionDays ?> giorni dall'ultima attività, poi anonimizzazione automatica: i campi sono sostituiti con un placeholder non reversibile; i dati statistici (decisione AI, categoria, severità, esito) sono conservati senza scadenza per finalità di sicurezza e reportistica.<?php else: ?>Anonimizzazione automatica non attualmente attiva (nessuna finestra di conservazione configurata): i dati restano identificabili fino a cancellazione manuale o esercizio del diritto alla cancellazione (§8).<?php endif; ?></td>
+    </tr>
+    <tr>
+      <td>Commenti nascosti o rimossi (contenuto), con i relativi campi testuali del log di moderazione e dei ricorsi</td>
+      <td><?php if ($violationRetentionEnabled): ?><?= $violationRetentionDays ?> giorni dalla ricezione, poi anonimizzazione automatica (stessa finestra dei dati identificativi degli utenti con violazioni).<?php else: ?>Anonimizzazione automatica non attualmente attiva (§8).<?php endif; ?></td>
+    </tr>
+    <tr>
+      <td>Menzioni della pagina sotto post di altre pagine (estratto del testo, autore), se la funzione è attiva</td>
+      <td><?php if ($retentionEnabled): ?><?= $retentionDays ?> giorni dalla ricezione, poi eliminazione automatica.<?php else: ?>Eliminazione automatica non attualmente attiva (§8).<?php endif; ?></td>
     </tr>
     <tr>
       <td>Dati identificativi dell'utente (nome, profilo, ID piattaforma) — utenti senza violazioni registrate</td>

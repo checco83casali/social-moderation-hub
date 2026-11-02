@@ -872,7 +872,7 @@ footer {
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         </div>
         <h3 data-i18n="feat.8.h">Configurable data retention</h3>
-        <p data-i18n="feat.8.p">Nightly cron anonymizes PII after N days. Statistical fields preserved for analytics. Reset operational data without losing configuration.</p>
+        <p data-i18n="feat.8.p">Nightly cron anonymizes PII after N days. Hidden and removed comments follow the (longer) violation window, together with their authors. Statistical fields preserved for analytics. Reset operational data without losing configuration.</p>
       </div>
       <div class="feat-card">
         <div class="feat-ic" style="background:rgba(247,178,74,.16);color:#f7b24a;">
@@ -886,7 +886,7 @@ footer {
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
         </div>
         <h3 data-i18n="feat.10.h">Installable app &amp; push alerts</h3>
-        <p data-i18n="feat.10.p">Install the dashboard as an app on phone or desktop and get a push notification when a comment needs review, a report arrives or an appeal is filed.</p>
+        <p data-i18n="feat.10.p">Install the dashboard as an app on phone or desktop and get a push notification when a comment needs review, a report arrives, an appeal is filed or your page is mentioned under another page's post.</p>
       </div>
       <div class="feat-card">
         <div class="feat-ic" style="background:rgba(139,92,246,.16);color:#c4b0ff;">
@@ -1244,6 +1244,11 @@ footer {
           </li>
           <li>
             <span class="plan-chk plan-chk--ok">✓</span>
+            <span data-i18n-html="a.f6"><strong>Mentions on other pages</strong> — read-only list of comments tagging your page under posts of other pages (not moderable with your page token): excerpt, links to the comment and the post, date; pseudonymised authors and the same retention as all other data.</span>
+            <span class="plan-pill plan-pill--new" data-i18n="pill.new">New</span>
+          </li>
+          <li>
+            <span class="plan-chk plan-chk--ok">✓</span>
             <span data-i18n-html="a.f3"><strong>Topic-aware proactive alerts</strong> — posts auto-tagged by topic; risk score predicted from historical patterns when a post is published.</span>
           </li>
         </ul>
@@ -1523,9 +1528,9 @@ const TRANS = {
     'feat.5.h':'Progressive ban system','feat.5.p':'Repeated violations escalate automatically. The ban is internal — no notifications to Facebook, no drama. Full history preserved.',
     'feat.6.h':'Multi-page & OAuth2 login','feat.6.p':'Connect multiple Facebook pages in one click. First user auto-becomes admin. Google, Meta, and Microsoft OAuth2 supported.',
     'feat.7.h':'Full audit trail','feat.7.p':'Every AI and human decision is logged with model name, confidence score, latency, categories, and the name of the human moderator.',
-    'feat.8.h':'Configurable data retention','feat.8.p':'Nightly cron anonymizes PII after N days. Statistical fields preserved for analytics. Reset operational data without losing configuration.',
+    'feat.8.h':'Configurable data retention','feat.8.p':'Nightly cron anonymizes PII after N days. Hidden and removed comments follow the (longer) violation window, together with their authors. Statistical fields preserved for analytics. Reset operational data without losing configuration.',
     'feat.9.h':'Appeals & transparency','feat.9.p':'Hidden comments get a signed appeal link. Users can contest; moderators accept or reject. Every AI decision comes with its reasoning — nothing is a black box.',
-    'feat.10.h':'Installable app & push alerts','feat.10.p':'Install the dashboard as an app on phone or desktop and get a push notification when a comment needs review, a report arrives or an appeal is filed.',
+    'feat.10.h':'Installable app & push alerts','feat.10.p':'Install the dashboard as an app on phone or desktop and get a push notification when a comment needs review, a report arrives, an appeal is filed or your page is mentioned under another page\'s post.',
     'feat.11.h':'Teams & roles','feat.11.p':'Admin, supervisor and moderator roles. Admins create users with a temporary password and can reset it at any time; the user must choose a new one at next login.',
     'feat.12.h':'Your own branding','feat.12.p':'Upload your logo once: it becomes the dashboard logo, the favicon and the app icon. Thresholds, toggles and templates are all configurable from the settings.',
     'lanes.label':'Special handling','lanes.h2':'Three dedicated lanes','lanes.sub':'Some content types need more than a binary allow/hide decision.',
@@ -1612,6 +1617,7 @@ const TRANS = {
     'a.f1':'<strong>Dual confidence scoring</strong> — each comment scored on both axes: probability of violation AND probability of genuine value.',
     'a.f4':'<strong>AI training</strong> — moderators explain their decisions on N comments (appeals included); Sonnet then proposes a new, inactive prompt version for you to review.',
     'a.f5':'<strong>Prompt usage &amp; effectiveness</strong> — evaluations, decisions overturned by moderators, escalations and confidence bands for every prompt version, with or without test-mode data; summary cards on the public policy page.',
+    'a.f6':'<strong>Mentions on other pages</strong> — read-only list of comments tagging your page under posts of other pages (not moderable with your page token): excerpt, links to the comment and the post, date; pseudonymised authors and the same retention as all other data.',
     'a.f3':'<strong>Topic-aware proactive alerts</strong> — posts auto-tagged by topic; risk score predicted from historical patterns when a post is published.',
   },
   it: {
@@ -1642,9 +1648,9 @@ const TRANS = {
     'feat.5.h':'Sistema di ban progressivo','feat.5.p':'Le violazioni ripetute scalano automaticamente. Il ban è interno — nessuna notifica a Facebook, nessun dramma. Storico completo preservato.',
     'feat.6.h':'Multi-pagina & login OAuth2','feat.6.p':'Collega più pagine Facebook in un clic. Il primo utente diventa admin automaticamente. Supporto OAuth2 Google, Meta e Microsoft.',
     'feat.7.h':'Audit trail completo','feat.7.p':'Ogni decisione AI e umana viene registrata con nome modello, punteggio di confidenza, latenza, categorie e nome del moderatore.',
-    'feat.8.h':'Retention dati configurabile','feat.8.p':'Cron notturno anonimizza i dati personali dopo N giorni. Campi statistici preservati per analytics. Reset dei dati operativi senza perdere la configurazione.',
+    'feat.8.h':'Retention dati configurabile','feat.8.p':'Cron notturno anonimizza i dati personali dopo N giorni. I commenti nascosti e rimossi seguono la finestra (più lunga) delle violazioni, insieme ai loro autori. Campi statistici preservati per analytics. Reset dei dati operativi senza perdere la configurazione.',
     'feat.9.h':'Appelli & trasparenza','feat.9.p':'I commenti nascosti ricevono un link di appello firmato. Gli utenti possono contestare; i moderatori accettano o rifiutano. Ogni decisione AI include il ragionamento — niente è una scatola nera.',
-    'feat.10.h':'App installabile e notifiche push','feat.10.p':'Installa la dashboard come app su telefono o desktop e ricevi una notifica push quando un commento richiede revisione, arriva una segnalazione o viene presentato un ricorso.',
+    'feat.10.h':'App installabile e notifiche push','feat.10.p':'Installa la dashboard come app su telefono o desktop e ricevi una notifica push quando un commento richiede revisione, arriva una segnalazione, viene presentato un ricorso o la pagina viene menzionata sotto il post di un\'altra pagina.',
     'feat.11.h':'Team e ruoli','feat.11.p':'Ruoli admin, supervisore e moderatore. Gli admin creano utenti con una password temporanea e possono reimpostarla in qualsiasi momento; l\'utente deve sceglierne una nuova al prossimo accesso.',
     'feat.12.h':'Il tuo marchio','feat.12.p':'Carica il logo una volta: diventa il logo della dashboard, la favicon e l\'icona dell\'app. Soglie, toggle e template si configurano tutti dalle impostazioni.',
     'lanes.label':'Gestione speciale','lanes.h2':'Tre corsie dedicate','lanes.sub':'Alcuni tipi di contenuto richiedono più di una semplice decisione mostra/nascondi.',
@@ -1731,6 +1737,7 @@ const TRANS = {
     'a.f1':'<strong>Scoring doppio</strong> — ogni commento valutato su entrambi gli assi: probabilità di violazione E probabilità di valore genuino.',
     'a.f4':'<strong>Training AI</strong> — i moderatori spiegano le loro decisioni su N commenti (ricorsi inclusi); Sonnet propone poi una nuova versione del prompt, inattiva, da rivedere.',
     'a.f5':'<strong>Utilizzo ed efficacia del prompt</strong> — valutazioni, decisioni ribaltate dai moderatori, escalation e fasce di confidenza per ogni versione del prompt, con o senza i dati della modalità sviluppo; card di riepilogo nella pagina pubblica della policy.',
+    'a.f6':'<strong>Menzioni su altre pagine</strong> — lista in sola lettura dei commenti che taggano la tua pagina sotto post di altre pagine (non moderabili con il token della pagina): estratto, link al commento e al post, data; autori pseudonimizzati e stessa conservazione di tutti gli altri dati.',
     'a.f3':'<strong>Alert proattivi per topic</strong> — post auto-taggati per argomento; score di rischio predetto da pattern storici alla pubblicazione.',
   }
 };

@@ -1392,6 +1392,67 @@ function setAcCategoryFilter(val) {
   loadApprovedComments();
 }
 
+// ── Menzioni su post di altre pagine (Enterprise, sola lettura) ───
+const mentionMap = {};
+
+// Link a Facebook: il post_id di una menzione appartiene a un'ALTRA pagina (prefisso del post_id).
+function mentionLinks(m) {
+  const [ownerId, storyId] = String(m.platform_post_id || '').split('_');
+  if (!storyId) return { post: '', comment: '' };
+  const post = `https://www.facebook.com/permalink.php?story_fbid=${encodeURIComponent(storyId)}&id=${encodeURIComponent(ownerId)}`;
+  const comment = m.platform_comment_id && m.platform_comment_id !== m.platform_post_id
+    ? `${post}&comment_id=${encodeURIComponent(m.platform_comment_id)}` : '';
+  return { post, comment };
+}
+
+function showMentionsWall(locked) {
+  const wall    = document.getElementById('mentions-upgrade-wall');
+  const content = document.getElementById('mentions-content');
+  if (wall)    wall.style.display    = locked ? 'block' : 'none';
+  if (content) content.style.display = locked ? 'none'  : 'block';
+}
+
+// Il server decide (403 senza licenza Enterprise): così funziona anche aprendo la schermata
+// da una notifica push, prima che initApp() abbia letto la licenza.
+async function loadMentions() {
+  const list    = document.getElementById('mentions-list');
+  const countEl = document.getElementById('mentions-count');
+  list.innerHTML = '<div class="loading">Caricamento…</div>';
+  try {
+    const d = await api('/mentions?limit=100');
+    showMentionsWall(false);
+    countEl.textContent = `${d.total} menzioni`;
+    if (!d.items?.length) { list.innerHTML = '<div class="empty">Nessuna menzione</div>'; return; }
+    list.innerHTML = d.items.map(m => {
+      mentionMap[m.id] = Object.assign({}, m, { _links: mentionLinks(m) });
+      const name = m.display_name || 'Utente';
+      return `
+        <div class="bc-item">
+          <div class="bc-header has-menu">
+            <div class="ban-avatar" style="width:26px;height:26px;font-size:10px">${esc(name[0].toUpperCase())}</div>
+            <span class="bc-user">${esc(name)}</span>
+            <span class="bc-page">${esc(m.page_name)}</span>
+            <span class="bc-time" title="${esc(m.mentioned_at)}">${relTime(m.mentioned_at)}</span>
+            ${rowMenuButton(`openMentionMenu(event, ${m.id})`)}
+          </div>
+          <div class="bc-content">${m.excerpt ? esc(m.excerpt) : '<span style="color:var(--muted)">Testo non disponibile</span>'}</div>
+        </div>`;
+    }).join('');
+  } catch (e) {
+    if (e.data?.feature === 'mentions') { showMentionsWall(true); return; }
+    list.innerHTML = '<div class="empty">Errore nel caricamento</div>';
+  }
+}
+
+function openMentionMenu(ev, id) {
+  const m = mentionMap[id];
+  if (!m) return;
+  const items = [];
+  if (m._links.comment) items.push({ label: 'Vedi il commento su Facebook', icon: MENU_ICONS.link, href: m._links.comment });
+  if (m._links.post)    items.push({ label: 'Vedi il post su Facebook',     icon: MENU_ICONS.link, href: m._links.post });
+  openRowMenu(ev.currentTarget, items);
+}
+
 // ── User drawer (drill-down) ──────────────────────────────────────
 // Stato dei commenti nel drawer "storico" utente.
 const DRAWER_STATUS = {

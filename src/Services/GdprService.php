@@ -79,6 +79,15 @@ class GdprService
             ->orderByDesc('created_at')
             ->get()->map(fn($r) => (array) $r)->toArray();
 
+        try {
+            $mentions = DB::table('mentions')
+                ->where('social_user_id', $socialUserId)
+                ->orderByDesc('mentioned_at')
+                ->get()->map(fn($r) => (array) $r)->toArray();
+        } catch (\Throwable) {
+            $mentions = [];   // tabella non ancora migrata
+        }
+
         return [
             'exported_at'    => date('c'),
             'social_user'    => (array) $user,
@@ -86,6 +95,7 @@ class GdprService
             'ban_records'    => $banRecords,
             'appeal_records' => $appeals,
             'moderation_log' => $moderationLog,
+            'mentions'       => $mentions,
         ];
     }
 
@@ -95,7 +105,9 @@ class GdprService
      * placeholder sui campi PII, righe conservate per continuità statistica
      * e per eventuali appelli/contenziosi già aperti.
      *
-     * @return array{comments:int,social_users:int,moderation_log:int,appeal_records:int,audit_log:int}
+     * Le menzioni (sola lettura, nessun valore statistico) vengono invece eliminate.
+     *
+     * @return array{comments:int,social_users:int,moderation_log:int,appeal_records:int,audit_log:int,mentions:int}
      */
     public function anonymiseUser(int $socialUserId): array
     {
@@ -105,7 +117,17 @@ class GdprService
             'moderation_log' => $this->anonymiseModerationLog($socialUserId),
             'appeal_records' => $this->anonymiseAppealRecords($socialUserId),
             'audit_log'      => $this->anonymiseAuditLog($socialUserId),
+            'mentions'       => $this->deleteMentions($socialUserId),
         ];
+    }
+
+    private function deleteMentions(int $socialUserId): int
+    {
+        try {
+            return (int) DB::table('mentions')->where('social_user_id', $socialUserId)->delete();
+        } catch (\Throwable) {
+            return 0;   // tabella non ancora migrata
+        }
     }
 
     /** Audit: restano chi/cosa/quando; note e dettagli (possono contenere testo dell'utente) vengono svuotati. */

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ModerationHub\Controllers;
 
+use ModerationHub\Services\MentionService;
 use ModerationHub\Services\MetaGraphService;
 use ModerationHub\Services\ModerationService;
 use ModerationHub\Services\WebhookDebug;
@@ -18,9 +19,12 @@ use Slim\Psr7\Response;
  */
 class WebhookController
 {
+    private const MENTION_RESULT = 'menzione su post di un\'altra pagina, non moderabile';
+
     public function __construct(
         private readonly MetaGraphService  $meta,
         private readonly ModerationService $moderation,
+        private readonly MentionService    $mentions,
         private ?Logger                    $logger = null,
     ) {}
 
@@ -140,12 +144,39 @@ class WebhookController
             }
         }
 
+        // Menzioni sotto post di altre pagine: non moderabili, ma tracciate (debug, push, lista Enterprise).
+        $mentions = $this->meta->parseWebhookMentions($payload);
+        foreach ($mentions as $mention) {
+            $page = DB::table('connected_pages')
+                ->where('page_id', $mention['page_id'])
+                ->where('is_active', 1)
+                ->first();
+            $entry = ['comment_id' => $mention['id'], 'post_id' => $mention['post_id'], 'page_id' => $mention['page_id']];
+            if (!$page) {
+                $trace[] = $entry + ['result' => 'ignorato: pagina non collegata o non attiva'];
+                continue;
+            }
+            try {
+                $message = $this->mentions->handle($mention, (array) $page);
+                $trace[] = $entry + [
+                    'excerpt' => MentionService::excerpt($message, 120),
+                    'result'  => self::MENTION_RESULT,
+                ];
+            } catch (\Throwable $e) {
+                $this->logger?->error('Mention handling failed: ' . $e->getMessage());
+                $trace[] = $entry + ['result' => 'errore: ' . $e->getMessage()];
+            }
+        }
+
         $update = ['processed' => 1];
         if ($debug) {
             $update['debug'] = $this->debugJson($request, [
                 'comments_parsed' => count($comments),
+                'mentions_parsed' => count($mentions),
                 'comments'        => $trace,
-                'result'          => $comments ? 'elaborato' : 'nessun commento da moderare in questo evento (campo/tipo/verbo non gestito o commento della pagina stessa)',
+                'result'          => $comments ? 'elaborato'
+                    : ($mentions ? self::MENTION_RESULT
+                    : 'nessun commento da moderare in questo evento (campo/tipo/verbo non gestito o commento della pagina stessa)'),
             ]);
         }
         DB::table('webhook_events')->where('id', $eventId)->update($update);

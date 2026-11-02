@@ -7,13 +7,14 @@ namespace ModerationHub\Services;
 use Illuminate\Database\Capsule\Manager as DB;
 
 /**
- * Notifiche push ai moderatori: nuovo commento in coda / nuova segnalazione.
+ * Notifiche push ai moderatori: nuovo commento in coda / nuova segnalazione / ricorso /
+ * menzione della pagina sotto un post di un'altra pagina (non moderabile).
  * Il payload porta anche il totale (coda + segnalazioni) per il badge dell'icona.
  */
 final class PushService
 {
     /** Etichette davanti all'inizio del testo. */
-    private const TAGS = ['queue' => 'Revisione', 'reportable' => 'Segnalazione', 'appeal' => 'Ricorso', 'test' => 'Prova'];
+    private const TAGS = ['queue' => 'Revisione', 'reportable' => 'Segnalazione', 'appeal' => 'Ricorso', 'mention' => 'Menzione', 'test' => 'Prova'];
 
     /** Lunghezza massima dell'inizio del testo mostrato nella notifica. */
     private const EXCERPT_CHARS = 90;
@@ -120,6 +121,9 @@ final class PushService
             $pending = DB::table('appeal_records')->where('status', 'pending')->count();
             $payload['body'] = $this->line($kind, $text) . "\n" . $pending . ' ricorsi in attesa';
             $payload['url']  = '/dashboard.html?screen=appeals';
+        } elseif ($kind === 'mention') {
+            $payload['body'] = $this->line($kind, $text) . "\n" . 'Su un post di un\'altra pagina · non moderabile';
+            $payload['url']  = '/dashboard.html?screen=mentions';
         } else {
             $payload['body'] = $this->line('queue', $text) . "\n" . $c['queue'] . ' in coda' . ($c['reportable'] ? ' · ' . $c['reportable'] . ' segnalazioni' : '');
             $payload['url']  = '/dashboard.html?screen=queue';

@@ -42,6 +42,9 @@ Fill in:
 Subscribe to these fields:
 - ✅ `feed`
 - ✅ `comments`
+- ✅ `mention` — comments tagging your page under posts of other pages. They are not moderable with the
+  page token: they trigger a push notification and, with an Enterprise license, appear in the read-only
+  **Mentions** list (the app subscribes the page to `feed,mention` automatically)
 
 5. Click **Verify and Save**
 

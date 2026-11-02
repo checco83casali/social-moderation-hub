@@ -211,6 +211,45 @@ class MetaGraphService
         return array_values(array_filter($comments, fn($c) => !empty($c['id'])));
     }
 
+    /**
+     * Eventi `mention`: la pagina è taggata in un commento (o post) sotto un post di
+     * un'ALTRA pagina — il prefisso del post_id è diverso da entry.id. Restano fuori dalla
+     * coda di moderazione perché il token della pagina non può nasconderli né eliminarli.
+     * Le menzioni sotto post della pagina stessa sono ignorate: arrivano già con `feed`.
+     *
+     * @param array<string, mixed> $payload
+     * @return list<array{id:string, post_id:string, page_id:string, message:string, from:array{id:string,name:string}, created_time:mixed, verb:string}>
+     */
+    public function parseWebhookMentions(array $payload): array
+    {
+        $mentions = [];
+        foreach ($payload['entry'] ?? [] as $entry) {
+            $pageId = (string) ($entry['id'] ?? '');
+            foreach ($entry['changes'] ?? [] as $change) {
+                if (($change['field'] ?? '') !== 'mention') continue;
+                $value  = $change['value'] ?? [];
+                $postId = (string) ($value['post_id'] ?? '');
+                $id     = (string) ($value['comment_id'] ?? $postId);
+                if ($id === '' || $postId === '') continue;
+                if (explode('_', $postId)[0] === $pageId) continue;
+
+                $mentions[] = [
+                    'id'           => $id,
+                    'post_id'      => $postId,
+                    'page_id'      => $pageId,
+                    'message'      => (string) ($value['message'] ?? ''),
+                    'from'         => [
+                        'id'   => (string) ($value['from']['id']   ?? $value['sender_id']   ?? ''),
+                        'name' => (string) ($value['from']['name'] ?? $value['sender_name'] ?? ''),
+                    ],
+                    'created_time' => $value['created_time'] ?? time(),
+                    'verb'         => (string) ($value['verb'] ?? 'add'),   // add | edit(ed) | remove
+                ];
+            }
+        }
+        return $mentions;
+    }
+
     // ──────────────────────────────────────────────────────────────────
     // Comment actions
     // ──────────────────────────────────────────────────────────────────

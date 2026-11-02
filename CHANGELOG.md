@@ -11,6 +11,14 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Mentions on other pages (Enterprise, `mentions`)** — `mention` webhook events (comments tagging a connected
+  page under posts of *other* pages: the `post_id` prefix differs from `entry.id`) stay out of the moderation
+  queue, since the page token cannot hide or delete them, but are no longer dropped silently: they trigger a
+  push notification ("Mention: …") and, with an Enterprise license (`mentions`, or any license with
+  `prompt_stats`), appear in the read-only **Mentions** list with an excerpt, links to the comment and the post
+  on Facebook and the date. Authors are pseudonymised like in the other lists; rows follow the general retention
+  window, are included in the GDPR export and deleted by the right to erasure. `GET /api/mentions`, table
+  `mentions` (migration 014).
 - **Discussion context in the detail view** — "Open the discussion context" shows the post summary, the parent
   comment, up to 3 previous and 3 following comments on the post and the replies, with their state
   (visible / hidden / queued); authors are internal pseudonyms only (`User #ID`). Parent ids are stored from the
@@ -67,6 +75,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   duty; detection measures; 6-phase response procedure with the mandatory timings.
 
 ### Changed
+- **Webhook debug: mentions** — a mention event now reports "menzione su post di un'altra pagina, non
+  moderabile" with `comment_id`, `post_id` and a message excerpt instead of the generic "no comment to
+  moderate"; the debug panel shows it with a "Mention" tag and filter.
 - **Review queue and comment lists share one layout** — same order of badges (who decided · AI verdict ·
   signals/categories · states), notes under the comment text, ⋯ menu in the corner (also on mobile), tags
   aligned to the right; AI verdict shown as one badge coloured by outcome ("AI: Approved · 97%"), manual
@@ -75,6 +86,11 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - Sidebar badges hidden when the count is 0.
 
 ### Fixed
+- **Retention: hidden and removed comments** — their content (and the free text of their moderation log and
+  appeals) was anonymised after the general window, while their authors followed the violation window. Comments
+  in a violation state (hidden, hidden reportable, awaiting legal review, removed, reported, appeal pending) now
+  follow `violation_retention_days`, and an author with such a comment counts as a user with violations even if
+  the counter did not increase (e.g. AI auto-hide awaiting legal review).
 - The AI evaluation of a comment was replaced in the detail view by the "edited" system log entry after an edit.
 - Training notes were skipped entirely while development mode was on.
 - Mobile: document overflow made the tab bar scroll; settings tabs scrolled vertically; the detail sheet header

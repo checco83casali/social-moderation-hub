@@ -27,7 +27,7 @@
     p.entry.forEach(en => (en.changes || []).forEach(c => {
       const v = c.value || {};
       const item = v.item || c.field || 'evento';
-      const kind = item === 'comment' ? 'comment' : item === 'reaction' ? 'reaction' : 'other';
+      const kind = c.field === 'mention' ? 'mention' : item === 'comment' ? 'comment' : item === 'reaction' ? 'reaction' : 'other';
       const who = (v.from && v.from.name) || v.sender_name || (v.from && v.from.id) || v.sender_id || 'Qualcuno';
       out.push({ kind, item, verb: v.verb || '', who, v, page: en.id });
     }));
@@ -38,6 +38,7 @@
     if (e.error || e.event_type === 'invalid_signature' || e.event_type === 'invalid_json') return 'error';
     const ch = changesOf(e);
     if (ch.some(c => c.kind === 'comment')) return 'comment';
+    if (ch.some(c => c.kind === 'mention')) return 'mention';
     if (ch.some(c => c.kind === 'reaction')) return 'reaction';
     return 'other';
   }
@@ -52,6 +53,10 @@
     if (c.kind === 'comment') {
       const msg = c.v.message ? ` <span class="whd-msgtxt">“${esc(String(c.v.message).slice(0, 160))}”</span>` : '';
       return `<b>${esc(c.who)}</b> ${esc(VERBS[c.verb] || c.verb || 'commento')}${msg}`;
+    }
+    if (c.kind === 'mention') {
+      const msg = c.v.message ? ` <span class="whd-msgtxt">“${esc(String(c.v.message).slice(0, 160))}”</span>` : '';
+      return `<b>${esc(c.who)}</b> ha menzionato la pagina${msg} <span class="whd-msgtxt">· post di un'altra pagina, non moderabile</span>`;
     }
     if (c.kind === 'reaction') {
       const t = c.v.reaction_type || '';
@@ -69,6 +74,7 @@
     else {
       const kinds = [...new Set(changesOf(e).map(c => c.kind))];
       if (kinds.includes('comment')) t.push('<span class="whd-tag t-comment">Commento</span>');
+      if (kinds.includes('mention')) t.push('<span class="whd-tag t-mention">Menzione</span>');
       if (kinds.includes('reaction')) t.push('<span class="whd-tag t-reaction">Reaction</span>');
       if (!kinds.length || kinds.includes('other')) t.push('<span class="whd-tag">Altro</span>');
       if (!Number(e.processed)) t.push('<span class="whd-tag t-warn">In elaborazione</span>');

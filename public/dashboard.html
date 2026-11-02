@@ -70,6 +70,7 @@
       <div class="nav-item" data-screen="bans"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>Utenti bannati</div>
       <div class="nav-item" data-screen="banned-comments"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>Commenti nascosti</div>
       <div class="nav-item" data-screen="approved-comments"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><polyline points="9 11 12 14 16 9"/></svg>Commenti approvati</div>
+      <div class="nav-item" data-screen="mentions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 006 0v-1a10 10 0 10-3.92 7.94"/></svg>Menzioni<span id="nav-mentions-pro-badge" style="display:none;font-size:9px;font-weight:600;padding:1px 6px;border-radius:10px;background:rgba(99,102,241,.2);color:var(--accent);margin-left:auto;flex-shrink:0">ENT</span></div>
     </div>
     <div class="nav-section">
       <div class="nav-label">Configurazione</div>
@@ -857,7 +858,7 @@
               </div>
               <div class="policy-form">
                 <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.6">
-                  Anonimizza automaticamente i commenti, gli utenti social, i payload webhook e i campi testuali dei log più vecchi della soglia configurata.<br>
+                  Anonimizza automaticamente i commenti, gli utenti social, i payload webhook e i campi testuali dei log più vecchi della soglia configurata; elimina le menzioni su post di altre pagine.<br>
                   I dati statistici (decisione AI, categoria, severity, timestamp) restano per metriche e audit. Conforme GDPR art. 17 / 5(1)(e).
                 </p>
                 <div class="form-group">
@@ -869,7 +870,7 @@
                 <div class="form-group">
                   <label class="form-label">Anonimizza utenti con violazioni/ban dopo (giorni)</label>
                   <input class="form-input" type="number" id="set-violation-retention-days" min="0" max="3650" step="1" style="width:120px;text-align:center">
-                  <div style="font-size:11px;color:var(--muted);margin-top:5px">Finestra dedicata per l'identità degli utenti con almeno una violazione/ban registrati (nome, profilo) — indipendente da quella generale sopra. <strong>0</strong> = eredita la finestra generale.</div>
+                  <div style="font-size:11px;color:var(--muted);margin-top:5px">Finestra dedicata per l'identità degli utenti con almeno una violazione/ban registrati (nome, profilo) e per il contenuto dei commenti nascosti o rimossi — indipendente da quella generale sopra. <strong>0</strong> = eredita la finestra generale.</div>
                 </div>
 
                 <!-- Retention cron status (populated by loadRetentionStatus()) -->
@@ -1086,6 +1087,7 @@
                 <div class="whd-filters" id="whd-filters" role="group" aria-label="Filtra per tipo">
                   <button type="button" class="whd-f active" data-f="all">Tutti <span class="whd-n"></span></button>
                   <button type="button" class="whd-f" data-f="comment">Commenti <span class="whd-n"></span></button>
+                  <button type="button" class="whd-f" data-f="mention">Menzioni <span class="whd-n"></span></button>
                   <button type="button" class="whd-f" data-f="reaction">Reaction <span class="whd-n"></span></button>
                   <button type="button" class="whd-f" data-f="other">Altro <span class="whd-n"></span></button>
                   <button type="button" class="whd-f" data-f="error">Errori <span class="whd-n"></span></button>
@@ -1293,6 +1295,21 @@
           </select>
         </div>
         <div id="ac-list"><div class="loading">Caricamento…</div></div>
+      </div>
+    </div>
+
+    <div class="screen" id="screen-mentions">
+      <div class="panel" id="mentions-content">
+        <div class="panel-head"><div class="panel-title">Menzioni su post di altre pagine</div><button class="panel-action" onclick="loadMentions()">↺ Aggiorna</button></div>
+        <p style="font-size:12.5px;color:var(--muted);margin:0 20px 6px;line-height:1.6">Commenti in cui la pagina è taggata sotto post di altre pagine. Sola lettura: il token della pagina non permette di nasconderli o eliminarli, quindi non entrano nella coda. Autori pseudonimizzati; le menzioni seguono la stessa conservazione degli altri dati.</p>
+        <div class="filter-bar"><span class="filter-count" id="mentions-count"></span></div>
+        <div id="mentions-list"><div class="loading">Caricamento…</div></div>
+      </div>
+      <div id="mentions-upgrade-wall" style="display:none;max-width:480px;margin:60px auto;text-align:center;padding:40px 32px;background:var(--bg-card);border:1px solid rgba(99,102,241,.25);border-radius:var(--radius-lg)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:40px;height:40px;color:var(--accent);margin-bottom:16px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        <div style="font-size:16px;font-weight:600;margin-bottom:8px">Funzionalità Enterprise</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:24px">La lista delle <strong>Menzioni</strong> su post di altre pagine è inclusa nella licenza Enterprise.<br>La notifica push delle menzioni arriva comunque.</div>
+        <button class="btn-primary" onclick="document.querySelector('[data-screen=settings]').click()">Attiva licenza →</button>
       </div>
     </div>
 

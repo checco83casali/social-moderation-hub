@@ -11,6 +11,14 @@ Il progetto segue il [Semantic Versioning](https://semver.org/lang/it/).
 ## [Unreleased]
 
 ### Added
+- **Menzioni su altre pagine (Enterprise, `mentions`)** — gli eventi webhook `mention` (commenti che taggano
+  una pagina collegata sotto post di *altre* pagine: il prefisso del `post_id` è diverso da `entry.id`) restano
+  fuori dalla coda di moderazione, perché il token della pagina non può nasconderli né eliminarli, ma non
+  vengono più scartati senza traccia: fanno partire una notifica push ("Menzione: …") e, con licenza
+  Enterprise (`mentions`, o qualsiasi licenza con `prompt_stats`), compaiono nella lista in sola lettura
+  **Menzioni** con estratto, link al commento e al post su Facebook e data. Autori pseudonimizzati come nelle
+  altre liste; le righe seguono la finestra di conservazione generale, sono incluse nell'export GDPR ed
+  eliminate dal diritto all'oblio. `GET /api/mentions`, tabella `mentions` (migrazione 014).
 - **Contesto della discussione nel dettaglio** — "Apri il contesto della discussione" mostra il riassunto del post,
   il commento padre, fino a 3 commenti precedenti e 3 successivi sul post e le risposte, con il loro stato
   (visibile / nascosto / in coda); gli autori sono solo pseudonimi interni (`Utente #ID`). L'id del padre viene
@@ -91,6 +99,9 @@ Il progetto segue il [Semantic Versioning](https://semver.org/lang/it/).
   art. 33 → notifica interessati art. 34 → recovery → registro interno incidenti).
 
 ### Changed
+- **Debug webhook: menzioni** — un evento di menzione ora riporta "menzione su post di un'altra pagina, non
+  moderabile" con `comment_id`, `post_id` e un estratto del messaggio al posto del generico "nessun commento da
+  moderare"; il pannello di debug lo mostra con etichetta e filtro "Menzioni".
 - **Coda di revisione e liste dei commenti con lo stesso layout** — stesso ordine dei badge (chi ha deciso ·
   verdetto AI · segnali/categorie · stati), note sotto il testo, menù ⋯ nell'angolo (anche su mobile), tag
   allineati a destra; verdetto AI in un solo badge colorato per esito ("AI: Approvato · 97%"), decisioni
@@ -99,6 +110,12 @@ Il progetto segue il [Semantic Versioning](https://semver.org/lang/it/).
 - I badge della barra laterale scompaiono quando il conteggio è 0.
 
 ### Fixed
+- **Conservazione: commenti nascosti e rimossi** — il loro contenuto (e il testo libero del log di moderazione
+  e dei ricorsi) veniva anonimizzato con la finestra generale, mentre i loro autori seguivano quella delle
+  violazioni. I commenti in stato di violazione (nascosto, nascosto segnalabile, in attesa di revisione legale,
+  rimosso, segnalato, ricorso in attesa) ora seguono `violation_retention_days`, e l'autore di un commento così
+  conta come utente con violazioni anche se il contatore non è salito (es. auto-hide AI in attesa di revisione
+  legale).
 - Dopo una modifica, nel dettaglio la valutazione AI veniva sostituita dalla riga di sistema "modificato".
 - Le note di addestramento venivano saltate del tutto con la modalità sviluppo attiva.
 - Mobile: l'overflow del documento faceva scorrere la barra a tab; le tab delle impostazioni scorrevano in

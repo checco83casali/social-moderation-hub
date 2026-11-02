@@ -796,6 +796,53 @@ class ModerationController
         }
     }
 
+    // ── GET /api/mentions  ──────────────────────────────────────────
+    /**
+     * Menzioni delle pagine collegate sotto post di altre pagine (Enterprise). Sola lettura:
+     * non sono moderabili con il token della pagina. Autori pseudonimizzati come nelle altre liste.
+     */
+    public function mentions(ServerRequestInterface $request, Response $response): ResponseInterface
+    {
+        if (!$this->license->canViewMentions()) {
+            return $this->json($response, ['error' => 'Enterprise license required', 'feature' => 'mentions'], 403);
+        }
+
+        $params = $request->getQueryParams();
+        $limit  = min((int) ($params['limit'] ?? 50), 100);
+        $page   = max(1, (int) ($params['page'] ?? 1));
+
+        try {
+            $query = DB::table('mentions as m')
+                ->join('connected_pages as cp', 'cp.id', '=', 'm.page_id')
+                ->leftJoin('social_users as su', 'su.id', '=', 'm.social_user_id');
+            $total = (clone $query)->count();
+            $items = $query
+                ->select([
+                    'm.id', 'm.excerpt', 'm.mentioned_at', 'm.received_at',
+                    'm.platform_comment_id', 'm.platform_post_id',
+                    'cp.page_name', 'cp.page_id as facebook_page_id',
+                    'm.social_user_id', 'su.display_name',
+                ])
+                ->orderByDesc('m.mentioned_at')
+                ->offset(($page - 1) * $limit)
+                ->limit($limit)
+                ->get()
+                ->map(function ($row) {
+                    $arr = (array) $row;
+                    // Senza autore noto niente display_name: maskUserRow() ripiegherebbe sull'id della menzione.
+                    if ($arr['social_user_id'] === null) unset($arr['display_name']);
+                    return $arr;
+                })
+                ->toArray();
+        } catch (\Throwable) {
+            $total = 0;   // tabella non ancora migrata
+            $items = [];
+        }
+
+        $items = $this->maskUserNames($request, $items);
+        return $this->json($response, compact('total', 'page', 'items') + ['per_page' => $limit]);
+    }
+
     // ── GET /api/comments/hidden  ────────────────────────────────────
     /** All hidden comments (pending appeal or confirmed). */
     public function hiddenComments(ServerRequestInterface $request, Response $response): ResponseInterface

@@ -305,6 +305,9 @@ $app->group('/api', function ($group) {
     // Hidden comments
     $group->get('/comments/hidden',            [ModerationController::class, 'hiddenComments']);
 
+    // Menzioni su post di altre pagine (Enterprise, sola lettura)
+    $group->get('/mentions',                   [ModerationController::class, 'mentions']);
+
     // Appeals
     $group->get('/appeals',                    [ModerationController::class, 'appealQueue']);
     $group->post('/appeals/{id}/decide',       [ModerationController::class, 'decideAppeal']);
